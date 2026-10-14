@@ -29,11 +29,11 @@
 ---
 
 ## Fase 3: Desarrollo Núcleo App/Web (Fecha límite: 29-10-2026)
-- **Estado:** Siguiente (Sprints de Código)
+- **Estado:** En Progreso (Sprints de Código)
 - **Entregables:** MVP funcional desplegado.
 
 ### Épica 1: Autenticación y Seguridad
-- **HU-05: Login y Sesión (Web/App)**
+- **HU-05: Login y Sesión (Web/App)** `[En Progreso — App Móvil Completada]`
   - **Descripción:** Implementar inicio de sesión con correo/contraseña consumiendo Supabase Auth.
 - **HU-06: Control de Acceso (RBAC)**
   - **Descripción:** Configurar navegación condicional (Técnico vs Admin) y proteger rutas mediante Row Level Security (RLS).
@@ -47,18 +47,18 @@
   - **Descripción:** Interfaz para visualizar el stock actual de insumos, herramientas y repuestos.
 
 ### Épica 3: Operación Móvil en Terreno (App)
-- **HU-10: Módulo de Sesión Activa por Evento**
-  - **Descripción:** Dropdown en la app para seleccionar el evento de turno.
-- **HU-11: Formulario de Incidencias In Situ**
-  - **Descripción:** Pantalla rápida (Regla de 3 taps) para registrar el tipo de falla y detalles técnicos vinculados al UUID escaneado.
-- **HU-12: Captura de Evidencia Fotográfica**
-  - **Descripción:** Permitir tomar una foto de la falla desde la app para adjuntarla al reporte.
-- **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)**
-  - **Descripción:** Flujo para administrador en la app que permite enrolar múltiples QR rápidamente.
+- **HU-10: Módulo de Sesión Activa por Evento** `[Completada — App Móvil]`
+  - **Descripción:** Visualización de evento de turno ("Festival Estadio Nacional"), métricas en m², desglose de equipos operativos/mantención/baja y actividad reciente.
+- **HU-11: Formulario de Incidencias In Situ** `[Completada — App Móvil]`
+  - **Descripción:** Modal Bottom Sheet tipo 3 taps (`ReportIncidentModal.tsx`) para registrar componentes defectuosos y observaciones guardando en SQLite.
+- **HU-12: Captura de Evidencia Fotográfica** `[Completada — App Móvil]`
+  - **Descripción:** Captura con cámara nativa (`expo-image-picker`) y miniatura de previsualización en el reporte de fallas.
+- **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[Completada — App Móvil]`
+  - **Descripción:** Modo Ráfaga en `ScannerScreen.tsx` para enrolamiento continuo de palmetas con contador dinámico en SQLite.
 
 ### Épica 4: Persistencia y Sincronización
-- **HU-14: Motor de Sincronización a Supabase**
-  - **Descripción:** Lógica que detecta internet y envía los registros guardados en el SQLite local hacia Supabase.
+- **HU-14: Motor de Sincronización a Supabase** `[En Progreso — UI y Control Local SQLite Listos]`
+  - **Descripción:** Control dinámico de pendientes en SQLite y botón de sincronización manual/automática en SettingsScreen.
 - **HU-15: Trigger de Descuento de Stock**
   - **Descripción:** Script SQL en Supabase que reste automáticamente unidades de repuestos al registrar una resolución.
 

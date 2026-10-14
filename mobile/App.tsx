@@ -1,25 +1,19 @@
 import React, { useEffect } from 'react';
-import { SafeAreaView, StyleSheet, StatusBar } from 'react-native';
-import { ScannerScreen } from './src/screens/ScannerScreen';
-import { initDB } from './src/db/database';
+import { StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { initDB } from './src/core/db/database';
+import { AppNavigator } from './src/core/navigation/AppNavigator';
 
 export default function App() {
   useEffect(() => {
-    // Inicializar SQLite
+    // Inicializar base de datos local SQLite
     initDB();
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <ScannerScreen />
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <StatusBar barStyle="light-content" backgroundColor="#0B0D10" />
+      <AppNavigator />
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'black',
-  },
-});

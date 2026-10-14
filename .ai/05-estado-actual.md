@@ -7,30 +7,39 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 13 de Octubre de 2026.
-- **Fase del Proyecto:** **Fase 2 (En Cierre)** ➔ Transición a **Fase 3 (Desarrollo Núcleo App/Web)**.
-- **Sprint Activo:** Cierre de Configuración Base y Diseño / Preparación de Épica de Autenticación.
-- **Salud del Monorepo:** Estable (sin conflictos de tipado, dependencias inicializadas y arnés de contexto centralizado).
+- **Fecha de Última Actualización:** 14 de Octubre de 2026.
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** en plena marcha.
+- **Sprint Activo:** Épica 1: Autenticación, Épica 3: Operación Móvil en Terreno (**100% de UI/Flujos Móviles Terminados**) y Épica 4: Persistencia y Sincronización.
+- **Salud del Monorepo:** 100% libre de errores de tipado (`npx tsc --noEmit` exitoso en `/mobile`), arquitectura de monolito modular con React Navigation (`MainTabNavigator` + `AppNavigator`), persistencia síncrona en SQLite y cámara `<CameraView>` con soporte de captura fotográfica real (`expo-image-picker`).
 
 ---
 
 ## 2. Historias de Usuario (HUs) — Estado de Avance
 
-### Fase 2: Arquitectura y Configuración Cloud (En Cierre)
+### Fase 2: Arquitectura y Configuración Cloud (Cerrada)
 - ✅ **HU-01: Infraestructura Base** `[Completada]`
-  - Proyecto inicializado en Supabase Cloud (PostgreSQL, Auth, Storage).
-  - Variables de entorno parametrizadas con prefijos de seguridad (`EXPO_PUBLIC_` y `NEXT_PUBLIC_`).
-  - Configuración de `.env.example` en `/mobile` y `.env.local.example` en `/web`.
 - ✅ **HU-02: Inicialización App Móvil y Escaneo Offline** `[Completada]`
-  - Boilerplate funcional en React Native con Expo (SDK 51+ / SDK ~57).
-  - Escáner de código QR operativo mediante `<CameraView>` y `useCameraPermissions` en `mobile/src/screens/ScannerScreen.tsx`.
-  - Persistencia local inmediata en SQLite mediante API síncrona moderna (`openDatabaseSync`, `execSync`, `runSync`) con la tabla `incidencias_locales` en `mobile/src/db/database.ts`.
 - ✅ **HU-03: Inicialización de Entorno Web** `[Completada]`
-  - Panel administrativo inicializado en Next.js (App Router, v16+) con TypeScript y Tailwind CSS v4.
-  - Paquetes `@supabase/supabase-js` y `@supabase/ssr` instalados y listos para configurar clientes Server/Client.
-- ⏳ **HU-04: Diseño de Interfaces UI/UX** `[Pendiente / En Preparación]`
-  - Definición de sistema de diseño y paleta completada en `.ai/03-ui-ux-branding.md` (Negro Profundo, Dorado corporativo, semáforo semántico, Dark Mode para terreno).
-  - Pendiente: Wireframes/mockups y componentes visuales base para el flujo de los 3 Taps y Dashboard.
+- ⏳ **HU-04: Diseño de Interfaces UI/UX** `[En Curso / Prototipado Directo en Código]`
+
+### Fase 3: Desarrollo Núcleo App/Web (En Curso)
+- 🔄 **HU-05: Login y Sesión (Web/App)** `[En Progreso — App Móvil Completada]`
+  - Móvil: `LoginScreen.tsx` terminado con validación visual y de credenciales.
+  - Web: Pendiente en Next.js App Router con `@supabase/ssr`.
+- ✅ **HU-10: Módulo de Sesión Activa por Evento** `[Completada — App Móvil]`
+  - `HomeScreen.tsx`: Card de montaje activo ("Festival Estadio Nacional"), métricas en m² (140 m² total, 70 m² operativos, 15 m² mantención, 5 m² baja) y visor de actividad reciente vinculado a SQLite.
+- ✅ **HU-11: Formulario de Incidencias In Situ (Regla de 3 Taps)** `[Completada — App Móvil]`
+  - `ReportIncidentModal.tsx`: Modal Bottom Sheet con selector 2x2 de componentes defectuosos (Cable de datos, Conector de poder, Placa LED, Fuente), observaciones y persistencia inmediata en SQLite local.
+- ✅ **HU-12: Captura de Evidencia Fotográfica** `[Completada — App Móvil]`
+  - Integración de `expo-image-picker` para toma de fotos in situ con la cámara (y fallback de galería), previsualización de miniatura en el reporte y almacenamiento de URI local en la tabla SQLite.
+- ✅ **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[Completada — App Móvil]`
+  - Toggle en `ScannerScreen.tsx` para alternar entre "Modo Inspección" y "Modo Ráfaga (Enrolamiento)", permitiendo escanear decenas de códigos QR de palmetas consecutivamente con contador en vivo y guardado en SQLite sin salir de la cámara.
+- 🔄 **HU-14: Motor de Sincronización a Supabase** `[En Progreso — UI y Control Local SQLite Listos]`
+  - `SettingsScreen.tsx`: Contador reactivo de pendientes en SQLite y botón "Sincronizar Ahora" con simulación de subida y marcado de registros en diferido.
+- ⏳ **HU-06: Control de Acceso (RBAC)** `[Siguiente]`
+- ⏳ **HU-07: Dashboard Central Web** `[Siguiente en Web]`
+- ⏳ **HU-08: CRUD de Activos Serializados (Web)** `[Siguiente en Web]`
+- ⏳ **HU-09: Gestión de Inventario a Granel (Web)** `[Siguiente en Web]`
 
 ---
 
@@ -38,29 +47,33 @@
 
 | Componente | Ruta | Estado Actual |
 | :--- | :--- | :--- |
-| **Arnés de Contexto** | `AGENTS.md` y `.ai/*.md` | Centralizado en raíz, archivos duplicados de subcarpetas eliminados. |
-| **Móvil (App)** | `mobile/` | Expo SDK 51+ configurado, SQLite local activo, escáner QR listo. |
-| **Web (Admin)** | `web/` | Next.js App Router configurado con Tailwind CSS y dependencias SSR de Supabase. |
+| **Arnés de Contexto** | `AGENTS.md` y `.ai/*.md` | Centralizado en raíz, 5 módulos activos de memoria viva y reglas estrictas. |
+| **Core Móvil** | `mobile/src/core/` | `theme/colors.ts`, `api/supabase.ts`, `db/database.ts` (API síncrona), `components/LiquidGlassView.tsx` (GlassView + BlurView fallback), `utils/haptics.ts` (`triggerHaptic`), `navigation/AppNavigator.tsx`, `navigation/MainTabNavigator.tsx` (Floating Liquid Glass Tab Bar con `SymbolView`). |
+| **Módulos Móvil** | `mobile/src/modules/` | `auth/screens/LoginScreen.tsx`, `home-event/screens/HomeScreen.tsx` (Liquid Glass Header + 120pb), `scanner-incidents/screens/ScannerScreen.tsx` (Liquid Glass controls + haptics), `scanner-incidents/screens/AssetDetailScreen.tsx` (Specs 2x2 grid responsive), `scanner-incidents/components/ReportIncidentModal.tsx` (Liquid Glass sheet + haptics), `settings-sync/screens/SettingsScreen.tsx`. |
+| **Web (Admin)** | `web/` | Next.js App Router con Tailwind CSS y dependencias `@supabase/ssr`. |
 | **Entornos y Secretos** | `mobile/.env.example`, `web/.env.local.example` | Plantillas de variables públicas listas y documentadas. |
-| **Repositorio / Git** | `.gitignore` en raíz y paquetes | Archivos `.env*`, `node_modules`, `.expo` y `.next` excluidos correctamente. |
 
 ---
 
 ## 4. Próximos Pasos Inmediatos
 
-1. **HU-04: Prototipos UI/UX (Móvil y Web):**
-   - Diseñar/implementar los wireframes y componentes base de la app móvil respetando estrictamente la **Regla de los 3 Taps** y el **Dark Mode** de terreno.
-   - Definir layout base del Dashboard administrativo web con estética sobria y acentos dorados.
-2. **HU-05: Implementación de Login y Sesión (Fase 3):**
-   - Implementar autenticación con correo/contraseña consumiendo Supabase Auth en `/web` y `/mobile`.
-   - Establecer el enrutamiento protegido inicial y almacenar token de sesión según el rol asignado (`tecnico` o `admin`).
+1. **HU-05 (Web) y HU-07 (Dashboard Central):**
+   - Construir en `web/app/login/page.tsx` la pantalla de login administrativo con la estética corporativa dorada.
+   - Implementar el Dashboard administrativo en `web/app/dashboard/page.tsx` para visualizar las palmetas y métricas reportadas por la app móvil.
+2. **HU-14 (Sincronización Cloud Real):**
+   - Conectar el botón "Sincronizar Ahora" de la app móvil a una Edge Function o batch insert real en las tablas `incidencias` y `palmetas_led` de Supabase.
 
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
-- **2026-10-13:**
-  - Implementación del arnés de contexto centralizado (**AI Context Harness**): creación de `AGENTS.md` en la raíz y módulos `.ai/01-negocio-y-reglas.md`, `.ai/02-arquitectura-stack.md`, `.ai/03-ui-ux-branding.md`, `.ai/04-base-de-datos.md`.
-  - Limpieza de archivos redundantes (`mobile/AGENTS.md`, `web/AGENTS.md`, `web/CLAUDE.md`).
-  - Documentación de la tabla SQLite local `incidencias_locales` y especificación del modelo relacional cloud para Supabase con triggers de inventario.
-  - Creación del archivo de memoria viva `.ai/05-estado-actual.md` para trazabilidad inter-sesión.
+- **2026-10-14 (Sesión 5 — Liquid Glass iOS Nativo, Retroalimentación Háptica, SF Symbols y Responsividad iPhone):**
+  - Instalación de librerías nativas en `/mobile`: `expo-blur`, `expo-haptics`, `expo-symbols` y `expo-glass-effect`.
+  - Creación de [LiquidGlassView.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/components/LiquidGlassView.tsx): Soporte dinámico para `UIGlassEffect` nativo (`GlassView`) con fallback automático de alto estándar en `BlurView` (`systemChromeMaterialDark`, intensidad 80, velo translúcido `rgba(20, 23, 28, 0.55)` y bisel especular `rgba(255, 255, 255, 0.14)`).
+  - Creación del helper [haptics.ts](file:///c:/Workspace/aleprod-capstone/mobile/src/core/utils/haptics.ts): Función segura `triggerHaptic` para eventos de selección, impacto ligero/medio y notificaciones de éxito o advertencia.
+  - Rediseño de [MainTabNavigator.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/navigation/MainTabNavigator.tsx): Floating Tab Bar compacto tipo cápsula centrada (`height: 66`, `borderRadius: 33`, `left: 36`, `right: 36`, `bottom: 26`), botón central de escáner azul (`#2563EB`, 52x52, halo cristalino, `marginTop: -22`, `SymbolView` `qrcode.viewfinder` nativo con fallback a `Ionicons`), etiqueta alineada y hápticos al pulsar tabs.
+  - Integración de Liquid Glass y hápticos en [ScannerScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/screens/ScannerScreen.tsx): Selector de modo, contador ráfaga y tarjeta de simulación con refracción en tiempo real sobre la cámara, y feedback `success` al escanear.
+  - Integración de Liquid Glass y hápticos en [ReportIncidentModal.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/components/ReportIncidentModal.tsx): Contenedor de cristal líquido para el Bottom Sheet, hápticos de selección en los 4 botones de componentes defectuosos y `success` al persistir en SQLite.
+  - Corrección de responsividad en [AssetDetailScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/screens/AssetDetailScreen.tsx): Columnas `flex: 1, minWidth: 0` en el grid 2x2, íconos con margen de 6pt, valores con ajuste multilínea sin desborde, separación `space-between` en el historial y borde `#262A34` en el banner informativo.
+  - Optimización en [HomeScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/HomeScreen.tsx): Header superior fijo ("Hola, Técnico / Sincronizado") posicionado dinámicamente con `useSafeAreaInsets()` (`top: insets.top + 10`, `zIndex: 20`) otorgando margen holgado y natural bajo el notch/Dynamic Island, con `paddingTop: insets.top + 90` y `paddingBottom: 120` en el `ScrollView` para que el contenido pase por detrás con refracción Liquid Glass sin chocar jamás con el borde superior.
+  - Verificación estricta de compilación con `npx tsc --noEmit` en `/mobile` (0 errores).

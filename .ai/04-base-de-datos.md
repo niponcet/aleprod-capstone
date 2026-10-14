@@ -17,16 +17,21 @@ El sistema opera bajo un modelo de datos distribuido:
 
 - **Motor:** `expo-sqlite` (API Síncrona).
 - **Archivo de base de datos:** `aleprod_local.db`.
-- **Ubicación en código:** `mobile/src/db/database.ts`.
+- **Ubicación en código:** `mobile/src/core/db/database.ts`.
 
 ### Tabla Local Activa: `incidencias_locales`
-*(Implementada en el código fuente actual)*
+*(Implementada y migrada en el código fuente actual)*
 
 ```sql
 CREATE TABLE IF NOT EXISTS incidencias_locales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   qr_uuid TEXT NOT NULL,
-  fecha TEXT NOT NULL
+  fecha TEXT NOT NULL,
+  tipo_falla TEXT DEFAULT 'Escaneo Operativo',
+  foto_uri TEXT,
+  evento_id TEXT DEFAULT 'Festival Estadio Nacional',
+  sincronizado INTEGER DEFAULT 0,
+  sincronizado_at TEXT
 );
 ```
 
@@ -36,22 +41,18 @@ CREATE TABLE IF NOT EXISTS incidencias_locales (
 | `id` | `INTEGER` | `NO` | Identificador único local autoincremental (`PRIMARY KEY`). |
 | `qr_uuid` | `TEXT` | `NO` | Código UUID o contenido escaneado desde el QR de la palmeta LED. |
 | `fecha` | `TEXT` | `NO` | Timestamp en formato ISO 8601 (`new Date().toISOString()`), registrando el momento exacto de la captura en terreno. |
+| `tipo_falla` | `TEXT` | `SÍ` | Categoría de la falla reportada (por defecto `'Escaneo Operativo'`). |
+| `foto_uri` | `TEXT` | `SÍ` | Ruta local temporal del archivo de imagen de evidencia fotográfica. |
+| `evento_id` | `TEXT` | `SÍ` | Nombre o identificador del evento activo de turno (ej: `'Festival Estadio Nacional'`). |
+| `sincronizado` | `INTEGER` | `NO` | `0` = Pendiente de subir a Supabase, `1` = Ya sincronizado en la nube. |
+| `sincronizado_at`| `TEXT` | `SÍ` | Timestamp ISO del momento en que se completó el push a Supabase. |
 
-#### Funciones de Acceso a Datos Actuales:
-- `initDB()`: Ejecuta `db.execSync(...)` al arrancar la app para crear la tabla si no existe.
-- `insertIncidencia(qrUuid: string)`: Realiza inserción parametrizada con `db.runSync(...)` retornando `lastInsertRowId`.
-
-#### Evolución Planificada (Fase 3 — Migraciones SQLite):
-Para soportar la **Regla de los 3 Taps**, captura de fotos y el motor de sincronización (HUs 10 a 14), la tabla se extenderá mediante migraciones o recreación controlada con los siguientes campos:
-
-```sql
--- Esquema extendido propuesto para Fase 3
-ALTER TABLE incidencias_locales ADD COLUMN tipo_falla TEXT;
-ALTER TABLE incidencias_locales ADD COLUMN foto_uri TEXT;
-ALTER TABLE incidencias_locales ADD COLUMN evento_id TEXT;
-ALTER TABLE incidencias_locales ADD COLUMN sincronizado INTEGER DEFAULT 0; -- 0: Pendiente, 1: Sincronizado
-ALTER TABLE incidencias_locales ADD COLUMN sincronizado_at TEXT;
-```
+#### Funciones de Acceso a Datos Implementadas:
+- `initDB()`: Inicializa y ejecuta migraciones seguras automáticas agregando columnas faltantes mediante `PRAGMA table_info`.
+- `insertIncidencia(qrUuid: string, tipoFalla?: string)`: Inserción parametrizada con `db.runSync(...)` con `sincronizado = 0`.
+- `getPendingSyncCount(): number`: Retorna `COUNT(*)` de incidencias donde `sincronizado = 0`.
+- `getRecentActivity(limit = 5): LocalIncidencia[]`: Retorna los últimos registros locales ordenados por `id DESC`.
+- `markAllAsSynced(): number`: Actualiza `sincronizado = 1` y marca `sincronizado_at` con el timestamp actual.
 
 ---
 
