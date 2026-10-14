@@ -7,9 +7,9 @@ import {
   Alert,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
@@ -17,7 +17,8 @@ import { triggerHaptic } from '../../../core/utils/haptics';
 import { insertLocalIncidencia } from '../../../core/db/database';
 
 export const ScannerScreen = () => {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [mode, setMode] = useState<'inspection' | 'burst'>('inspection');
@@ -30,7 +31,16 @@ export const ScannerScreen = () => {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <TouchableOpacity
+          style={[styles.closeButtonRight, { top: Math.max(insets.top + 6, 44) }]}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="close" size={22} color="#F87171" />
+        </TouchableOpacity>
+        <Ionicons name="camera-outline" size={48} color={colors.primaryAmber} style={{ marginBottom: 16 }} />
         <Text style={styles.permissionText}>
           Necesitamos acceso a la cámara para escanear los QR de las pantallas.
         </Text>
@@ -52,10 +62,13 @@ export const ScannerScreen = () => {
 
     if (mode === 'inspection') {
       // Modo Inspección: Navegar al detalle del activo
-      navigation.navigate('AssetDetail', {
-        uuid: data,
-        title: data.length > 8 ? `Módulo #${data.slice(-4).toUpperCase()}` : `Módulo #${data}`,
-        status: '• Operativo',
+      router.push({
+        pathname: '/asset-detail',
+        params: {
+          uuid: data,
+          title: data.length > 8 ? `Módulo #${data.slice(-4).toUpperCase()}` : `Módulo #${data}`,
+          status: '• Operativo',
+        },
       });
       // Rehabilitar escaneo tras navegación
       setTimeout(() => setScanned(false), 1500);
@@ -85,7 +98,7 @@ export const ScannerScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
       {/* Cámara de fondo */}
@@ -98,8 +111,32 @@ export const ScannerScreen = () => {
         }}
       />
 
-      {/* Selector Superior de Modo con LiquidGlass */}
-      <View style={styles.topSelectorContainer}>
+      {/* Botón Cerrar (✕) ajustado a la esquina superior derecha, más arriba que el toggle y en rojo suave */}
+      <TouchableOpacity
+        style={[
+          styles.closeButtonRight,
+          {
+            top: Math.max(insets.top + 6, 44),
+          },
+        ]}
+        onPress={() => {
+          triggerHaptic('selection');
+          router.back();
+        }}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="close" size={22} color="#F87171" />
+      </TouchableOpacity>
+
+      {/* Selector Superior de Modo con LiquidGlass posicionado más abajo para mejor ergonomía */}
+      <View
+        style={[
+          styles.modeToggleContainer,
+          {
+            marginTop: Math.max(insets.top + 50, 96),
+          },
+        ]}
+      >
         <LiquidGlassView borderRadius={24} style={styles.modeToggleGroup}>
           <TouchableOpacity
             style={[
@@ -189,7 +226,7 @@ export const ScannerScreen = () => {
       </View>
 
       {/* Barra Inferior con Botón de Simulación dentro de LiquidGlass */}
-      <View style={styles.bottomControls}>
+      <View style={[styles.bottomControls, { paddingBottom: Math.max(insets.bottom + 16, 28) }]}>
         <LiquidGlassView borderRadius={16} style={styles.bottomGlassCard}>
           <TouchableOpacity
             style={styles.simulateButton}
@@ -203,7 +240,7 @@ export const ScannerScreen = () => {
           </TouchableOpacity>
         </LiquidGlassView>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -232,10 +269,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
-  topSelectorContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+  closeButtonRight: {
+    position: 'absolute',
+    right: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(248, 113, 113, 0.35)',
+    zIndex: 20,
+  },
+  modeToggleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
     zIndex: 10,
   },
   modeToggleGroup: {
@@ -354,7 +404,6 @@ const styles = StyleSheet.create({
   },
   bottomControls: {
     paddingHorizontal: 24,
-    paddingBottom: 108,
     alignItems: 'center',
     width: '100%',
   },

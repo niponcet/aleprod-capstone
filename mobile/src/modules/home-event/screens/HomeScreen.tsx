@@ -7,17 +7,20 @@ import {
   TouchableOpacity,
   Alert,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { getRecentActivity, LocalIncidencia } from '../../../core/db/database';
+import { TAB_OFFSET } from '../../../core/constants/navigation';
 
 export const HomeScreen: React.FC = () => {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const [realIncidencias, setRealIncidencias] = useState<LocalIncidencia[]>([]);
 
   // Recargar datos locales cada vez que el usuario regresa a la pantalla
@@ -29,10 +32,13 @@ export const HomeScreen: React.FC = () => {
   );
 
   const handlePalmetaPress = (uuid: string, title: string, status: string) => {
-    navigation.navigate('AssetDetail', {
-      uuid,
-      title,
-      status,
+    router.push({
+      pathname: '/asset-detail',
+      params: {
+        uuid,
+        title,
+        status,
+      },
     });
   };
 
@@ -50,7 +56,7 @@ export const HomeScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
       {/* Header Superior Fijo — Respetando safe area y Dynamic Island / Notch */}
@@ -207,8 +213,8 @@ export const HomeScreen: React.FC = () => {
             const itemStatus = item.tipo_falla?.toLowerCase().includes('baja')
               ? '• Dado de Baja'
               : item.tipo_falla?.toLowerCase().includes('mantención')
-              ? '• En Mantención'
-              : '• Operativo';
+                ? '• En Mantención'
+                : '• Operativo';
 
             return (
               <TouchableOpacity

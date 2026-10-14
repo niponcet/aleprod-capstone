@@ -10,27 +10,19 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { ReportIncidentModal } from '../components/ReportIncidentModal';
 import { getIncidenciasByUuid, insertLocalIncidencia, LocalIncidencia } from '../../../core/db/database';
 
-type AssetDetailRouteParams = {
-  AssetDetail: {
-    uuid?: string;
-    title?: string;
-    status?: string;
-  };
-};
-
 export const AssetDetailScreen: React.FC = () => {
-  const navigation = useNavigation();
-  const route = useRoute<RouteProp<AssetDetailRouteParams, 'AssetDetail'>>();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ uuid?: string; title?: string; status?: string }>();
 
-  const rawUuid = route.params?.uuid || 'aleprod-p39-0045-cl';
-  const displayTitle = route.params?.title || (rawUuid.length > 8 ? `Módulo #${rawUuid.slice(-4).toUpperCase()}` : `Módulo #${rawUuid}`);
-  const initialStatus = route.params?.status || '• Operativo';
+  const rawUuid = params.uuid || 'aleprod-p39-0045-cl';
+  const displayTitle = params.title || (rawUuid.length > 8 ? `Módulo #${rawUuid.slice(-4).toUpperCase()}` : `Módulo #${rawUuid}`);
+  const initialStatus = params.status || '• Operativo';
 
   const [currentStatus, setCurrentStatus] = useState<string>(initialStatus);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -86,7 +78,7 @@ export const AssetDetailScreen: React.FC = () => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
           activeOpacity={0.7}
         >
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />

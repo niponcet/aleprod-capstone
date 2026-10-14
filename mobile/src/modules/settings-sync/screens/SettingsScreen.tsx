@@ -9,19 +9,22 @@ import {
   ActivityIndicator,
   StatusBar,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { getPendingSyncCount, markAllAsSynced } from '../../../core/db/database';
 import { supabase } from '../../../core/api/supabase';
+import { TAB_OFFSET } from '../../../core/constants/navigation';
 
 interface SettingsScreenProps {
   onSignOut?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => {
+  const { width: screenWidth } = useWindowDimensions();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [syncing, setSyncing] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>('molina@aleprod.cl');
@@ -39,7 +42,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
       if (session?.user?.email) {
         setUserEmail(session.user.email);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const handleSyncNow = async () => {
@@ -78,7 +81,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
           onPress: async () => {
             try {
               await supabase.auth.signOut();
-            } catch {}
+            } catch { }
             onSignOut?.();
           },
         },
@@ -87,9 +90,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { width: screenWidth, marginLeft: TAB_OFFSET }]} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      
+
       {/* Título Superior Centrado */}
       <View style={styles.topHeader}>
         <Text style={styles.topHeaderTitle}>Configuración</Text>
