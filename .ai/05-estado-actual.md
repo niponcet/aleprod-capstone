@@ -93,6 +93,13 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-19 (Sesión 8 — Estabilización de Entorno y Dependencias Móviles):**
+  - Actualización de runtime Node.js del sistema a **v22.23.2 LTS** y configuración de `RemoteSigned` en PowerShell.
+  - Corrección de dependencias faltantes en `/mobile`: instalación limpia de `expo-router`, `@expo/vector-icons`, etc.
+  - Creación de `mobile/.npmrc` con `legacy-peer-deps=true` para prevenir bloqueos por peer dependencies en npm.
+  - Instalación de dependencia nativa faltante `expo-font` y alineación de paquetes con `npx expo install --fix`.
+  - Verificación de salud completa con `npx expo-doctor` (**21/21 checks passed**) y chequeo de tipos estricto con `npx tsc --noEmit` (**0 errores**).
+
 - **2026-10-15 (Sesión 7 — Auditoría de QA y Corrección de Estado):**
   - Auditoría exhaustiva archivo por archivo del código real en `/mobile` y `/web`.
   - Corrección de estados de HUs en `ROADMAP.md`: HU-10, HU-11, HU-12, HU-13 pasan de `[Completada]` a `[En Progreso: UI Lista / Falta integración Supabase]`.
