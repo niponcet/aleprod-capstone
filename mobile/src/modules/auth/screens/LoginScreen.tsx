@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
-import { supabase, isSupabaseConfigured } from '../../../core/api/supabase';
+import { supabase } from '../../../core/api/supabase';
 
 interface LoginScreenProps {
   onDevBypass?: () => void;
@@ -32,21 +32,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) {
-      Alert.alert('Campos requeridos', 'Por favor ingresa tu correo electrónico y contraseña.');
-      return;
-    }
-
-    if (!isSupabaseConfigured) {
       Alert.alert(
-        'Modo Demostración / Supabase no configurado',
-        'Las credenciales de Supabase aún no están configuradas en .env (EXPO_PUBLIC_SUPABASE_URL). ¿Deseas acceder en Modo Desarrollo a la app de terreno?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Entrar como Técnico (Dev)',
-            onPress: () => onDevBypass?.(),
-          },
-        ]
+        'Campos requeridos',
+        'Por favor ingresa tu correo electrónico y contraseña corporativa.'
       );
       return;
     }
@@ -59,12 +47,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
       });
 
       if (error) {
-        Alert.alert('Error de autenticación', error.message || 'Credenciales inválidas.');
-      } else if (!data.session) {
-        Alert.alert('Aviso', 'Iniciaste sesión pero no se obtuvo una sesión activa.');
+        let errorMessage = error.message;
+        if (
+          error.message.includes('Invalid login credentials') ||
+          error.message.includes('invalid_credentials')
+        ) {
+          errorMessage = 'Credenciales inválidas. Por favor verifica tu correo y contraseña.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Tu cuenta de correo aún no ha sido confirmada.';
+        }
+
+        Alert.alert('Error de inicio de sesión', errorMessage);
+        return;
       }
+
+      if (!data.session) {
+        Alert.alert(
+          'Sesión no iniciada',
+          'No se pudo establecer una sesión activa con el servidor.'
+        );
+      }
+      // Al ser exitoso, supabase.auth.onAuthStateChange en AuthContext
+      // actualizará la sesión y la navegación redirigirá a la aplicación.
     } catch (err: any) {
-      Alert.alert('Error de conexión', err?.message || 'No fue posible conectar con el servidor.');
+      Alert.alert(
+        'Error de conexión',
+        err?.message || 'No fue posible conectar con el servidor. Revisa tu conexión a internet.'
+      );
     } finally {
       setLoading(false);
     }
@@ -84,15 +93,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
         >
           {/* Logo Superior Corporativo */}
           <View style={styles.logoSection}>
-            {/* 
-              NOTA PARA DESARROLLO FUTURO:
-              Para reemplazar por imagen de logo corporativo local cuando esté disponible:
-              <Image 
-                source={require('../../../../assets/logo.png')} 
-                style={styles.logoImage} 
-                resizeMode="contain" 
-              />
-            */}
             <View style={styles.logoCircle}>
               <Text style={styles.logoInitials}>AP</Text>
             </View>
@@ -104,7 +104,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
             <Text style={styles.title}>Iniciar sesión</Text>
             <View style={styles.titleAccentBar} />
             <Text style={styles.subtitle}>
-              Ingresa tus credenciales para acceder al dashboard.
+              Ingresa tus credenciales para acceder a la operación en terreno.
             </Text>
           </View>
 
@@ -122,13 +122,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="nombre@aleprod.cl"
+                  placeholder="tecnico@aleprod.cl"
                   placeholderTextColor={colors.textMuted}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
+                  editable={!loading}
                 />
               </View>
             </View>
@@ -152,12 +153,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  editable={!loading}
                 />
                 <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => setShowPassword(!showPassword)}
                   activeOpacity={0.7}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  disabled={loading}
                 >
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -174,6 +177,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
                 style={styles.checkboxContainer}
                 onPress={() => setRememberMe(!rememberMe)}
                 activeOpacity={0.8}
+                disabled={loading}
               >
                 <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
                   {rememberMe && (
@@ -191,6 +195,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
                   )
                 }
                 activeOpacity={0.7}
+                disabled={loading}
               >
                 <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
               </TouchableOpacity>
@@ -201,28 +206,34 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
               onPress={handleLogin}
               disabled={loading}
               activeOpacity={0.85}
-              style={styles.buttonWrapper}
+              style={[styles.buttonWrapper, loading && styles.buttonDisabled]}
             >
               <LinearGradient
-                colors={['#C87A08', '#F5C242']}
+                colors={loading ? ['#6E4506', '#9B7B2B'] : ['#C87A08', '#F5C242']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.loginButton}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color={colors.textInverse} />
+                  <View style={styles.loadingRow}>
+                    <ActivityIndicator size="small" color={colors.textInverse} />
+                    <Text style={[styles.loginButtonText, styles.loadingText]}>
+                      Iniciando sesión...
+                    </Text>
+                  </View>
                 ) : (
                   <Text style={styles.loginButtonText}>Ingresar</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Acceso Rápido Dev (para pruebas sin backend) */}
-            {onDevBypass && (
+            {/* Fallback de modo desarrollo si está explícitamente configurado */}
+            {Boolean(__DEV__ && onDevBypass) && (
               <TouchableOpacity
                 style={styles.devBypassButton}
                 onPress={onDevBypass}
                 activeOpacity={0.7}
+                disabled={loading}
               >
                 <Text style={styles.devBypassText}>
                   ⚡ Acceso Rápido Terreno (Modo Dev)
@@ -232,7 +243,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
 
             {/* Pie de Página */}
             <Text style={styles.footerText}>
-              Acceso restringido a personal autorizado de Aleprod.
+              Acceso restringido a personal técnico autorizado de Aleprod.
             </Text>
           </View>
         </ScrollView>
@@ -387,11 +398,22 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
   loginButton: {
     height: 52,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginLeft: 10,
   },
   loginButtonText: {
     color: colors.textInverse,

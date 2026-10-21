@@ -14,7 +14,16 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
-import { getRecentActivity, LocalIncidencia } from '../../../core/db/database';
+import {
+  getRecentActivity,
+  getActiveLocalEvento,
+  upsertLocalEvento,
+  updateLocalEventoEstado,
+  LocalIncidencia,
+  LocalEvento,
+} from '../../../core/db/database';
+import { supabase } from '../../../core/api/supabase';
+import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
 
 export const HomeScreen: React.FC = () => {
@@ -22,14 +31,87 @@ export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const [realIncidencias, setRealIncidencias] = useState<LocalIncidencia[]>([]);
+  const [activeEvent, setActiveEvent] = useState<LocalEvento | null>(null);
+  const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
-  // Recargar datos locales cada vez que el usuario regresa a la pantalla
+  // Consulta híbrida: Supabase Cloud para datos frescos + SQLite local para offline
+  const fetchActiveEvent = useCallback(async () => {
+    try {
+      // 1. Cargar inmediatamente desde cache SQLite local para cero retraso visual
+      const localActive = getActiveLocalEvento();
+      if (localActive) {
+        setActiveEvent(localActive);
+      }
+
+      // 2. Consultar en Supabase para obtener el estado real en tiempo real
+      const { data, error } = await supabase
+        .from('eventos')
+        .select('*')
+        .eq('estado', 'en_curso')
+        .order('fecha_inicio', { ascending: false })
+        .limit(1);
+
+      if (!error) {
+        if (data && data.length > 0) {
+          const remoteEvent: LocalEvento = {
+            id: data[0].id,
+            nombre: data[0].nombre,
+            locacion: data[0].locacion || 'Recinto no especificado',
+            fecha_inicio: data[0].fecha_inicio,
+            fecha_termino: data[0].fecha_termino,
+            estado: 'en_curso',
+            metros_cuadrados: Number(data[0].metros_cuadrados) || 0,
+            tipo_pantalla: data[0].tipo_pantalla || 'Pista de Baile LED',
+            tecnico_id: data[0].tecnico_id,
+          };
+          setActiveEvent(remoteEvent);
+          upsertLocalEvento(remoteEvent);
+        } else {
+          // No hay ningún evento 'en_curso' (fueron finalizados o no se han iniciado)
+          setActiveEvent(null);
+          if (localActive) {
+            updateLocalEventoEstado(localActive.id, 'finalizado');
+          }
+        }
+      } else if (!localActive) {
+        setActiveEvent(null);
+      }
+    } catch (err) {
+      console.warn('Error consultando evento activo en HomeScreen:', err);
+    } finally {
+      setLoadingEvent(false);
+    }
+  }, []);
+
+  // Recargar datos locales y evento activo cada vez que la pantalla entra en foco
   useFocusEffect(
     useCallback(() => {
       const records = getRecentActivity(5);
       setRealIncidencias(records);
-    }, [])
+      fetchActiveEvent();
+    }, [fetchActiveEvent])
   );
+
+  const handleActiveEventPress = () => {
+    if (!activeEvent) return;
+    triggerHaptic('selection');
+    router.push({
+      pathname: '/event-detail',
+      params: {
+        id: activeEvent.id,
+        title: activeEvent.nombre,
+        venue: activeEvent.locacion,
+        status: activeEvent.estado,
+        totalMeters: String(activeEvent.metros_cuadrados || 0),
+        screenType: activeEvent.tipo_pantalla || 'Pista de Baile LED',
+      },
+    });
+  };
+
+  const handleGoToEvents = () => {
+    triggerHaptic('light');
+    router.push('/(tabs)/eventos');
+  };
 
   const handlePalmetaPress = (uuid: string, title: string, status: string) => {
     router.push({
@@ -86,29 +168,75 @@ export const HomeScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Card: Montaje Activo */}
-        <View style={styles.activeMountCard}>
-          <View style={styles.activeMountTopRow}>
-            <View style={styles.activeTag}>
-              <Text style={styles.activeTagText}>MONTAJE ACTIVO</Text>
+        {/* Card: Montaje Activo Dinámico o Estado Vacío (HU-10) */}
+        {activeEvent ? (
+          <TouchableOpacity
+            style={styles.activeMountCard}
+            onPress={handleActiveEventPress}
+            activeOpacity={0.85}
+          >
+            <View style={styles.activeMountTopRow}>
+              <View style={styles.activeTag}>
+                <View style={styles.activeDot} />
+                <Text style={styles.activeTagText}>MONTAJE ACTIVO</Text>
+              </View>
+              <View style={styles.locationPill}>
+                <Ionicons name="location-outline" size={13} color={colors.primaryAmber} style={{ marginRight: 4 }} />
+                <Text style={styles.locationPillText} numberOfLines={1}>
+                  {activeEvent.locacion}
+                </Text>
+              </View>
             </View>
-            <View style={styles.locationPill}>
-              <Ionicons name="location-outline" size={14} color={colors.textSecondary} style={{ marginRight: 4 }} />
-              <Text style={styles.locationPillText}>Escenario A</Text>
+
+            <Text style={styles.eventTitle}>{activeEvent.nombre}</Text>
+            <Text style={styles.eventSubtitle}>{activeEvent.tipo_pantalla || 'Pista de Baile LED'}</Text>
+
+            <View style={styles.cardDivider} />
+
+            <View style={styles.activeMountBottomRow}>
+              <View>
+                <Text style={styles.metersLabel}>Superficie asignada</Text>
+                <Text style={styles.metersValue}>
+                  <Text style={styles.metersValueBold}>
+                    {activeEvent.metros_cuadrados || 0} m²
+                  </Text>
+                  {activeEvent.metros_cuadrados ? ` (≈ ${Math.round(activeEvent.metros_cuadrados * 4)} palmetas)` : ''}
+                </Text>
+              </View>
+
+              <View style={styles.viewDetailLink}>
+                <Text style={styles.viewDetailText}>Ver detalle</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.primaryAmber} />
+              </View>
             </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.noActiveMountCard}>
+            <View style={styles.noActiveTopRow}>
+              <View style={styles.noActiveIconBox}>
+                <Ionicons name="calendar-outline" size={22} color={colors.textSecondary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.noActiveTitle}>Sin Montaje Activo</Text>
+                <Text style={styles.noActiveSubtitle}>
+                  No hay eventos en curso actualmente en terreno.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.cardDivider} />
+
+            <TouchableOpacity
+              style={styles.goToEventsButton}
+              onPress={handleGoToEvents}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="flash-outline" size={16} color={colors.primaryAmber} style={{ marginRight: 6 }} />
+              <Text style={styles.goToEventsButtonText}>Ir a Agenda de Eventos para Iniciar</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.primaryAmber} style={{ marginLeft: 'auto' }} />
+            </TouchableOpacity>
           </View>
-
-          <Text style={styles.eventTitle}>Festival Estadio Nacional</Text>
-
-          <View style={styles.cardDivider} />
-
-          <View style={styles.activeMountBottomRow}>
-            <Text style={styles.metersLabel}>Metros utilizados</Text>
-            <Text style={styles.metersValue}>
-              <Text style={styles.metersValueBold}>50 m²</Text> / 50 m²
-            </Text>
-          </View>
-        </View>
+        )}
 
         {/* Sección: Estado de Equipos */}
         <View style={styles.sectionContainer}>
@@ -397,12 +525,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   activeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(212, 175, 55, 0.14)',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primaryAmber,
+    marginRight: 6,
   },
   activeTagText: {
     color: colors.primaryAmber,
@@ -419,6 +556,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 14,
+    maxWidth: 160,
   },
   locationPillText: {
     color: colors.textSecondary,
@@ -430,6 +568,12 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: '800',
     marginTop: 4,
+  },
+  eventSubtitle: {
+    color: colors.primaryLight,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
   },
   cardDivider: {
     height: 1,
@@ -448,10 +592,75 @@ const styles = StyleSheet.create({
   metersValue: {
     color: colors.textSecondary,
     fontSize: 14,
+    marginTop: 2,
   },
   metersValueBold: {
     color: colors.textPrimary,
     fontWeight: '700',
+  },
+  viewDetailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(229, 152, 25, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 152, 25, 0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  viewDetailText: {
+    color: colors.primaryAmber,
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  noActiveMountCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 22,
+  },
+  noActiveTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noActiveIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  noActiveTitle: {
+    color: colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  noActiveSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  goToEventsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  goToEventsButtonText: {
+    color: colors.primaryAmber,
+    fontSize: 13,
+    fontWeight: '600',
   },
   sectionContainer: {
     marginBottom: 24,

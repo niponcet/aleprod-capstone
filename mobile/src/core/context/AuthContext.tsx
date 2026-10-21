@@ -1,34 +1,36 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../api/supabase';
 
 interface AuthContextType {
   session: Session | null;
+  user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  devBypass: boolean;
-  setDevBypass: (val: boolean) => void;
   signOut: () => Promise<void>;
+  // Mantenido como no-op para retrocompatibilidad
+  devBypass?: boolean;
+  setDevBypass?: (val: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
+  user: null,
   loading: true,
   isAuthenticated: false,
+  signOut: async () => {},
   devBypass: false,
   setDevBypass: () => {},
-  signOut: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [devBypass, setDevBypass] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
-    // Obtener sesión inicial
+    // Obtener sesión inicial directamente desde Supabase Auth
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
@@ -37,16 +39,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false);
         }
       })
-      .catch(() => {
-        if (mounted) setLoading(false);
+      .catch((err) => {
+        console.warn('Error al recuperar sesión de Supabase:', err);
+        if (mounted) {
+          setSession(null);
+          setLoading(false);
+        }
       });
 
-    // Escuchar cambios de autenticación
+    // Escuchar activamente eventos de cambio de estado (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (mounted) {
-        setSession(session);
+        setSession(newSession);
+        setLoading(false);
       }
     });
 
@@ -58,25 +65,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      if (session) {
-        await supabase.auth.signOut();
-      }
-    } catch {}
-    setDevBypass(false);
-    setSession(null);
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Error al cerrar sesión en Supabase:', err);
+    } finally {
+      setSession(null);
+    }
   };
 
-  const isAuthenticated = Boolean(session || devBypass);
+  // El estado de autenticación depende 100% de la sesión activa en Supabase Auth
+  const isAuthenticated = Boolean(session);
 
   return (
     <AuthContext.Provider
       value={{
         session,
+        user: session?.user ?? null,
         loading,
         isAuthenticated,
-        devBypass,
-        setDevBypass,
         signOut,
+        devBypass: false,
+        setDevBypass: () => {},
       }}
     >
       {children}

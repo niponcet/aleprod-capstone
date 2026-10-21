@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -19,11 +19,14 @@ import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { insertLocalIncidencia } from '../../../core/db/database';
 
-interface ReportIncidentModalProps {
+export interface ReportIncidentModalProps {
   visible: boolean;
   onClose: () => void;
-  qrUuid: string;
+  qrUuid?: string;
+  eventoId?: string;
+  eventoNombre?: string;
   onSuccess?: () => void;
+  onRequestScan?: () => void;
 }
 
 interface ComponentOption {
@@ -43,19 +46,34 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
   visible,
   onClose,
   qrUuid,
+  eventoId,
+  eventoNombre = 'Festival Estadio Nacional',
   onSuccess,
+  onRequestScan,
 }) => {
+  const [activeQr, setActiveQr] = useState<string>(qrUuid || '');
+  const [isManualInput, setIsManualInput] = useState<boolean>(!qrUuid);
   const [selectedComponent, setSelectedComponent] = useState<string>('Conector de poder');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [observations, setObservations] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
+
+  // Sincronizar activeQr cuando qrUuid cambia
+  useEffect(() => {
+    if (qrUuid) {
+      setActiveQr(qrUuid);
+      setIsManualInput(false);
+    } else {
+      setActiveQr('');
+      setIsManualInput(true);
+    }
+  }, [qrUuid, visible]);
 
   const handlePickPhoto = async () => {
     triggerHaptic('light');
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        // Fallback a galería
         const galleryResult = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
@@ -79,7 +97,6 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
         setPhotoUri(cameraResult.assets[0].uri);
       }
     } catch (error) {
-      // Si falla la cámara (ej: simulador sin cámara física), usar galería
       try {
         const fallbackResult = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -97,19 +114,26 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
   };
 
   const handleSave = () => {
-    if (!qrUuid) {
-      Alert.alert('Error', 'No se ha detectado el identificador UUID del activo.');
+    const cleanQr = activeQr.trim();
+    if (!cleanQr) {
+      triggerHaptic('warning');
+      Alert.alert(
+        'Palmeta Requerida',
+        'Debes escanear o ingresar el código identificador de la palmeta. Si no se asocia, bodega no podrá rastrear el activo para su reparación.'
+      );
       return;
     }
 
     setSaving(true);
     try {
+      const effectiveEvent = eventoNombre || eventoId || 'Festival Estadio Nacional';
+
       insertLocalIncidencia(
-        qrUuid,
+        cleanQr,
         selectedComponent,
         photoUri ?? undefined,
         observations.trim() || undefined,
-        'Festival Estadio Nacional'
+        effectiveEvent
       );
 
       triggerHaptic('success');
@@ -117,7 +141,7 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
       onClose();
       Alert.alert(
         'Falla Reportada con Éxito',
-        `Activo: ${qrUuid}\nFalla: ${selectedComponent}\n\nEl reporte se guardó en la base de datos SQLite local y se sincronizará automáticamente cuando haya internet.`,
+        `Palmeta: ${cleanQr}\nFalla: ${selectedComponent}\nEvento: ${effectiveEvent}\n\nEl reporte se guardó en la base de datos SQLite local y se sincronizará automáticamente cuando haya internet.`,
         [{ text: 'Entendido', onPress: () => onSuccess?.() }]
       );
     } catch (error) {
@@ -170,7 +194,61 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.sheetBody}
             >
-              {/* Sección: Componente Defectuoso (Regla de 3 Taps con Haptics) */}
+              {/* Sección: Identificación del Activo (QR Escaneado o Manual) */}
+              <View style={styles.assetHeaderRow}>
+                <Text style={styles.sectionLabel}>PALMETA / CÓDIGO QR</Text>
+                {onRequestScan && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      triggerHaptic('light');
+                      onRequestScan();
+                    }}
+                    style={styles.rescanLink}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="camera-outline" size={13} color={colors.primaryAmber} style={{ marginRight: 4 }} />
+                    <Text style={styles.rescanLinkText}>Escanear</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {!isManualInput && activeQr ? (
+                <View style={styles.assetCard}>
+                  <View style={styles.assetCardLeft}>
+                    <Ionicons name="qr-code" size={16} color={colors.primaryAmber} style={{ marginRight: 8 }} />
+                    <Text style={styles.assetCodeText} numberOfLines={1}>{activeQr}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      triggerHaptic('light');
+                      setIsManualInput(true);
+                    }}
+                    style={styles.editAssetBtn}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="pencil-outline" size={14} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.manualInputWrapper}>
+                  <TextInput
+                    style={styles.manualInput}
+                    placeholder="Escribe código (ej: ALEP-P39-0045)..."
+                    placeholderTextColor={colors.textMuted}
+                    value={activeQr}
+                    onChangeText={setActiveQr}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                  />
+                  {activeQr.length > 0 && (
+                    <TouchableOpacity onPress={() => setActiveQr('')} style={{ padding: 6 }}>
+                      <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* Sección: Componente Defectuoso (Regla de 3 Taps con Haptics — Grid Original 2x2) */}
               <Text style={styles.sectionLabel}>COMPONENTE DEFECTUOSO</Text>
               <View style={styles.componentsGrid}>
                 {COMPONENTS.map((item) => {
@@ -200,6 +278,7 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
                             styles.componentLabel,
                             isSelected && styles.componentLabelActive,
                           ]}
+                          numberOfLines={1}
                         >
                           {item.label}
                         </Text>
@@ -258,7 +337,7 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
                 textAlignVertical="top"
               />
 
-              {/* Botón Guardar Registro */}
+              {/* Botón Guardar Registro (Original) */}
               <TouchableOpacity
                 style={styles.saveButton}
                 onPress={handleSave}
@@ -345,6 +424,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingBottom: 34,
   },
+  assetHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
+    marginBottom: 6,
+  },
   sectionLabel: {
     color: colors.textSecondary,
     fontSize: 11,
@@ -352,6 +438,59 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
     marginBottom: 10,
     marginTop: 6,
+  },
+  rescanLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  rescanLinkText: {
+    fontSize: 12,
+    color: colors.primaryAmber,
+    fontWeight: '600',
+  },
+  assetCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: 'rgba(229, 152, 25, 0.35)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  assetCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  assetCodeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  editAssetBtn: {
+    padding: 4,
+  },
+  manualInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundDark,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  manualInput: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 13,
+    paddingVertical: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   componentsGrid: {
     flexDirection: 'row',

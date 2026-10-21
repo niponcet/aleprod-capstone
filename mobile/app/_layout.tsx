@@ -57,6 +57,7 @@ function RootNavigationLayout() {
         }}
       />
       <Stack.Screen name="asset-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="event-detail" options={{ headerShown: false }} />
     </Stack>
   );
 }
