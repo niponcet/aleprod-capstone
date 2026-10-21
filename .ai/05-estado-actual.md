@@ -7,27 +7,27 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 15 de Octubre de 2026 (Post-Auditoría QA).
-- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — UI Móvil avanzada, Backend/Integración Supabase pendiente, Web no iniciada.
-- **Sprint Activo:** Épica 1 (Auth parcial), Épica 3 (UI Móvil lista, lógica parcial con SQLite local, **sin integración Supabase real**), Épica 4 (Sincronización simulada).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile`). Navegación con **Expo Router** y `<NativeTabs>` (Liquid Glass iOS). Persistencia síncrona en SQLite funcional.
-- **⚠️ Hallazgo Crítico de Auditoría:** No existen archivos `.env` con credenciales Supabase reales. El cliente Supabase usa `placeholder.supabase.co`. La variable `isSupabaseConfigured` retorna `false` siempre. **Ninguna operación de red real ha sido ejecutada contra Supabase.**
+- **Fecha de Última Actualización:** 21 de Octubre de 2026 (Sesión 10 — Ciclo de Vida e Historial de Eventos HU-16).
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Ciclo de vida completo de eventos (creación, seguimiento, visualización y cierre en solo lectura) con persistencia híbrida SQLite/Supabase.
+- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10 y HU-16 Completadas en móvil), Épica 4 (HU-15 Trigger de stock completado en Supabase).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile`). Navegación con **Expo Router** y `<NativeTabs>` (Liquid Glass iOS).
+- **Credenciales Cloud:** `mobile/.env` configurado con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS y storage bucket `evidencias-incidencias` activos y verificados vía pruebas automatizadas.
 
 ---
 
 ## 2. Historias de Usuario (HUs) — Estado de Avance AUDITADO
 
 ### Fase 2: Arquitectura y Configuración Cloud (Completada — Infraestructura Base)
-- ✅ **HU-01: Infraestructura Base** `[Completada]`
+- ✅ **HU-01: Infraestructura Base** `[Completada — Supabase Cloud Desplegado]`
 - ✅ **HU-02: Inicialización App Móvil y Escaneo Offline** `[Completada]`
 - ✅ **HU-03: Inicialización de Entorno Web** `[Completada]`
 - 🔄 **HU-04: Diseño de Interfaces UI/UX** `[En Progreso: Prototipado Directo en Código / Sin Figma formal]`
 
-### Fase 3: Desarrollo Núcleo App/Web (En Curso — UI Avanzada / Backend Pendiente)
+### Fase 3: Desarrollo Núcleo App/Web (En Curso — UI Avanzada / Backend Móvil Conectado)
 
 #### Épica 1: Autenticación
-- 🔄 **HU-05: Login y Sesión (Web/App)** `[En Progreso — UI Móvil Lista / Supabase Auth NO configurado / Web No Iniciada]`
-  - Móvil: `LoginScreen.tsx` con UI premium y llamada `signInWithPassword` codificada, pero `.env` no configurado → siempre cae a modo demo (`devBypass`).
+- 🔄 **HU-05: Login y Sesión (Web/App)** `[En Progreso — Móvil Completado con Supabase Auth Real / Web No Iniciada]`
+  - Móvil: `LoginScreen.tsx` y `AuthContext.tsx` 100% conectados a `supabase.auth.signInWithPassword`, `getSession` y `onAuthStateChange`. Manejo de errores nativo con alertas en español, feedback de carga con `ActivityIndicator` y sesión probada exitosamente con usuario semilla (`tecnico@aleprod.cl`).
   - Web: NO existe `web/app/login/page.tsx`.
 
 #### Épica 2: Plataforma Web
@@ -37,19 +37,27 @@
 - ❌ **HU-09: Gestión de Inventario a Granel (Web)** `[No Iniciado]`
 
 #### Épica 3: Operación Móvil en Terreno
-- 🔄 **HU-10: Módulo de Sesión Activa por Evento** `[En Progreso: UI Lista + Datos Hardcodeados]`
-  - `HomeScreen.tsx`: UI premium con Liquid Glass. Actividad reciente se alimenta de SQLite real (`getRecentActivity`), pero las métricas de m² (70/15/5/140) y el nombre del evento ("Festival Estadio Nacional") están **hardcodeados en el JSX**. Incluye 2 cards de actividad de referencia/mockup estáticas.
-- 🔄 **HU-11: Formulario de Incidencias In Situ** `[En Progreso: UI Lista + SQLite Local / Falta INSERT a Supabase]`
-  - `ReportIncidentModal.tsx`: Bottom Sheet con selector 2x2, haptics y persistencia real en SQLite (`insertLocalIncidencia`). El `evento_id` está hardcodeado como `'Festival Estadio Nacional'`. **No hay INSERT a tabla `incidencias` de Supabase.**
-- 🔄 **HU-12: Captura de Evidencia Fotográfica** `[En Progreso: Captura Local Funcional / Falta Upload a Supabase Storage]`
-  - `expo-image-picker` funcional (cámara + galería fallback). URI local guardada en SQLite. **No hay upload a Supabase Storage bucket.**
-- 🔄 **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[En Progreso: UI + SQLite Funcionales / Falta Enrolamiento en Supabase]`
-  - Toggle Inspección/Ráfaga funcional con contador en vivo y guardado en SQLite. **Falta INSERT real en tabla `palmetas_led` de Supabase** y validación de UUID contra inventario remoto.
+- ✅ **HU-10: Módulo de Sesión Activa por Evento** `[Completada]`
+  - `EventsScreen.tsx`: Cabecera fija limpia con badge contador. Botón de alta "Iniciar Evento" con diseño sobrio y equilibrado en superficie oscura elevada con acento ámbar. Conectado a Supabase `eventos` con pull-to-refresh.
+  - `StartEventBottomSheet.tsx`: Bottom Sheet con selector multi-servicio (Pista de Baile LED + Pirotecnia opcional), selector/buscador de recintos frecuentes, stepper/chips de m² e inserción directa en Supabase con estado `en_curso` y `tecnico_id`.
+  - `HomeScreen.tsx`: Totalmente conectado al evento real activo (híbrido Supabase + SQLite `getActiveLocalEvento`). Si existe evento en curso, renderiza la card dinámica con nombre, recinto, metros configurados y navegación táctil al detalle (`/event-detail`); si no hay eventos activos, renderiza card de estado vacío "Sin Montaje Activo" con acceso rápido a la agenda.
+- 🔄 **HU-11: Formulario de Incidencias In Situ** `[En Progreso: Flujo Camera-First Anti-Huérfanas Implementado / Falta INSERT a Supabase]`
+  - Implementación de `IncidentScannerModal.tsx` integrado en `EventDetailScreen.tsx` para captura directa de QR en terreno previo al formulario (Regla de 3 Taps estricta).
+  - `ReportIncidentModal.tsx` refactorizado: bloqueo de incidencias huérfanas exigiendo identificación de palmeta, visualización destacada de `qrUuid` verificado, entrada manual de contingencia (`TextInput`) si el código físico está roto/dañado, y vinculación dinámica del `evento_id`/`eventoNombre` real.
+- 🔄 **HU-12: Captura de Evidencia Fotográfica** `[En Progreso: Captura Local Funcional / Bucket Storage Listo]`
+  - Bucket `evidencias-incidencias` creado en Supabase Storage con políticas de inserción autenticada y lectura pública.
+- 🔄 **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[En Progreso: UI + SQLite Funcionales / Tabla Remota Lista]`
+  - Tabla `palmetas_led` con restricciones de unicidad de QR y políticas RLS creadas en Supabase Cloud.
+- ✅ **HU-16: Ciclo de Vida e Historial de Eventos** `[Completada]`
+  - Implementación de control de estados (`en_curso` vs `finalizado`) tanto en PostgreSQL Supabase como en SQLite local (`eventos_locales`).
+  - `EventsScreen.tsx`: Pestañas interactivas "En Curso" e "Historial" con contadores en tiempo real, navegación táctil al detalle del evento y auto-refresco vía `useFocusEffect`.
+  - `EventDetailScreen.tsx`: Vista detallada con metadata operativa (superficie $m^2$, recinto, configuración de equipamiento), trazabilidad de incidencias mediante consulta híbrida (SQLite offline + Supabase remoto), botón de cierre ("Finalizar Evento") y protección estricta en modo Read-Only cuando el evento está archivado.
 
 #### Épica 4: Persistencia y Sincronización
 - 🔄 **HU-14: Motor de Sincronización a Supabase** `[En Progreso: UI + Conteo Local / Sincronización SIMULADA]`
-  - `SettingsScreen.tsx`: Contador reactivo de pendientes (`getPendingSyncCount`) y botón "Sincronizar Ahora" con UI. **La sincronización usa `setTimeout(1200ms)` + `markAllAsSynced()` que solo cambia flag local. NO hay batch INSERT real a Supabase ni upload de fotos.**
-- ❌ **HU-15: Trigger de Descuento de Stock** `[No Iniciado]`
+  - `SettingsScreen.tsx`: Próximo paso: conectar sync a batch INSERT en Supabase `incidencias` y upload a bucket `evidencias-incidencias`.
+- ✅ **HU-15: Trigger de Descuento de Stock** `[Completada]`
+  - Trigger PostgreSQL `tr_descontar_stock_repuesto` desplegado y activo en Supabase Cloud sobre `consumo_repuestos` y `repuestos_inventario`.
 
 ---
 
@@ -57,41 +65,57 @@
 
 | Componente | Ruta | Estado Actual |
 | :--- | :--- | :--- |
-| **Arnés de Contexto** | `AGENTS.md` y `.ai/*.md` | Centralizado en raíz, 5 módulos activos. |
-| **Enrutamiento Móvil (Expo Router)** | `mobile/app/` | `<NativeTabs>` con Liquid Glass iOS, SF Symbols, botón QR flotante. |
-| **Core Móvil** | `mobile/src/core/` | `theme/colors.ts`, `api/supabase.ts` (⚠️ placeholder), `db/database.ts` (SQLite síncrona funcional), `context/AuthContext.tsx` (⚠️ devBypass siempre activo). |
-| **Módulos Móvil** | `mobile/src/modules/` | 4 módulos con UI premium completa. Lógica de negocio limitada a SQLite local. |
-| **Web (Admin)** | `web/` | ⚠️ **Boilerplate create-next-app sin modificar.** `page.tsx` muestra "To get started, edit the page.tsx file". No hay rutas de login ni dashboard. |
-| **Entornos y Secretos** | `mobile/.env.example`, `web/.env.local.example` | ⚠️ Solo plantillas con placeholders. **No existen `.env` reales con credenciales Supabase.** |
+| **Arnés de Contexto** | `AGENTS.md` y `.ai/*.md` | Centralizado en raíz, 5 módulos activos y actualizados. |
+| **Enrutamiento Móvil (Expo Router)** | `mobile/app/` | `<NativeTabs>` con Liquid Glass iOS, SF Symbols, botón QR flotante, `login.tsx` y `event-detail.tsx` conectados. |
+| **Core Móvil** | `mobile/src/core/` | `theme/colors.ts`, `api/supabase.ts` (✅ credenciales activas), `db/database.ts` (SQLite síncrona con `incidencias_locales` y `eventos_locales`), `context/AuthContext.tsx` (✅ 100% Supabase Auth). |
+| **Módulos Móvil** | `mobile/src/modules/` | 4 módulos con UI premium completa. `EventsScreen.tsx` (tabs y navegación), `EventDetailScreen.tsx` (trazabilidad y cierre de evento), `LoginScreen.tsx` 100% integrado a Supabase Auth. |
+| **Web (Admin)** | `web/` | ⚠️ **Boilerplate create-next-app sin modificar.** Pendiente implementar login y dashboard. |
+| **Entornos y Secretos** | `mobile/.env`, `web/.env.local.example` | `mobile/.env` con credenciales reales del proyecto `fovmurimpbexfrjwxdew`. |
 
 ---
 
 ## 4. Próximos Pasos Inmediatos (Post-Auditoría)
 
-1. **Configurar Supabase Real:**
-   - Crear proyecto en Supabase Dashboard.
-   - Configurar `.env` en `/mobile` y `/web` con URL y Anon Key reales.
-   - Crear tablas remotas (`eventos`, `palmetas_led`, `incidencias`, `repuestos`) y policies RLS.
-
-2. **HU-05 Completa (Auth Real):**
-   - Probar `signInWithPassword` contra Supabase Auth real.
-   - Crear `web/app/login/page.tsx` con estética corporativa dorada.
-
-3. **HU-10 → HU-13 (Integración Backend):**
-   - Reemplazar datos hardcodeados en `HomeScreen` y `EventsScreen` por queries a Supabase.
-   - Conectar `insertLocalIncidencia` a un flujo de sync real.
-   - Implementar upload de fotos a Supabase Storage.
-
-4. **HU-14 (Sincronización Real):**
-   - Reemplazar `setTimeout` simulado por batch `supabase.from('incidencias').insert()` real.
-   - Implementar upload de `foto_uri` a bucket de Storage y actualizar URL remota.
-
-5. **Épica 2 (Web):**
+1. **HU-11 & HU-12 (Persistencia e Inserción Real de Incidencias):**
+   - Conectar el guardado de incidencias en Supabase `incidencias` cuando haya conexión y subir `foto_uri` al bucket `evidencias-incidencias`.
+2. **HU-14 (Sincronización Real Offline -> Cloud):**
+   - Reemplazar `setTimeout` simulado en `SettingsScreen.tsx` por batch insert real a Supabase `incidencias` y upload de imágenes pendientes.
+3. **Épica 2 (Web):**
    - Construir login, dashboard y CRUD de palmetas en Next.js.
 
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16, Scanner Anti-Huérfanas HU-11 y Montaje Dinámico en Home HU-10):**
+  - Conexión de `HomeScreen.tsx` con el evento real activo (`estado = 'en_curso'`): consulta híbrida Supabase + SQLite (`getActiveLocalEvento`).
+  - Implementación de estado activo con navegación a `EventDetailScreen` y estado vacío "Sin Montaje Activo" con acceso rápido a la agenda de eventos si no hay montajes en curso.
+  - Implementación de helper `getActiveLocalEvento` y `upsertLocalEvento` en `mobile/src/core/db/database.ts`.
+  - Implementación completa de HU-16 (pestañas "En Curso" e "Historial" en `EventsScreen.tsx`, `EventDetailScreen.tsx` con modo Read-Only).
+  - Implementación de flujo Camera-First en `EventDetailScreen.tsx` con `IncidentScannerModal.tsx` y refactorización de `ReportIncidentModal.tsx` vinculando activo y evento real.
+  - Verificación de tipos TypeScript (`npx tsc --noEmit`) con **0 errores**.
+  - Implementación completa de la HU-16 para gestión del ciclo de vida de eventos en terreno.
+  - Creación de pantalla `mobile/src/modules/home-event/screens/EventDetailScreen.tsx` y ruta `mobile/app/event-detail.tsx` con opciones de navegación nativa (header oculto en stack).
+  - Integración de pestañas segmentadas "En Curso" e "Historial" en `EventsScreen.tsx` con conteo dinámico en badges, diseño LiquidGlass y navegación `router.push('/event-detail')`.
+  - Inclusión de `useFocusEffect` en `EventsScreen.tsx` para sincronización inmediata tras el cierre de eventos en el detalle.
+  - Implementación de consulta híbrida de incidencias por `evento_id`: lectura local síncrona en SQLite (`incidencias_locales`) y remota en Supabase Cloud (`incidencias`), combinadas y ordenadas cronológicamente.
+  - Creación de tabla `eventos_locales` en SQLite (`database.ts`) y métodos `getLocalIncidenciasByEvento` y `updateLocalEventoEstado`.
+  - Lógica de Cierre y Read-Only: botón "Finalizar Evento" con alerta destructiva de confirmación que actualiza `estado = 'finalizado'` y `fecha_termino` en Supabase y SQLite; bloqueo automático de botones de reporte y mutación en eventos finalizados.
+  - Validación de tipos en TypeScript (`npx tsc --noEmit`) con **0 errores**.
+
+- **2026-10-21 (Sesión 9 — Despliegue DDL en Supabase Cloud y Conexión HU-05 Móvil):**
+  - Conexión vía MCP de Supabase al proyecto activo `Aleprod` (`fovmurimpbexfrjwxdew`, región `sa-east-1`).
+  - Creación del archivo `mobile/.env` con credenciales reales `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+  - Inyección del esquema relacional DDL completo en PostgreSQL: tablas `perfiles`, `eventos`, `palmetas_led`, `repuestos_inventario`, `incidencias` y `consumo_repuestos`.
+  - Habilitación de Row Level Security (RLS) en el 100% de las tablas con políticas de acceso para perfiles, técnicos y administradores.
+  - Implementación del trigger de base de datos `tr_descontar_stock_repuesto` (HU-15) sobre `consumo_repuestos` y trigger `handle_new_user` para perfiles.
+  - Creación del bucket de Storage público `evidencias-incidencias` con políticas de carga autenticada.
+  - Creación y verificación exitosa del usuario semilla de terreno `tecnico@aleprod.cl` / `Aleprod2026!` con GoTrue token compatibility y evento inicial "Festival Estadio Nacional".
+  - Refactorización de `mobile/src/core/context/AuthContext.tsx`: eliminación de `devBypass` activo, desacople 100% reactivo a `supabase.auth.getSession()` y `supabase.auth.onAuthStateChange`.
+  - Creación del componente `StartEventBottomSheet.tsx` con LiquidGlassView, selector y búsqueda de recintos frecuentes, stepper numérico y chips de m², selector de configuración LED e inserción directa en `eventos` de Supabase vinculada al técnico autenticado.
+  - Refactorización de `EventsScreen.tsx`: integración de botón CTA superior con gradiente dorado, hero card para inicio rápido, pull-to-refresh y sincronización en tiempo real con la tabla `eventos` de Supabase.
+  - Actualización de esquema en Supabase Cloud para `eventos`: agregado de columnas `tecnico_id`, `metros_cuadrados` y `tipo_pantalla` junto con políticas RLS de inserción para técnicos y administradores.
+  - Verificación de tipos TypeScript (`npx tsc --noEmit`) en `/mobile` con **0 errores**.
 
 - **2026-10-19 (Sesión 8 — Estabilización de Entorno y Dependencias Móviles):**
   - Actualización de runtime Node.js del sistema a **v22.23.2 LTS** y configuración de `RemoteSigned` en PowerShell.

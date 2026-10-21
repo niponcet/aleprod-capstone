@@ -33,8 +33,8 @@
 - **Entregables:** MVP funcional desplegado.
 
 ### Épica 1: Autenticación y Seguridad
-- **HU-05: Login y Sesión (Web/App)** `[En Progreso — UI Móvil Lista / Supabase Auth NO configurado (.env con placeholders) / Web No Iniciada]`
-  - **Descripción:** Implementar inicio de sesión con correo/contraseña consumiendo Supabase Auth.
+- **HU-05: Login y Sesión (Web/App)** `[En Progreso — Móvil 100% Conectado a Supabase Auth Real con Sesión Activa / Web Pendiente]`
+  - **Descripción:** Implementar inicio de sesión con correo/contraseña consumiendo Supabase Auth. App móvil completamente conectada con `getSession()` y `onAuthStateChange`, manejo de errores nativo y usuario semilla verificado.
 - **HU-06: Control de Acceso (RBAC)** `[No Iniciado]`
   - **Descripción:** Configurar navegación condicional (Técnico vs Admin) y proteger rutas mediante Row Level Security (RLS).
 
@@ -47,20 +47,23 @@
   - **Descripción:** Interfaz para visualizar el stock actual de insumos, herramientas y repuestos.
 
 ### Épica 3: Operación Móvil en Terreno (App)
-- **HU-10: Módulo de Sesión Activa por Evento** `[En Progreso: UI Lista + Datos Hardcodeados / Falta integración Supabase]`
-  - **Descripción:** Visualización de evento de turno, métricas en m², desglose de equipos y actividad reciente. La UI está completa con datos estáticos y actividad parcial de SQLite local, pero las métricas (m², palmetas) y el nombre del evento están fijos en código sin consultar tablas remotas.
+- **HU-10: Módulo de Sesión Activa por Evento** `[Completada]`
+  - **Descripción:** Visualización de evento de turno, métricas en m² y agenda de eventos. `EventsScreen.tsx` cuenta con CTA superior, Bottom Sheet para iniciar eventos en terreno (`StartEventBottomSheet.tsx`) con inserción real en Supabase `eventos`, pull-to-refresh y asociación al técnico activo. `HomeScreen.tsx` conectado dinámicamente: renderiza la card del evento activo en tiempo real (nombre, recinto, metros, equipamiento) con navegación táctil al detalle, o card de estado vacío "Sin Montaje Activo" con redirección a la agenda si no hay eventos en curso.
 - **HU-11: Formulario de Incidencias In Situ** `[En Progreso: UI Lista + Persistencia SQLite Local / Falta INSERT a Supabase]`
   - **Descripción:** Modal Bottom Sheet tipo 3 taps (`ReportIncidentModal.tsx`). Los reportes se guardan correctamente en SQLite local, pero NO se envían a la tabla `incidencias` de Supabase.
-- **HU-12: Captura de Evidencia Fotográfica** `[En Progreso: Captura Local Funcional / Falta Upload a Supabase Storage]`
-  - **Descripción:** Captura con `expo-image-picker` funcional con previsualización. La URI se guarda en SQLite, pero la foto **no se sube a Supabase Storage** (bucket).
+- **HU-12: Captura de Evidencia Fotográfica** `[En Progreso: Captura Local Funcional / Bucket evidencias-incidencias Creado en Supabase / Falta Upload desde App]`
+  - **Descripción:** Captura con `expo-image-picker` funcional con previsualización. Bucket `evidencias-incidencias` creado y configurado en Supabase Storage. Falta conectar el upload desde la app móvil.
 - **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[En Progreso: UI + SQLite Local Funcionales / Falta Enrolamiento en Supabase]`
   - **Descripción:** Toggle de modo en `ScannerScreen.tsx` funcional con contador en vivo y guardado en SQLite. Falta el INSERT real en tabla `palmetas_led` de Supabase y validación de UUID contra inventario remoto.
+
+- **HU-16: Ciclo de Vida e Historial de Eventos** `[Completada]`
+  - **Descripción:** Gestión de estados (`en_curso` y `finalizado`) en Supabase y SQLite. Segmentación en `EventsScreen.tsx` con pestañas interactivas "En Curso" e "Historial". Nueva pantalla `EventDetailScreen.tsx` con métricas del montaje ($m^2$, recintos, equipamiento) y trazabilidad de incidencias (consulta híbrida SQLite/Supabase). Mecanismo de cierre ("Finalizar Evento") y modo estricto de Solo Lectura (Read-Only) para eventos archivados.
 
 ### Épica 4: Persistencia y Sincronización
 - **HU-14: Motor de Sincronización a Supabase** `[En Progreso: UI + Conteo Local Listos / Sincronización SIMULADA con setTimeout]`
   - **Descripción:** El botón "Sincronizar Ahora" y el contador de pendientes funcionan sobre SQLite, pero la sincronización usa `setTimeout` simulado que solo cambia flags locales. NO hay batch INSERT real a Supabase ni upload de fotos a Storage.
-- **HU-15: Trigger de Descuento de Stock** `[No Iniciado]`
-  - **Descripción:** Script SQL en Supabase que reste automáticamente unidades de repuestos al registrar una resolución.
+- **HU-15: Trigger de Descuento de Stock** `[Completada]`
+  - **Descripción:** Trigger PostgreSQL `tr_descontar_stock_repuesto` implementado y activo en Supabase. Al registrar consumo en `consumo_repuestos`, descuenta atómicamente el stock en `repuestos_inventario` y previene stock negativo.
 
 ---
 
@@ -69,9 +72,9 @@
 - **Entregables:** Pruebas de campo con técnicos reales.
 
 ### Backlog Fase 4:
-- **HU-16: QA Testing (Pruebas de Estrés)**
+- **HU-17: QA Testing (Pruebas de Estrés)**
   - **Descripción:** Ejecución de casos de prueba (ej: validación de sincronización simulando modo avión).
-- **HU-17: Marcha Blanca en Terreno**
+- **HU-18: Marcha Blanca en Terreno**
   - **Descripción:** Despliegue de la app en teléfonos del equipo de Alejandra Producciones durante un evento real.
 
 ---
@@ -81,5 +84,5 @@
 - **Entregables:** Documentación y Defensa.
 
 ### Backlog Fase 5:
-- **HU-18: Documentación Final**
+- **HU-19: Documentación Final**
   - **Descripción:** Redacción del Informe Final de Pruebas, Manual de Usuario y Manual Técnico de Despliegue.

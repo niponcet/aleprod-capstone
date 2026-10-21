@@ -52,7 +52,24 @@ CREATE TABLE IF NOT EXISTS incidencias_locales (
 - `insertIncidencia(qrUuid: string, tipoFalla?: string)`: Inserción parametrizada con `db.runSync(...)` con `sincronizado = 0`.
 - `getPendingSyncCount(): number`: Retorna `COUNT(*)` de incidencias donde `sincronizado = 0`.
 - `getRecentActivity(limit = 5): LocalIncidencia[]`: Retorna los últimos registros locales ordenados por `id DESC`.
+- `getLocalIncidenciasByEvento(eventoIdOrName: string): LocalIncidencia[]`: Retorna incidencias locales filtradas por ID o nombre de evento.
+- `updateLocalEventoEstado(id: string, nuevoEstado: 'en_curso' | 'finalizado'): boolean`: Actualiza el ciclo de vida del evento en SQLite.
 - `markAllAsSynced(): number`: Actualiza `sincronizado = 1` y marca `sincronizado_at` con el timestamp actual.
+
+### Tabla Local Activa: `eventos_locales` (HU-16 Resiliencia Offline)
+```sql
+CREATE TABLE IF NOT EXISTS eventos_locales (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  locacion TEXT NOT NULL,
+  fecha_inicio TEXT NOT NULL,
+  fecha_termino TEXT,
+  estado TEXT NOT NULL DEFAULT 'en_curso',
+  metros_cuadrados REAL DEFAULT 0,
+  tipo_pantalla TEXT,
+  tecnico_id TEXT
+);
+```
 
 ---
 
@@ -110,9 +127,13 @@ CREATE TABLE public.eventos (
   fecha_inicio TIMESTAMPTZ NOT NULL,
   fecha_termino TIMESTAMPTZ,
   estado TEXT NOT NULL DEFAULT 'planificado' CHECK (estado IN ('planificado', 'en_curso', 'finalizado')),
+  tecnico_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  metros_cuadrados NUMERIC DEFAULT 0,
+  tipo_pantalla TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 ```
+
 
 ### Tabla: `palmetas_led` (Activos Serializados con QR)
 ```sql
