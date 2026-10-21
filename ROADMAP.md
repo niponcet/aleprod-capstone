@@ -51,8 +51,8 @@
   - **Descripción:** Visualización de evento de turno, métricas en m² y agenda de eventos. `EventsScreen.tsx` cuenta con CTA superior, Bottom Sheet para iniciar eventos en terreno (`StartEventBottomSheet.tsx`) con inserción real en Supabase `eventos`, pull-to-refresh y asociación al técnico activo. `HomeScreen.tsx` conectado dinámicamente: renderiza la card del evento activo en tiempo real (nombre, recinto, metros, equipamiento) con navegación táctil al detalle, o card de estado vacío "Sin Montaje Activo" con redirección a la agenda si no hay eventos en curso.
 - **HU-11: Formulario de Incidencias In Situ** `[En Progreso: UI Lista + Persistencia SQLite Local / Falta INSERT a Supabase]`
   - **Descripción:** Modal Bottom Sheet tipo 3 taps (`ReportIncidentModal.tsx`). Los reportes se guardan correctamente en SQLite local, pero NO se envían a la tabla `incidencias` de Supabase.
-- **HU-12: Captura de Evidencia Fotográfica** `[En Progreso: Captura Local Funcional / Bucket evidencias-incidencias Creado en Supabase / Falta Upload desde App]`
-  - **Descripción:** Captura con `expo-image-picker` funcional con previsualización. Bucket `evidencias-incidencias` creado y configurado en Supabase Storage. Falta conectar el upload desde la app móvil.
+- **HU-12: Captura de Evidencia Fotográfica** `[Completada]`
+  - **Descripción:** Captura con `expo-image-picker` y subida a Supabase Storage (`evidencias-incidencias`) mediante `uploadEvidenceImage()` en `sync.ts` (Base64 -> ArrayBuffer). Obtención de URL pública y vinculación automática a la incidencia.
 - **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[En Progreso: UI + SQLite Local Funcionales / Falta Enrolamiento en Supabase]`
   - **Descripción:** Toggle de modo en `ScannerScreen.tsx` funcional con contador en vivo y guardado en SQLite. Falta el INSERT real en tabla `palmetas_led` de Supabase y validación de UUID contra inventario remoto.
 
@@ -60,8 +60,8 @@
   - **Descripción:** Gestión de estados (`en_curso` y `finalizado`) en Supabase y SQLite. Segmentación en `EventsScreen.tsx` con pestañas interactivas "En Curso" e "Historial". Nueva pantalla `EventDetailScreen.tsx` con métricas del montaje ($m^2$, recintos, equipamiento) y trazabilidad de incidencias (consulta híbrida SQLite/Supabase). Mecanismo de cierre ("Finalizar Evento") y modo estricto de Solo Lectura (Read-Only) para eventos archivados.
 
 ### Épica 4: Persistencia y Sincronización
-- **HU-14: Motor de Sincronización a Supabase** `[En Progreso: UI + Conteo Local Listos / Sincronización SIMULADA con setTimeout]`
-  - **Descripción:** El botón "Sincronizar Ahora" y el contador de pendientes funcionan sobre SQLite, pero la sincronización usa `setTimeout` simulado que solo cambia flags locales. NO hay batch INSERT real a Supabase ni upload de fotos a Storage.
+- **HU-14: Motor de Sincronización a Supabase** `[Completada]`
+  - **Descripción:** Motor de sincronización batch real implementado en `sync.ts` y conectado a `SettingsScreen.tsx`. Procesa incidencias pendientes en SQLite (`sincronizado = 0`), sube fotos a Storage, resuelve foreign keys relacionales seguras (`evento_id` y `palmeta_id`), ejecuta `INSERT` en PostgreSQL `incidencias` y actualiza la bandera local `sincronizado = 1` solo ante confirmación exitosa con manejo resiliente de red.
 - **HU-15: Trigger de Descuento de Stock** `[Completada]`
   - **Descripción:** Trigger PostgreSQL `tr_descontar_stock_repuesto` implementado y activo en Supabase. Al registrar consumo en `consumo_repuestos`, descuenta atómicamente el stock en `repuestos_inventario` y previene stock negativo.
 

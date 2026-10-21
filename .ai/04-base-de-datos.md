@@ -51,9 +51,13 @@ CREATE TABLE IF NOT EXISTS incidencias_locales (
 - `initDB()`: Inicializa y ejecuta migraciones seguras automáticas agregando columnas faltantes mediante `PRAGMA table_info`.
 - `insertIncidencia(qrUuid: string, tipoFalla?: string)`: Inserción parametrizada con `db.runSync(...)` con `sincronizado = 0`.
 - `getPendingSyncCount(): number`: Retorna `COUNT(*)` de incidencias donde `sincronizado = 0`.
+- `getPendingIncidencias(): LocalIncidencia[]`: Retorna todas las incidencias pendientes (`sincronizado = 0`) para el batch de sincronización (HU-14).
+- `markIncidenciaAsSynced(id: number, remoteFotoUrl?: string): boolean`: Marca una incidencia individual como sincronizada y persiste la URL remota de Storage (HU-14).
 - `getRecentActivity(limit = 5): LocalIncidencia[]`: Retorna los últimos registros locales ordenados por `id DESC`.
 - `getLocalIncidenciasByEvento(eventoIdOrName: string): LocalIncidencia[]`: Retorna incidencias locales filtradas por ID o nombre de evento.
-- `updateLocalEventoEstado(id: string, nuevoEstado: 'en_curso' | 'finalizado'): boolean`: Actualiza el ciclo de vida del evento en SQLite.
+- `updateLocalEventoEstado(idOrNombre: string, nuevoEstado: 'en_curso' | 'finalizado'): boolean`: Actualiza el ciclo de vida del evento en SQLite.
+- `getActiveLocalEvento(): LocalEvento | null`: Retorna el evento activo local más reciente.
+- `upsertLocalEvento(evento: LocalEvento): void`: Almacena o actualiza en caché SQLite el evento activo.
 - `markAllAsSynced(): number`: Actualiza `sincronizado = 1` y marca `sincronizado_at` con el timestamp actual.
 
 ### Tabla Local Activa: `eventos_locales` (HU-16 Resiliencia Offline)

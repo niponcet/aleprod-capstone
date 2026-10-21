@@ -237,6 +237,48 @@ export const upsertLocalEvento = (evento: LocalEvento): void => {
 };
 
 /**
+ * HU-14: Retorna todas las incidencias pendientes de sincronizar (sincronizado = 0)
+ */
+export const getPendingIncidencias = (): LocalIncidencia[] => {
+  try {
+    const rows = db.getAllSync<LocalIncidencia>(
+      'SELECT * FROM incidencias_locales WHERE sincronizado = 0 ORDER BY id ASC'
+    );
+    return rows;
+  } catch (error) {
+    console.error("Error obteniendo incidencias pendientes:", error);
+    return [];
+  }
+};
+
+/**
+ * HU-14: Marca una incidencia local específica como sincronizada y actualiza su foto remota si aplica
+ */
+export const markIncidenciaAsSynced = (
+  id: number,
+  remoteFotoUrl?: string
+): boolean => {
+  try {
+    const fecha = new Date().toISOString();
+    if (remoteFotoUrl) {
+      db.runSync(
+        'UPDATE incidencias_locales SET sincronizado = 1, sincronizado_at = ?, foto_uri = ? WHERE id = ?',
+        [fecha, remoteFotoUrl, id]
+      );
+    } else {
+      db.runSync(
+        'UPDATE incidencias_locales SET sincronizado = 1, sincronizado_at = ? WHERE id = ?',
+        [fecha, id]
+      );
+    }
+    return true;
+  } catch (error) {
+    console.error(`Error marcando incidencia ${id} como sincronizada:`, error);
+    return false;
+  }
+};
+
+/**
  * Marca todos los registros locales pendientes como sincronizados
  */
 export const markAllAsSynced = (): number => {

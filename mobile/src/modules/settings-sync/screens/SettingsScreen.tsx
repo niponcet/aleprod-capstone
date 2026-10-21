@@ -15,8 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
-import { getPendingSyncCount, markAllAsSynced } from '../../../core/db/database';
+import { getPendingSyncCount } from '../../../core/db/database';
+import { syncPendingIncidencias, SyncResult } from '../../../core/api/sync';
 import { supabase } from '../../../core/api/supabase';
+import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
 
 interface SettingsScreenProps {
@@ -27,7 +29,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
   const { width: screenWidth } = useWindowDimensions();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [syncing, setSyncing] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('molina@aleprod.cl');
+  const [userEmail, setUserEmail] = useState<string>('tecnico@aleprod.cl');
+  const [userName, setUserName] = useState<string>('Técnico Terreno');
 
   // Obtener conteo de pendientes cada vez que la pantalla gana foco
   useFocusEffect(
@@ -38,35 +41,80 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
   );
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.email) {
-        setUserEmail(session.user.email);
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user?.email) {
+        setUserEmail(user.email);
+        try {
+          const { data: profile } = await supabase
+            .from('perfiles')
+            .select('nombre_completo')
+            .eq('id', user.id)
+            .single();
+          if (profile?.nombre_completo) {
+            setUserName(profile.nombre_completo);
+          }
+        } catch { }
       }
     }).catch(() => { });
   }, []);
 
+  // HU-14: Motor de Sincronización Real con Supabase Cloud y Storage
   const handleSyncNow = async () => {
     if (pendingCount === 0) {
       Alert.alert(
         'Almacenamiento Sincronizado',
-        'No hay registros pendientes de envío. Todos los escaneos locales ya están respaldados.',
+        'No hay registros pendientes de envío. Todos los reportes locales ya están respaldados en la nube.',
         [{ text: 'Entendido' }]
       );
       return;
     }
 
     setSyncing(true);
-    // Simular latencia de red y despacho por lotes
-    setTimeout(() => {
-      const synced = markAllAsSynced();
-      setPendingCount(0);
-      setSyncing(false);
+    triggerHaptic('medium');
+
+    try {
+      const result: SyncResult = await syncPendingIncidencias();
+      const remaining = getPendingSyncCount();
+      setPendingCount(remaining);
+
+      if (result.syncedCount > 0) {
+        triggerHaptic('success');
+        const photoMsg = result.photosUploaded > 0
+          ? `\n\n📸 Fotografías respaldadas: ${result.photosUploaded} en Supabase Storage.`
+          : '';
+
+        if (result.failedCount === 0) {
+          Alert.alert(
+            'Sincronización Exitosa',
+            `Se han respaldado ${result.syncedCount} incidencia(s) en la base central de Supabase con sus timestamps originales.${photoMsg}`,
+            [{ text: 'Excelente' }]
+          );
+        } else {
+          Alert.alert(
+            'Sincronización Parcial',
+            `Se respaldaron ${result.syncedCount} incidencia(s), pero ${result.failedCount} no pudieron subirse.${photoMsg}\n\nLos registros pendientes se mantienen seguros en SQLite para el próximo reintento.`,
+            [{ text: 'Entendido' }]
+          );
+        }
+      } else {
+        triggerHaptic('warning');
+        Alert.alert(
+          'Sin Conexión con Supabase',
+          'No fue posible contactar la nube. Tus reportes permanecen almacenados localmente de forma segura en SQLite.',
+          [{ text: 'Entendido' }]
+        );
+      }
+    } catch (err: any) {
+      triggerHaptic('warning');
+      console.warn('Excepción sincronizando:', err);
       Alert.alert(
-        'Sincronización Exitosa',
-        `Se han enviado ${synced} incidencias a la base central de Supabase respetando los timestamps originales de captura en terreno.`,
-        [{ text: 'Excelente' }]
+        'Aviso de Red',
+        'Ocurrió un error al contactar el servidor. Las incidencias continuarán en el dispositivo.',
+        [{ text: 'Entendido' }]
       );
-    }, 1200);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleLogout = () => {
@@ -105,12 +153,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
         {/* Card de Perfil */}
         <View style={styles.profileCard}>
           <View style={styles.profileAvatar}>
-            <Text style={styles.profileAvatarText}>TL</Text>
+            <Text style={styles.profileAvatarText}>
+              {userName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'TT'}
+            </Text>
           </View>
 
           <View style={styles.profileDetails}>
             <View style={styles.profileNameRow}>
-              <Text style={styles.profileName}>Técnico Matias Molina</Text>
+              <Text style={styles.profileName}>{userName}</Text>
               <View style={styles.terrenoBadge}>
                 <Text style={styles.terrenoBadgeText}>Terreno</Text>
               </View>

@@ -7,9 +7,9 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 21 de Octubre de 2026 (Sesión 10 — Ciclo de Vida e Historial de Eventos HU-16).
-- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Ciclo de vida completo de eventos (creación, seguimiento, visualización y cierre en solo lectura) con persistencia híbrida SQLite/Supabase.
-- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10 y HU-16 Completadas en móvil), Épica 4 (HU-15 Trigger de stock completado en Supabase).
+- **Fecha de Última Actualización:** 21 de Octubre de 2026 (Sesión 11 — Motor de Sincronización Real y Supabase Storage HU-12 y HU-14).
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Motor de sincronización offline-first activo con subida de fotos a Storage y lote a PostgreSQL, ciclo de vida de eventos y persistencia híbrida SQLite/Supabase.
+- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10, HU-12 y HU-16 Completadas en móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile`). Navegación con **Expo Router** y `<NativeTabs>` (Liquid Glass iOS).
 - **Credenciales Cloud:** `mobile/.env` configurado con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS y storage bucket `evidencias-incidencias` activos y verificados vía pruebas automatizadas.
 
@@ -41,11 +41,13 @@
   - `EventsScreen.tsx`: Cabecera fija limpia con badge contador. Botón de alta "Iniciar Evento" con diseño sobrio y equilibrado en superficie oscura elevada con acento ámbar. Conectado a Supabase `eventos` con pull-to-refresh.
   - `StartEventBottomSheet.tsx`: Bottom Sheet con selector multi-servicio (Pista de Baile LED + Pirotecnia opcional), selector/buscador de recintos frecuentes, stepper/chips de m² e inserción directa en Supabase con estado `en_curso` y `tecnico_id`.
   - `HomeScreen.tsx`: Totalmente conectado al evento real activo (híbrido Supabase + SQLite `getActiveLocalEvento`). Si existe evento en curso, renderiza la card dinámica con nombre, recinto, metros configurados y navegación táctil al detalle (`/event-detail`); si no hay eventos activos, renderiza card de estado vacío "Sin Montaje Activo" con acceso rápido a la agenda.
-- 🔄 **HU-11: Formulario de Incidencias In Situ** `[En Progreso: Flujo Camera-First Anti-Huérfanas Implementado / Falta INSERT a Supabase]`
+- 🔄 **HU-11: Formulario de Incidencias In Situ** `[En Progreso: Flujo Camera-First Anti-Huérfanas Implementado / Sincronización Manual Lista (HU-14)]`
   - Implementación de `IncidentScannerModal.tsx` integrado en `EventDetailScreen.tsx` para captura directa de QR en terreno previo al formulario (Regla de 3 Taps estricta).
   - `ReportIncidentModal.tsx` refactorizado: bloqueo de incidencias huérfanas exigiendo identificación de palmeta, visualización destacada de `qrUuid` verificado, entrada manual de contingencia (`TextInput`) si el código físico está roto/dañado, y vinculación dinámica del `evento_id`/`eventoNombre` real.
-- 🔄 **HU-12: Captura de Evidencia Fotográfica** `[En Progreso: Captura Local Funcional / Bucket Storage Listo]`
+- ✅ **HU-12: Captura y Subida de Evidencia Fotográfica** `[Completada]`
   - Bucket `evidencias-incidencias` creado en Supabase Storage con políticas de inserción autenticada y lectura pública.
+  - Subida de evidencias fotográficas locales (`file://`) desde SQLite a Supabase Storage bucket `evidencias-incidencias` utilizando `expo-file-system` (lectura Base64) y `base64-arraybuffer` (decodificación a ArrayBuffer).
+  - Obtención y almacenamiento de `publicUrl` permanente en la nube vinculada a cada incidencia.
 - 🔄 **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[En Progreso: UI + SQLite Funcionales / Tabla Remota Lista]`
   - Tabla `palmetas_led` con restricciones de unicidad de QR y políticas RLS creadas en Supabase Cloud.
 - ✅ **HU-16: Ciclo de Vida e Historial de Eventos** `[Completada]`
@@ -54,8 +56,12 @@
   - `EventDetailScreen.tsx`: Vista detallada con metadata operativa (superficie $m^2$, recinto, configuración de equipamiento), trazabilidad de incidencias mediante consulta híbrida (SQLite offline + Supabase remoto), botón de cierre ("Finalizar Evento") y protección estricta en modo Read-Only cuando el evento está archivado.
 
 #### Épica 4: Persistencia y Sincronización
-- 🔄 **HU-14: Motor de Sincronización a Supabase** `[En Progreso: UI + Conteo Local / Sincronización SIMULADA]`
-  - `SettingsScreen.tsx`: Próximo paso: conectar sync a batch INSERT en Supabase `incidencias` y upload a bucket `evidencias-incidencias`.
+- ✅ **HU-14: Motor de Sincronización a Supabase** `[Completada]`
+  - Módulo de sincronización en lote `mobile/src/core/api/sync.ts` (`syncPendingIncidencias`).
+  - Subida de imágenes pendientes a Supabase Storage y batch INSERT a la tabla `incidencias` en PostgreSQL.
+  - Resolución de claves foráneas resiliente (`palmeta_id` y `evento_id` por UUID o nombre).
+  - Actualización local atómica a `sincronizado = 1` y guardado de `remoteFotoUrl` únicamente ante confirmación exitosa de la nube.
+  - `SettingsScreen.tsx` refactorizado con estado de carga nativo (`ActivityIndicator`), retroalimentación por `Alert` con métricas exactas y manejo tolerante a fallos/modo offline sin pérdida de datos locales.
 - ✅ **HU-15: Trigger de Descuento de Stock** `[Completada]`
   - Trigger PostgreSQL `tr_descontar_stock_repuesto` desplegado y activo en Supabase Cloud sobre `consumo_repuestos` y `repuestos_inventario`.
 
@@ -76,16 +82,27 @@
 
 ## 4. Próximos Pasos Inmediatos (Post-Auditoría)
 
-1. **HU-11 & HU-12 (Persistencia e Inserción Real de Incidencias):**
-   - Conectar el guardado de incidencias en Supabase `incidencias` cuando haya conexión y subir `foto_uri` al bucket `evidencias-incidencias`.
-2. **HU-14 (Sincronización Real Offline -> Cloud):**
-   - Reemplazar `setTimeout` simulado en `SettingsScreen.tsx` por batch insert real a Supabase `incidencias` y upload de imágenes pendientes.
-3. **Épica 2 (Web):**
-   - Construir login, dashboard y CRUD de palmetas en Next.js.
+1. **Fase 3 - Épica 2 (Plataforma Web Next.js - HU-05 Web, HU-06, HU-07):**
+   - Construir autenticación con Supabase Auth SSR en `web/app/login/page.tsx`.
+   - Implementar control de acceso RBAC (`admin` vs `tecnico`).
+   - Crear Dashboard administrativo con métricas reales de inventario y estado de eventos.
+2. **HU-13 (Aprovisionamiento Masivo / Modo Ráfaga en Móvil):**
+   - Conectar escaneo ráfaga a la tabla `palmetas_led` en Supabase Cloud con validación de duplicados.
+3. **Optimización HU-11 (Auto-sincronización opcional):**
+   - Disparar sync en segundo plano inmediatamente tras registrar incidencia si el dispositivo cuenta con red activa.
 
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-21 (Sesión 11 — Motor de Sincronización Real y Supabase Storage HU-12 y HU-14):**
+  - Implementación del servicio de sincronización por lote `mobile/src/core/api/sync.ts` (`syncPendingIncidencias`).
+  - Carga de imágenes locales a Supabase Storage: función utilitaria `uploadEvidenceImage` con `expo-file-system` (lectura Base64) y `base64-arraybuffer` (decodificación a `ArrayBuffer`) apuntando al bucket `evidencias-incidencias`.
+  - Batch INSERT en la tabla `incidencias` de Supabase con resolución resiliente de claves foráneas (`evento_id` por UUID o nombre, `palmeta_id` vía QR UUID).
+  - Manejo de confirmación local en SQLite: actualización atómica a `sincronizado = 1`, `sincronizado_at = now()` y persistencia de `remoteFotoUrl`.
+  - Tolerancia a fallos: ante errores de conectividad o HTTP en la nube, los registros y fotos locales permanecen intactos en `incidencias_locales` (`sincronizado = 0`) para futuros reintentos sin pérdida de información ni crasheos.
+  - Refactorización de `mobile/src/modules/settings-sync/screens/SettingsScreen.tsx`: eliminación completa del `setTimeout` simulado, integración de `ActivityIndicator` reactivo y feedback detallado con alertas nativas (`Alert.alert`).
+  - Verificación de tipos TypeScript (`npx tsc --noEmit`) con **0 errores**.
 
 - **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16, Scanner Anti-Huérfanas HU-11 y Montaje Dinámico en Home HU-10):**
   - Conexión de `HomeScreen.tsx` con el evento real activo (`estado = 'en_curso'`): consulta híbrida Supabase + SQLite (`getActiveLocalEvento`).
