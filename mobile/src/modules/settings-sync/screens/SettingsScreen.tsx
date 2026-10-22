@@ -15,8 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
-import { getPendingSyncCount } from '../../../core/db/database';
-import { syncPendingIncidencias, SyncResult } from '../../../core/api/sync';
+import { getTotalPendingSyncCount } from '../../../core/db/database';
+import { syncAllPendingData } from '../../../core/api/sync';
 import { supabase } from '../../../core/api/supabase';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
@@ -32,10 +32,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
   const [userEmail, setUserEmail] = useState<string>('tecnico@aleprod.cl');
   const [userName, setUserName] = useState<string>('Técnico Terreno');
 
-  // Obtener conteo de pendientes cada vez que la pantalla gana foco
+  // Obtener conteo consolidado de pendientes cada vez que la pantalla gana foco
   useFocusEffect(
     useCallback(() => {
-      const count = getPendingSyncCount();
+      const count = getTotalPendingSyncCount();
       setPendingCount(count);
     }, [])
   );
@@ -58,12 +58,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
     }).catch(() => { });
   }, []);
 
-  // HU-14: Motor de Sincronización Real con Supabase Cloud y Storage
+  // HU-14 y HU-13: Motor de Sincronización Real con Supabase Cloud y Storage
   const handleSyncNow = async () => {
     if (pendingCount === 0) {
       Alert.alert(
         'Almacenamiento Sincronizado',
-        'No hay registros pendientes de envío. Todos los reportes locales ya están respaldados en la nube.',
+        'No hay registros pendientes de envío. Todos los reportes y palmetas locales ya están respaldados en la nube.',
         [{ text: 'Entendido' }]
       );
       return;
@@ -73,26 +73,35 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
     triggerHaptic('medium');
 
     try {
-      const result: SyncResult = await syncPendingIncidencias();
-      const remaining = getPendingSyncCount();
+      const { incidencias, palmetas } = await syncAllPendingData();
+      const remaining = getTotalPendingSyncCount();
       setPendingCount(remaining);
 
-      if (result.syncedCount > 0) {
+      const totalSynced = incidencias.syncedCount + palmetas.syncedCount;
+      const totalFailed = incidencias.failedCount + palmetas.failedCount;
+
+      if (totalSynced > 0 || palmetas.duplicateCount > 0) {
         triggerHaptic('success');
-        const photoMsg = result.photosUploaded > 0
-          ? `\n\n📸 Fotografías respaldadas: ${result.photosUploaded} en Supabase Storage.`
+        const photoMsg = incidencias.photosUploaded > 0
+          ? `\n\n📸 Fotografías respaldadas: ${incidencias.photosUploaded} en Supabase Storage.`
+          : '';
+        const palmetasMsg = palmetas.syncedCount > 0
+          ? `\n📦 Palmetas aprovisionadas: ${palmetas.syncedCount} activas.`
+          : '';
+        const dupMsg = palmetas.duplicateCount > 0
+          ? `\nℹ️ ${palmetas.duplicateCount} palmeta(s) ya existían previamente en la nube.`
           : '';
 
-        if (result.failedCount === 0) {
+        if (totalFailed === 0) {
           Alert.alert(
             'Sincronización Exitosa',
-            `Se han respaldado ${result.syncedCount} incidencia(s) en la base central de Supabase con sus timestamps originales.${photoMsg}`,
+            `Se respaldaron con éxito todos los datos:${palmetasMsg}\n📋 Incidencias: ${incidencias.syncedCount}.${photoMsg}${dupMsg}`,
             [{ text: 'Excelente' }]
           );
         } else {
           Alert.alert(
             'Sincronización Parcial',
-            `Se respaldaron ${result.syncedCount} incidencia(s), pero ${result.failedCount} no pudieron subirse.${photoMsg}\n\nLos registros pendientes se mantienen seguros en SQLite para el próximo reintento.`,
+            `Se respaldaron ${totalSynced} registro(s), pero ${totalFailed} no pudieron subirse.${palmetasMsg}${photoMsg}\n\nLos registros pendientes se mantienen seguros en SQLite para el próximo reintento.`,
             [{ text: 'Entendido' }]
           );
         }
@@ -100,7 +109,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
         triggerHaptic('warning');
         Alert.alert(
           'Sin Conexión con Supabase',
-          'No fue posible contactar la nube. Tus reportes permanecen almacenados localmente de forma segura en SQLite.',
+          'No fue posible contactar la nube. Tus datos permanecen almacenados localmente de forma segura en SQLite.',
           [{ text: 'Entendido' }]
         );
       }
@@ -109,7 +118,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
       console.warn('Excepción sincronizando:', err);
       Alert.alert(
         'Aviso de Red',
-        'Ocurrió un error al contactar el servidor. Las incidencias continuarán en el dispositivo.',
+        'Ocurrió un error al contactar el servidor. Los datos continuarán seguros en el dispositivo.',
         [{ text: 'Entendido' }]
       );
     } finally {

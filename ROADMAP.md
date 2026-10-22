@@ -53,8 +53,8 @@
   - **Descripción:** Modal Bottom Sheet tipo 3 taps (`ReportIncidentModal.tsx`). Los reportes se guardan correctamente en SQLite local, pero NO se envían a la tabla `incidencias` de Supabase.
 - **HU-12: Captura de Evidencia Fotográfica** `[Completada]`
   - **Descripción:** Captura con `expo-image-picker` y subida a Supabase Storage (`evidencias-incidencias`) mediante `uploadEvidenceImage()` en `sync.ts` (Base64 -> ArrayBuffer). Obtención de URL pública y vinculación automática a la incidencia.
-- **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[En Progreso: UI + SQLite Local Funcionales / Falta Enrolamiento en Supabase]`
-  - **Descripción:** Toggle de modo en `ScannerScreen.tsx` funcional con contador en vivo y guardado en SQLite. Falta el INSERT real en tabla `palmetas_led` de Supabase y validación de UUID contra inventario remoto.
+- **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[Completada]`
+  - **Descripción:** Módulo de aprovisionamiento continuo en `ScannerScreen.tsx` conectado a Supabase y SQLite. Inserción directa en la tabla `palmetas_led` (`codigo_qr`, `estado = 'operativo'`, `lote_ingreso = 'LOTE-MMYYYY'`). Manejo robusto de duplicados (PostgreSQL 23505 y restricciones de unicidad) con aviso visual no bloqueante (Toast animado) sin pausar el flujo de ráfaga. Resiliencia Offline completa con almacenamiento temporal en SQLite (`palmetas_pendientes`) y sincronización por lote en `sync.ts` (`syncPendingPalmetas`) accesible desde Configuración.
 
 - **HU-16: Ciclo de Vida e Historial de Eventos** `[Completada]`
   - **Descripción:** Gestión de estados (`en_curso` y `finalizado`) en Supabase y SQLite. Segmentación en `EventsScreen.tsx` con pestañas interactivas "En Curso" e "Historial". Nueva pantalla `EventDetailScreen.tsx` con métricas del montaje ($m^2$, recintos, equipamiento) y trazabilidad de incidencias (consulta híbrida SQLite/Supabase). Mecanismo de cierre ("Finalizar Evento") y modo estricto de Solo Lectura (Read-Only) para eventos archivados.

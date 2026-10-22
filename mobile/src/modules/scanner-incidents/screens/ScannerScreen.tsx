@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  Alert,
   StatusBar,
+  Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -14,7 +15,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { triggerHaptic } from '../../../core/utils/haptics';
-import { insertLocalIncidencia } from '../../../core/db/database';
+import {
+  provisionPalmeta,
+  generateLoteIngreso,
+  ProvisionResult,
+} from '../../../core/api/palmetas';
+
+interface ToastState {
+  type: 'success' | 'duplicate' | 'offline' | 'error';
+  title: string;
+  message: string;
+  code: string;
+}
 
 export const ScannerScreen = () => {
   const router = useRouter();
@@ -24,6 +36,33 @@ export const ScannerScreen = () => {
   const [mode, setMode] = useState<'inspection' | 'burst'>('inspection');
   const [burstCount, setBurstCount] = useState<number>(0);
   const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [currentLote] = useState<string>(() => generateLoteIngreso());
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  // Animación del banner toast rápido
+  const toastAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (toast) {
+      Animated.spring(toastAnim, {
+        toValue: 1,
+        tension: 80,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+
+      const timer = setTimeout(() => {
+        Animated.timing(toastAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start(() => setToast(null));
+      }, 2600);
+
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   if (!permission) {
     return <View style={styles.container} />;
@@ -42,7 +81,7 @@ export const ScannerScreen = () => {
         </TouchableOpacity>
         <Ionicons name="camera-outline" size={48} color={colors.primaryAmber} style={{ marginBottom: 16 }} />
         <Text style={styles.permissionText}>
-          Necesitamos acceso a la cámara para escanear los QR de las pantallas.
+          Necesitamos acceso a la cámara para escanear los QR de las palmetas LED.
         </Text>
         <TouchableOpacity
           style={styles.permissionButton}
@@ -55,13 +94,13 @@ export const ScannerScreen = () => {
     );
   }
 
-  const handleBarcodeScanned = ({ data }: { type: string; data: string }) => {
-    if (scanned) return;
+  const handleBarcodeScanned = async ({ data }: { type: string; data: string }) => {
+    if (scanned || isProcessing) return;
     setScanned(true);
-    triggerHaptic('success');
 
     if (mode === 'inspection') {
       // Modo Inspección: Navegar al detalle del activo
+      triggerHaptic('success');
       router.push({
         pathname: '/asset-detail',
         params: {
@@ -70,31 +109,84 @@ export const ScannerScreen = () => {
           status: '• Operativo',
         },
       });
-      // Rehabilitar escaneo tras navegación
       setTimeout(() => setScanned(false), 1500);
-    } else {
-      // Modo Ráfaga (HU-13): Enrolamiento continuo
-      try {
-        insertLocalIncidencia(
-          data,
-          'Aprovisionamiento Masivo (Modo Ráfaga)',
-          undefined,
-          'Enrolamiento en bodega',
-          'Bodega Central'
-        );
+      return;
+    }
+
+    // Modo Ráfaga (HU-13): Aprovisionamiento masivo continuo
+    setIsProcessing(true);
+    try {
+      const result: ProvisionResult = await provisionPalmeta(data, currentLote);
+
+      if (result.status === 'duplicate') {
+        // Manejo de duplicados: aviso visual rápido (toast) sin romper la ráfaga
+        triggerHaptic('warning');
+        setToast({
+          type: 'duplicate',
+          title: 'PALMETA YA REGISTRADA',
+          message: 'Este código QR ya se encuentra en el inventario',
+          code: data,
+        });
+      } else if (result.status === 'cloud_created') {
+        // Inserción exitosa en Supabase (palmetas_led)
+        triggerHaptic('success');
         setBurstCount((prev) => prev + 1);
         setLastScannedCode(data);
-      } catch (err) {
-        console.error('Error enrolando en ráfaga:', err);
+        setToast({
+          type: 'success',
+          title: 'ENROLADA EN SUPABASE',
+          message: `Lote asignado: ${result.lote} · Estado: Operativo`,
+          code: data,
+        });
+      } else if (result.status === 'offline_queued') {
+        // Resiliencia offline: guardada en SQLite (palmetas_pendientes)
+        triggerHaptic('success');
+        setBurstCount((prev) => prev + 1);
+        setLastScannedCode(data);
+        setToast({
+          type: 'offline',
+          title: 'GUARDADA OFFLINE (SQLITE)',
+          message: 'Sin internet · Se sincronizará automáticamente',
+          code: data,
+        });
+      } else {
+        triggerHaptic('error');
+        setToast({
+          type: 'error',
+          title: 'ERROR DE REGISTRO',
+          message: result.message || 'No fue posible registrar la palmeta',
+          code: data,
+        });
       }
-      // Reanudar inmediatamente en 1.2 segundos para el siguiente código
-      setTimeout(() => setScanned(false), 1200);
+    } catch (err: any) {
+      console.error('Error durante escaneo en ráfaga:', err);
+      triggerHaptic('error');
+      setToast({
+        type: 'error',
+        title: 'ERROR EN EL PROCESO',
+        message: err?.message || 'Error inesperado al aprovisionar',
+        code: data,
+      });
+    } finally {
+      setIsProcessing(false);
+      // Reanudar cámara en 1.2 segundos para escaneo rápido continuo
+      setTimeout(() => {
+        setScanned(false);
+      }, 1200);
     }
   };
 
   const handleSimulateScan = () => {
-    const sampleUuid = `aleprod-p39-${Math.floor(1000 + Math.random() * 9000)}-cl`;
+    // Generar código UUID de muestra para simular aprovisionamiento
+    const randomHex = Math.floor(1000 + Math.random() * 9000);
+    const sampleUuid = `aleprod-p39-${randomHex}-cl`;
     handleBarcodeScanned({ type: 'qr', data: sampleUuid });
+  };
+
+  const handleSimulateDuplicate = () => {
+    if (lastScannedCode) {
+      handleBarcodeScanned({ type: 'qr', data: lastScannedCode });
+    }
   };
 
   return (
@@ -105,13 +197,13 @@ export const ScannerScreen = () => {
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
-        onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+        onBarcodeScanned={scanned || isProcessing ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
         }}
       />
 
-      {/* Botón Cerrar (✕) ajustado a la esquina superior derecha, más arriba que el toggle y en rojo suave */}
+      {/* Botón Cerrar (✕) */}
       <TouchableOpacity
         style={[
           styles.closeButtonRight,
@@ -128,7 +220,7 @@ export const ScannerScreen = () => {
         <Ionicons name="close" size={22} color="#F87171" />
       </TouchableOpacity>
 
-      {/* Selector Superior de Modo con LiquidGlass posicionado más abajo para mejor ergonomía */}
+      {/* Selector Superior de Modo con LiquidGlass */}
       <View
         style={[
           styles.modeToggleContainer,
@@ -177,7 +269,7 @@ export const ScannerScreen = () => {
             activeOpacity={0.8}
           >
             <Ionicons
-              name="flash-outline"
+              name="flash"
               size={15}
               color={mode === 'burst' ? '#000000' : colors.textSecondary}
               style={{ marginRight: 6 }}
@@ -192,6 +284,71 @@ export const ScannerScreen = () => {
             </Text>
           </TouchableOpacity>
         </LiquidGlassView>
+
+        {/* Banner Toast Flotante para Feedback Visual Rápido sin Detener Ráfaga */}
+        {toast && (
+          <Animated.View
+            style={[
+              styles.toastAnimatedContainer,
+              {
+                opacity: toastAnim,
+                transform: [
+                  {
+                    translateY: toastAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-16, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.toastCard,
+                toast.type === 'duplicate' && styles.toastCardDuplicate,
+                toast.type === 'success' && styles.toastCardSuccess,
+                toast.type === 'offline' && styles.toastCardOffline,
+                toast.type === 'error' && styles.toastCardError,
+              ]}
+            >
+              <View style={styles.toastIconWrapper}>
+                {toast.type === 'duplicate' && (
+                  <Ionicons name="warning" size={20} color="#F59E0B" />
+                )}
+                {toast.type === 'success' && (
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                )}
+                {toast.type === 'offline' && (
+                  <Ionicons name="cloud-offline" size={20} color={colors.primaryAmber} />
+                )}
+                {toast.type === 'error' && (
+                  <Ionicons name="alert-circle" size={20} color="#EF4444" />
+                )}
+              </View>
+
+              <View style={styles.toastContent}>
+                <View style={styles.toastHeaderRow}>
+                  <Text
+                    style={[
+                      styles.toastTitle,
+                      toast.type === 'duplicate' && { color: '#F59E0B' },
+                      toast.type === 'success' && { color: colors.success },
+                      toast.type === 'offline' && { color: colors.primaryAmber },
+                      toast.type === 'error' && { color: '#EF4444' },
+                    ]}
+                  >
+                    {toast.title}
+                  </Text>
+                  <Text style={styles.toastCode} numberOfLines={1}>
+                    #{toast.code.slice(-6).toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.toastMessage}>{toast.message}</Text>
+              </View>
+            </View>
+          </Animated.View>
+        )}
       </View>
 
       {/* Overlay del Visor con esquinas doradas */}
@@ -203,19 +360,36 @@ export const ScannerScreen = () => {
           <View style={[styles.corner, styles.cornerBottomLeft]} />
           <View style={[styles.corner, styles.cornerBottomRight]} />
 
-          {/* Línea animada de escaneo / Mira */}
-          <View style={styles.scanTargetHole} />
+          {/* Línea animada / Mira */}
+          <View style={styles.scanTargetHole}>
+            {isProcessing && (
+              <View style={styles.processingCenter}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.processingText}>Enrolando...</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Indicador de Modo / Contador Ráfaga con LiquidGlass */}
         {mode === 'burst' ? (
           <LiquidGlassView borderRadius={16} style={styles.burstCounterCard}>
-            <Text style={styles.burstCounterTitle}>ENROLAMIENTO CONTINUO</Text>
+            <View style={styles.burstHeaderRow}>
+              <View style={styles.burstLoteBadge}>
+                <Ionicons name="cube-outline" size={11} color={colors.primaryAmber} style={{ marginRight: 4 }} />
+                <Text style={styles.burstLoteText}>{currentLote}</Text>
+              </View>
+              <Text style={styles.burstCounterTitle}>ENROLAMIENTO CONTINUO</Text>
+            </View>
+
             <Text style={styles.burstCounterNumber}>{burstCount} palmetas</Text>
-            {lastScannedCode && (
+
+            {lastScannedCode ? (
               <Text style={styles.lastScannedText} numberOfLines={1}>
-                Última: #{lastScannedCode.slice(-4).toUpperCase()} ✓
+                Última: #{lastScannedCode.slice(-6).toUpperCase()} ✓
               </Text>
+            ) : (
+              <Text style={styles.lastScannedPlaceholder}>Apunta a los QR sucesivamente</Text>
             )}
           </LiquidGlassView>
         ) : (
@@ -225,19 +399,34 @@ export const ScannerScreen = () => {
         )}
       </View>
 
-      {/* Barra Inferior con Botón de Simulación dentro de LiquidGlass */}
+      {/* Barra Inferior con Controles de Simulación dentro de LiquidGlass */}
       <View style={[styles.bottomControls, { paddingBottom: Math.max(insets.bottom + 16, 28) }]}>
         <LiquidGlassView borderRadius={16} style={styles.bottomGlassCard}>
-          <TouchableOpacity
-            style={styles.simulateButton}
-            onPress={handleSimulateScan}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="sparkles-outline" size={18} color={colors.primaryAmber} style={{ marginRight: 8 }} />
-            <Text style={styles.simulateButtonText}>
-              Simular Escaneo (#LED-A45)
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.bottomControlsRow}>
+            <TouchableOpacity
+              style={[styles.simulateButton, isProcessing && { opacity: 0.6 }]}
+              onPress={handleSimulateScan}
+              disabled={isProcessing}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="sparkles-outline" size={18} color={colors.primaryAmber} style={{ marginRight: 8 }} />
+              <Text style={styles.simulateButtonText}>
+                {isProcessing ? 'Enrolando...' : 'Simular Nuevo QR'}
+              </Text>
+            </TouchableOpacity>
+
+            {mode === 'burst' && lastScannedCode && (
+              <TouchableOpacity
+                style={[styles.duplicateButton, isProcessing && { opacity: 0.6 }]}
+                onPress={handleSimulateDuplicate}
+                disabled={isProcessing}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="copy-outline" size={16} color="#F59E0B" style={{ marginRight: 6 }} />
+                <Text style={styles.duplicateButtonText}>Probar Duplicado</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </LiquidGlassView>
       </View>
     </View>
@@ -287,6 +476,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     zIndex: 10,
+    paddingHorizontal: 16,
   },
   modeToggleGroup: {
     flexDirection: 'row',
@@ -311,6 +501,76 @@ const styles = StyleSheet.create({
   modeButtonTextActive: {
     color: '#000000',
     fontWeight: '800',
+  },
+  toastAnimatedContainer: {
+    width: '100%',
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  toastCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '92%',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: 'rgba(20, 23, 28, 0.95)',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  toastCardDuplicate: {
+    borderColor: 'rgba(245, 158, 11, 0.65)',
+    backgroundColor: 'rgba(30, 24, 15, 0.96)',
+  },
+  toastCardSuccess: {
+    borderColor: 'rgba(16, 185, 129, 0.65)',
+    backgroundColor: 'rgba(12, 32, 24, 0.96)',
+  },
+  toastCardOffline: {
+    borderColor: 'rgba(212, 175, 55, 0.65)',
+    backgroundColor: 'rgba(32, 28, 16, 0.96)',
+  },
+  toastCardError: {
+    borderColor: 'rgba(239, 68, 68, 0.65)',
+    backgroundColor: 'rgba(35, 15, 15, 0.96)',
+  },
+  toastIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  toastContent: {
+    flex: 1,
+  },
+  toastHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  toastTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  toastCode: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+  },
+  toastMessage: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '500',
   },
   viewfinderCenterWrapper: {
     alignItems: 'center',
@@ -365,6 +625,22 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(212, 175, 55, 0.3)',
     borderRadius: 14,
     borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  processingCenter: {
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  processingText: {
+    color: colors.primaryAmber,
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 6,
   },
   viewfinderInstructions: {
     color: '#FFFFFF',
@@ -384,9 +660,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.4)',
+    minWidth: 240,
+  },
+  burstHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  burstLoteBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  burstLoteText: {
+    color: colors.primaryAmber,
+    fontSize: 10,
+    fontWeight: '700',
+    fontFamily: 'monospace',
   },
   burstCounterTitle: {
-    color: colors.primaryAmber,
+    color: colors.textSecondary,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1,
@@ -402,8 +699,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  lastScannedPlaceholder: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '500',
+  },
   bottomControls: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     alignItems: 'center',
     width: '100%',
   },
@@ -411,18 +713,43 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     overflow: 'hidden',
+    padding: 6,
+  },
+  bottomControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   simulateButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     height: 48,
-    paddingHorizontal: 20,
-    width: '100%',
+    paddingHorizontal: 16,
+    borderRadius: 12,
   },
   simulateButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  duplicateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  duplicateButtonText: {
+    color: colors.primaryAmber,
+    fontSize: 12,
     fontWeight: '700',
   },
 });

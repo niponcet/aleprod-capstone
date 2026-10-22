@@ -75,6 +75,27 @@ CREATE TABLE IF NOT EXISTS eventos_locales (
 );
 ```
 
+### Tabla Local Activa: `palmetas_pendientes` (HU-13 Aprovisionamiento Masivo Offline)
+```sql
+CREATE TABLE IF NOT EXISTS palmetas_pendientes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  qr_uuid TEXT NOT NULL UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'operativo',
+  lote_ingreso TEXT NOT NULL,
+  fecha TEXT NOT NULL,
+  sincronizado INTEGER DEFAULT 0,
+  sincronizado_at TEXT
+);
+```
+
+#### Funciones de Acceso a Datos de Palmetas:
+- `insertPendingPalmeta(qrUuid, loteIngreso, estado)`: Inserción local de palmetas con control de unicidad (`UNIQUE`). Retorna `{ success, isDuplicate, id }`.
+- `getPendingPalmetasCount()`: Conteo de palmetas locales con `sincronizado = 0`.
+- `getPendingPalmetas()`: Lista de palmetas encoladas para el motor de sincronización.
+- `markPalmetaAsSynced(id)`: Actualiza `sincronizado = 1` y marca timestamp.
+- `isPalmetaPending(qrUuid)`: Chequeo rápido de pre-existencia local.
+- `getTotalPendingSyncCount()`: Suma combinada de incidencias y palmetas pendientes.
+
 ---
 
 ## 3. Esquema Central PostgreSQL en Supabase Cloud
@@ -143,9 +164,11 @@ CREATE TABLE public.eventos (
 ```sql
 CREATE TABLE public.palmetas_led (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  qr_uuid TEXT NOT NULL UNIQUE,
-  codigo_visible TEXT NOT NULL UNIQUE,       -- Ej: 'PL-001', 'PL-002'
+  qr_uuid TEXT UNIQUE,                      -- Código/UUID de la palmeta
+  codigo_qr TEXT UNIQUE,                    -- Alias de escaneo móvil (HU-13)
+  codigo_visible TEXT UNIQUE,               -- Ej: 'PL-AF69C8' (autogenerado si null)
   lote_fabricacion TEXT,
+  lote_ingreso TEXT,                        -- Ej: 'LOTE-102026' (HU-13)
   estado TEXT NOT NULL DEFAULT 'operativo' CHECK (estado IN ('operativo', 'mantencion', 'reparacion', 'baja')),
   ultima_revision TIMESTAMPTZ,
   ubicacion_actual TEXT DEFAULT 'bodega_central',
@@ -153,6 +176,10 @@ CREATE TABLE public.palmetas_led (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 ```
+
+#### Trigger de Homologación de Campos (`tr_sync_palmeta_fields`):
+Sincroniza automáticamente `qr_uuid` <-> `codigo_qr`, `lote_fabricacion` <-> `lote_ingreso` y genera `codigo_visible` si no fue provisto.
+
 
 ### Tabla: `incidencias` (Reportes Técnicos desde Móvil)
 ```sql

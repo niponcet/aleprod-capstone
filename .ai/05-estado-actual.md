@@ -7,9 +7,9 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 21 de Octubre de 2026 (Sesión 11 — Motor de Sincronización Real y Supabase Storage HU-12 y HU-14).
-- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Motor de sincronización offline-first activo con subida de fotos a Storage y lote a PostgreSQL, ciclo de vida de eventos y persistencia híbrida SQLite/Supabase.
-- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10, HU-12 y HU-16 Completadas en móvil), Épica 4 (HU-14 y HU-15 Completadas).
+- **Fecha de Última Actualización:** 21 de Octubre de 2026 (Sesión 12 — Aprovisionamiento Masivo en Modo Ráfaga HU-13).
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Motor de sincronización offline-first activo con subida de fotos a Storage y lote a PostgreSQL, ciclo de vida de eventos, aprovisionamiento masivo con control de duplicados y persistencia híbrida SQLite/Supabase.
+- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10, HU-12, HU-13 y HU-16 Completadas en móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile`). Navegación con **Expo Router** y `<NativeTabs>` (Liquid Glass iOS).
 - **Credenciales Cloud:** `mobile/.env` configurado con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS y storage bucket `evidencias-incidencias` activos y verificados vía pruebas automatizadas.
 
@@ -48,8 +48,11 @@
   - Bucket `evidencias-incidencias` creado en Supabase Storage con políticas de inserción autenticada y lectura pública.
   - Subida de evidencias fotográficas locales (`file://`) desde SQLite a Supabase Storage bucket `evidencias-incidencias` utilizando `expo-file-system` (lectura Base64) y `base64-arraybuffer` (decodificación a ArrayBuffer).
   - Obtención y almacenamiento de `publicUrl` permanente en la nube vinculada a cada incidencia.
-- 🔄 **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[En Progreso: UI + SQLite Funcionales / Tabla Remota Lista]`
-  - Tabla `palmetas_led` con restricciones de unicidad de QR y políticas RLS creadas en Supabase Cloud.
+- ✅ **HU-13: Aprovisionamiento Masivo (Modo Ráfaga)** `[Completada]`
+  - Conexión real de `ScannerScreen.tsx` con Supabase `palmetas_led` (`codigo_qr`, `estado = 'operativo'`, `lote_ingreso`).
+  - Detección instantánea de duplicados mediante código de error Postgres `23505` y restricciones de unicidad, mostrando toast/banner visual rápido no bloqueante ("Palmeta ya registrada") sin pausar el flujo de ráfaga.
+  - Resiliencia Offline: almacenamiento de contingencia en la nueva tabla local SQLite `palmetas_pendientes` (`insertPendingPalmeta`).
+  - Integración al motor de sincronización `sync.ts` (`syncPendingPalmetas`) y pantalla de configuración `SettingsScreen.tsx` para sincronización combinada.
 - ✅ **HU-16: Ciclo de Vida e Historial de Eventos** `[Completada]`
   - Implementación de control de estados (`en_curso` vs `finalizado`) tanto en PostgreSQL Supabase como en SQLite local (`eventos_locales`).
   - `EventsScreen.tsx`: Pestañas interactivas "En Curso" e "Historial" con contadores en tiempo real, navegación táctil al detalle del evento y auto-refresco vía `useFocusEffect`.
@@ -86,14 +89,20 @@
    - Construir autenticación con Supabase Auth SSR en `web/app/login/page.tsx`.
    - Implementar control de acceso RBAC (`admin` vs `tecnico`).
    - Crear Dashboard administrativo con métricas reales de inventario y estado de eventos.
-2. **HU-13 (Aprovisionamiento Masivo / Modo Ráfaga en Móvil):**
-   - Conectar escaneo ráfaga a la tabla `palmetas_led` en Supabase Cloud con validación de duplicados.
-3. **Optimización HU-11 (Auto-sincronización opcional):**
+2. **Optimización HU-11 (Auto-sincronización opcional):**
    - Disparar sync en segundo plano inmediatamente tras registrar incidencia si el dispositivo cuenta con red activa.
 
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-21 (Sesión 12 — Aprovisionamiento Masivo en Modo Ráfaga HU-13):**
+  - Implementación del servicio `mobile/src/core/api/palmetas.ts`: inserción de palmetas con `codigo_qr`, `estado = 'operativo'`, `lote_ingreso` dinámico (`generateLoteIngreso` -> `LOTE-102026`).
+  - Creación de tabla local SQLite `palmetas_pendientes` con helpers (`insertPendingPalmeta`, `getPendingPalmetas`, `getPendingPalmetasCount`, `markPalmetaAsSynced`).
+  - Actualización del esquema Supabase Cloud en `palmetas_led`: columnas `codigo_qr` y `lote_ingreso`, índice único, trigger `tr_sync_palmeta_fields` y política RLS para inserción autenticada.
+  - Refactorización de `ScannerScreen.tsx`: integración de aprovisionamiento continuo, banner toast rápido no bloqueante con animación de entrada y colores semánticos (aviso "Palmeta ya registrada" ante código 23505), feedback háptico diferenciado y botones para simular nuevos códigos y duplicados.
+  - Extensión del motor de sincronización `sync.ts` con `syncPendingPalmetas` y `syncAllPendingData`, vinculado a `SettingsScreen.tsx` para sincronización consolidada (incidencias + palmetas).
+  - Verificación automatizada con script de prueba real en Supabase Cloud: inserción exitosa, captura de error de duplicado 23505 y limpieza. Tipado TypeScript verificado con 0 errores.
 
 - **2026-10-21 (Sesión 11 — Motor de Sincronización Real y Supabase Storage HU-12 y HU-14):**
   - Implementación del servicio de sincronización por lote `mobile/src/core/api/sync.ts` (`syncPendingIncidencias`).

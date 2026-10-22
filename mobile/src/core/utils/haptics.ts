@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 
-export type HapticType = 'selection' | 'light' | 'medium' | 'success' | 'warning';
+export type HapticType = 'selection' | 'light' | 'medium' | 'success' | 'warning' | 'error';
 
 /**
  * Dispara retroalimentación háptica nativa en dispositivos iOS/Android
@@ -23,6 +23,9 @@ export const triggerHaptic = (type: HapticType = 'selection') => {
         break;
       case 'warning':
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+        break;
+      case 'error':
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
         break;
     }
   } catch {

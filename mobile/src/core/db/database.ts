@@ -27,6 +27,16 @@ export interface LocalEvento {
   tecnico_id?: string;
 }
 
+export interface LocalPalmetaPendiente {
+  id: number;
+  qr_uuid: string;
+  estado: string;
+  lote_ingreso: string;
+  fecha: string;
+  sincronizado: number;
+  sincronizado_at?: string;
+}
+
 export const initDB = () => {
   try {
     // 1. Tabla de incidencias locales
@@ -82,7 +92,20 @@ export const initDB = () => {
       );
     `);
 
-    console.log("Tablas 'incidencias_locales' y 'eventos_locales' sincronizadas.");
+    // 3. Tabla de palmetas pendientes para modo ráfaga offline (HU-13)
+    db.execSync(`
+      CREATE TABLE IF NOT EXISTS palmetas_pendientes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        qr_uuid TEXT NOT NULL UNIQUE,
+        estado TEXT NOT NULL DEFAULT 'operativo',
+        lote_ingreso TEXT NOT NULL,
+        fecha TEXT NOT NULL,
+        sincronizado INTEGER DEFAULT 0,
+        sincronizado_at TEXT
+      );
+    `);
+
+    console.log("Tablas 'incidencias_locales', 'eventos_locales' y 'palmetas_pendientes' sincronizadas.");
   } catch (error) {
     console.error("Error inicializando la base de datos:", error);
   }
@@ -294,4 +317,110 @@ export const markAllAsSynced = (): number => {
     console.error("Error marcando registros como sincronizados:", error);
     return 0;
   }
+};
+
+/**
+ * HU-13: Inserta una palmeta en la cola local de pendientes cuando no hay conexión
+ * Maneja duplicados locales automáticamente vía constraint UNIQUE
+ */
+export const insertPendingPalmeta = (
+  qrUuid: string,
+  loteIngreso: string,
+  estado: string = 'operativo'
+): { success: boolean; isDuplicate: boolean; id?: number } => {
+  try {
+    // 1. Verificación previa por código
+    const existing = db.getFirstSync<{ id: number; sincronizado: number }>(
+      'SELECT id, sincronizado FROM palmetas_pendientes WHERE qr_uuid = ? LIMIT 1',
+      [qrUuid]
+    );
+
+    if (existing) {
+      return { success: false, isDuplicate: true, id: existing.id };
+    }
+
+    // 2. Inserción parametrizada con API síncrona moderna de Expo SQLite
+    const fecha = new Date().toISOString();
+    const result = db.runSync(
+      'INSERT INTO palmetas_pendientes (qr_uuid, estado, lote_ingreso, fecha, sincronizado) VALUES (?, ?, ?, ?, 0)',
+      [qrUuid, estado, loteIngreso, fecha]
+    );
+
+    return { success: true, isDuplicate: false, id: result.lastInsertRowId };
+  } catch (error: any) {
+    if (error?.message && (error.message.includes('UNIQUE constraint failed') || error.message.includes('code 2067'))) {
+      return { success: false, isDuplicate: true };
+    }
+    console.error('Error insertando palmeta pendiente:', error);
+    throw error;
+  }
+};
+
+/**
+ * HU-13: Retorna el número de palmetas pendientes de sincronizar
+ */
+export const getPendingPalmetasCount = (): number => {
+  try {
+    const row = db.getFirstSync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM palmetas_pendientes WHERE sincronizado = 0'
+    );
+    return row?.count ?? 0;
+  } catch (error) {
+    console.error('Error obteniendo conteo de palmetas pendientes:', error);
+    return 0;
+  }
+};
+
+/**
+ * HU-13: Retorna todas las palmetas pendientes para el motor de sincronización
+ */
+export const getPendingPalmetas = (): LocalPalmetaPendiente[] => {
+  try {
+    const rows = db.getAllSync<LocalPalmetaPendiente>(
+      'SELECT * FROM palmetas_pendientes WHERE sincronizado = 0 ORDER BY id ASC'
+    );
+    return rows;
+  } catch (error) {
+    console.error('Error obteniendo palmetas pendientes:', error);
+    return [];
+  }
+};
+
+/**
+ * HU-13: Marca una palmeta local pendiente como sincronizada con la nube
+ */
+export const markPalmetaAsSynced = (id: number): boolean => {
+  try {
+    const fecha = new Date().toISOString();
+    db.runSync(
+      'UPDATE palmetas_pendientes SET sincronizado = 1, sincronizado_at = ? WHERE id = ?',
+      [fecha, id]
+    );
+    return true;
+  } catch (error) {
+    console.error(`Error marcando palmeta ${id} como sincronizada:`, error);
+    return false;
+  }
+};
+
+/**
+ * HU-13: Verifica si una palmeta ya está en cola local de pendientes
+ */
+export const isPalmetaPending = (qrUuid: string): boolean => {
+  try {
+    const row = db.getFirstSync<{ id: number }>(
+      'SELECT id FROM palmetas_pendientes WHERE qr_uuid = ? LIMIT 1',
+      [qrUuid]
+    );
+    return !!row;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Conteo total de pendientes (incidencias + palmetas masivas)
+ */
+export const getTotalPendingSyncCount = (): number => {
+  return getPendingSyncCount() + getPendingPalmetasCount();
 };

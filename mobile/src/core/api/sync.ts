@@ -5,6 +5,9 @@ import {
   getPendingIncidencias,
   markIncidenciaAsSynced,
   LocalIncidencia,
+  getPendingPalmetas,
+  markPalmetaAsSynced,
+  LocalPalmetaPendiente,
 } from '../db/database';
 
 export interface SyncResult {
@@ -12,6 +15,15 @@ export interface SyncResult {
   syncedCount: number;
   failedCount: number;
   photosUploaded: number;
+  palmetasSynced?: number;
+  errors: string[];
+}
+
+export interface PalmetaSyncResult {
+  totalPending: number;
+  syncedCount: number;
+  duplicateCount: number;
+  failedCount: number;
   errors: string[];
 }
 
@@ -247,4 +259,80 @@ export const syncPendingIncidencias = async (): Promise<SyncResult> => {
   }
 
   return result;
+};
+
+/**
+ * HU-13: Sincroniza las palmetas aprovisionadas en modo ráfaga que quedaron pendientes en SQLite
+ */
+export const syncPendingPalmetas = async (): Promise<PalmetaSyncResult> => {
+  const pendingRows: LocalPalmetaPendiente[] = getPendingPalmetas();
+
+  const result: PalmetaSyncResult = {
+    totalPending: pendingRows.length,
+    syncedCount: 0,
+    duplicateCount: 0,
+    failedCount: 0,
+    errors: [],
+  };
+
+  if (pendingRows.length === 0) {
+    return result;
+  }
+
+  for (const item of pendingRows) {
+    try {
+      const { error } = await supabase
+        .from('palmetas_led')
+        .insert({
+          codigo_qr: item.qr_uuid,
+          qr_uuid: item.qr_uuid,
+          estado: item.estado || 'operativo',
+          lote_ingreso: item.lote_ingreso,
+          lote_fabricacion: item.lote_ingreso,
+          ubicacion_actual: 'bodega_central',
+        });
+
+      if (!error) {
+        markPalmetaAsSynced(item.id);
+        result.syncedCount++;
+      } else {
+        const errorMsg = error.message?.toLowerCase() || '';
+        const isDuplicate =
+          error.code === '23505' ||
+          errorMsg.includes('duplicate') ||
+          errorMsg.includes('already exists') ||
+          errorMsg.includes('unique constraint');
+
+        if (isDuplicate) {
+          // Si ya existía en la nube, marcamos como sincronizada para liberar la cola
+          markPalmetaAsSynced(item.id);
+          result.duplicateCount++;
+        } else {
+          result.failedCount++;
+          result.errors.push(`Palmeta #${item.qr_uuid}: ${error.message}`);
+        }
+      }
+    } catch (err: any) {
+      console.error(`Error sincronizando palmeta pendiente ${item.qr_uuid}:`, err);
+      result.failedCount++;
+      result.errors.push(err?.message || 'Error de red');
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Sincronización completa de terreno (Incidencias + Palmetas masivas)
+ */
+export const syncAllPendingData = async (): Promise<{
+  incidencias: SyncResult;
+  palmetas: PalmetaSyncResult;
+}> => {
+  const [incidencias, palmetas] = await Promise.all([
+    syncPendingIncidencias(),
+    syncPendingPalmetas(),
+  ]);
+
+  return { incidencias, palmetas };
 };
