@@ -154,3 +154,93 @@ const fallbackToOffline = (qrCode: string, lote: string): ProvisionResult => {
     };
   }
 };
+
+export interface InventoryMetrics {
+  totalPalmetas: number;
+  totalM2: number;
+  operativoCount: number;
+  operativoM2: number;
+  operativoPercentage: number;
+  mantencionCount: number;
+  mantencionM2: number;
+  bajaCount: number;
+  bajaM2: number;
+}
+
+/**
+ * Convierte cantidad de palmetas a metros cuadrados (1 palmeta = 0.25 m² / 50x50cm)
+ */
+export const palmetasToM2 = (count: number): number => {
+  return Number((count * 0.25).toFixed(2));
+};
+
+/**
+ * Formatea metros cuadrados (ej: "25 m²" o "32.5 m²")
+ */
+export const formatM2 = (m2: number): string => {
+  if (m2 === 0) return '0 m²';
+  return Number.isInteger(m2) ? `${m2} m²` : `${m2.toFixed(2).replace(/\.?0+$/, '')} m²`;
+};
+
+export const getEmptyInventoryMetrics = (): InventoryMetrics => ({
+  totalPalmetas: 0,
+  totalM2: 0,
+  operativoCount: 0,
+  operativoM2: 0,
+  operativoPercentage: 0,
+  mantencionCount: 0,
+  mantencionM2: 0,
+  bajaCount: 0,
+  bajaM2: 0,
+});
+
+/**
+ * Consulta en Supabase la tabla 'palmetas_led' agrupada por estado ('operativo', 'mantencion', 'baja')
+ * y calcula áreas dinámicamente con el estándar 1 palmeta = 0.25 m².
+ */
+export const fetchInventoryMetrics = async (): Promise<InventoryMetrics> => {
+  try {
+    const { data, error } = await supabase
+      .from('palmetas_led')
+      .select('estado');
+
+    if (error) {
+      console.warn('Error consultando palmetas en Supabase, retornando ceros:', error.message);
+      return getEmptyInventoryMetrics();
+    }
+
+    let op = 0;
+    let mant = 0;
+    let baja = 0;
+
+    (data || []).forEach((row: { estado?: string }) => {
+      const st = row.estado?.toLowerCase() || '';
+      if (st === 'operativo') {
+        op++;
+      } else if (st === 'mantencion' || st === 'reparacion') {
+        mant++;
+      } else if (st === 'baja') {
+        baja++;
+      }
+    });
+
+    const total = op + mant + baja;
+    const percentage = total > 0 ? (op / total) * 100 : 0;
+
+    return {
+      totalPalmetas: total,
+      totalM2: palmetasToM2(total),
+      operativoCount: op,
+      operativoM2: palmetasToM2(op),
+      operativoPercentage: percentage,
+      mantencionCount: mant,
+      mantencionM2: palmetasToM2(mant),
+      bajaCount: baja,
+      bajaM2: palmetasToM2(baja),
+    };
+  } catch (err: any) {
+    console.warn('Excepción obteniendo métricas de inventario:', err?.message);
+    return getEmptyInventoryMetrics();
+  }
+};
+

@@ -199,6 +199,38 @@ export const getLocalIncidenciasByEvento = (eventoIdOrName: string): LocalIncide
 };
 
 /**
+ * Retorna todas las incidencias locales registradas en SQLite
+ */
+export const getAllLocalIncidencias = (): LocalIncidencia[] => {
+  try {
+    const rows = db.getAllSync<LocalIncidencia>(
+      'SELECT * FROM incidencias_locales ORDER BY id DESC'
+    );
+    return rows;
+  } catch (error) {
+    console.error("Error obteniendo todas las incidencias locales:", error);
+    return [];
+  }
+};
+
+/**
+ * Retorna todos los eventos registrados en la caché SQLite local
+ */
+export const getAllLocalEventos = (): LocalEvento[] => {
+  try {
+    const rows = db.getAllSync<LocalEvento>(
+      'SELECT * FROM eventos_locales ORDER BY fecha_inicio DESC'
+    );
+    return rows;
+  } catch (error) {
+    console.error("Error obteniendo eventos locales:", error);
+    return [];
+  }
+};
+
+
+
+/**
  * HU-16: Actualiza el estado de un evento local (ej. a 'finalizado')
  */
 export const updateLocalEventoEstado = (

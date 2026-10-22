@@ -47,8 +47,9 @@
   - **Descripción:** Interfaz para visualizar el stock actual de insumos, herramientas y repuestos.
 
 ### Épica 3: Operación Móvil en Terreno (App)
-- **HU-10: Módulo de Sesión Activa por Evento** `[Completada]`
-  - **Descripción:** Visualización de evento de turno, métricas en m² y agenda de eventos. `EventsScreen.tsx` cuenta con CTA superior, Bottom Sheet para iniciar eventos en terreno (`StartEventBottomSheet.tsx`) con inserción real en Supabase `eventos`, pull-to-refresh y asociación al técnico activo. `HomeScreen.tsx` conectado dinámicamente: renderiza la card del evento activo en tiempo real (nombre, recinto, metros, equipamiento) con navegación táctil al detalle, o card de estado vacío "Sin Montaje Activo" con redirección a la agenda si no hay eventos en curso.
+- **HU-10: Módulo de Sesión Activa por Evento y Métricas Dinámicas** `[Completada]`
+  - **Descripción:** Visualización de evento de turno, métricas en m² y agenda de eventos. `HomeScreen.tsx` 100% conectado a datos dinámicos: cálculo de área según estándar Aleprod (1 palmeta = 0.25 m² para pantallas P3.9) consultando en tiempo real la tabla `palmetas_led` en Supabase por estado ('operativo', 'mantencion', 'baja'); actividad reciente híbrida (Supabase + SQLite) de las últimas 3 incidencias con badges y semáforo semántico; y botón "Historial >" enlazado a la nueva pantalla dedicada `ActivityHistoryScreen.tsx` con filtros por evento y FlatList optimizada.
+
 - **HU-11: Formulario de Incidencias In Situ** `[En Progreso: UI Lista + Persistencia SQLite Local / Falta INSERT a Supabase]`
   - **Descripción:** Modal Bottom Sheet tipo 3 taps (`ReportIncidentModal.tsx`). Los reportes se guardan correctamente en SQLite local, pero NO se envían a la tabla `incidencias` de Supabase.
 - **HU-12: Captura de Evidencia Fotográfica** `[Completada]`

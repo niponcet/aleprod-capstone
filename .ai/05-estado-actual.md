@@ -7,11 +7,11 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 21 de Octubre de 2026 (Sesión 12 — Aprovisionamiento Masivo en Modo Ráfaga HU-13).
-- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Motor de sincronización offline-first activo con subida de fotos a Storage y lote a PostgreSQL, ciclo de vida de eventos, aprovisionamiento masivo con control de duplicados y persistencia híbrida SQLite/Supabase.
-- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10, HU-12, HU-13 y HU-16 Completadas en móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile`). Navegación con **Expo Router** y `<NativeTabs>` (Liquid Glass iOS).
-- **Credenciales Cloud:** `mobile/.env` configurado con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS y storage bucket `evidencias-incidencias` activos y verificados vía pruebas automatizadas.
+- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 13 — Métricas Dinámicas de Inventario, Actividad Reciente y Pantalla de Historial).
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Motor de sincronización offline-first activo, ciclo de vida de eventos, aprovisionamiento masivo y métricas dinámicas de inventario conectadas en tiempo real a Supabase Cloud con trazabilidad histórica completa.
+- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en móvil), Épica 4 (HU-14 y HU-15 Completadas).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` con **0 errores**). Navegación con **Expo Router**, `<NativeTabs>` (Liquid Glass iOS) y ruta de navegación `activity-history` activa.
+- **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS y storage bucket `evidencias-incidencias` activos y verificados vía pruebas automatizadas.
 
 ---
 
@@ -96,7 +96,16 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-22 (Sesión 13 — Métricas Dinámicas de Inventario, Actividad Reciente y Pantalla de Historial):**
+  - **Métricas Dinámicas en `HomeScreen.tsx`:** Eliminación de datos estáticos (`70 m²`, `15 m²`, `140 palmetas`, etc.). Conexión reactiva a Supabase `palmetas_led` con cálculo automático de área según estándar Aleprod (1 palmeta = 0.25 m² para pantallas P3.9 de 50x50cm). Visualización de m², palmetas y porcentajes dinámicos en tarjetas operativas, en mantención y dadas de baja.
+  - **Actividad Reciente Real:** Eliminación de tarjetas mockup (`#A45`, `#B12`). Consulta híbrida de las últimas 3 incidencias registradas en Supabase Cloud y SQLite local mediante `fetchHybridIncidents({ limit: 3 })`, mapeadas con iconos y colores semánticos (rojo para baja, ámbar para revisión/falla, verde para operativa).
+  - **Nueva Pantalla de Historial (`ActivityHistoryScreen.tsx`):** Creación de vista dedicada y ruta Expo Router `/activity-history` registrada en el Stack principal. Botón "Historial >" de la Home conectado con navegación y feedback háptico.
+  - **Filtros por Evento y Búsqueda en Vivo:** Selector tipo Dropdown (Modal Bottom Sheet) para aislar eventos cómodamente sin scrolls horizontales infinitos, complementado con una barra de búsqueda en tiempo real (por QR, código visible, tipo de falla o descripción).
+  - **Servicios Modulares:** Nuevos métodos en `mobile/src/core/api/palmetas.ts` (`fetchInventoryMetrics`, `palmetasToM2`, `formatM2`) y creación de `mobile/src/core/api/incidencias.ts` (`fetchHybridIncidents`, `fetchFilterEvents`).
+  - **Verificación de Tipos:** Validación estricta con `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
 - **2026-10-21 (Sesión 12 — Aprovisionamiento Masivo en Modo Ráfaga HU-13):**
+
   - Implementación del servicio `mobile/src/core/api/palmetas.ts`: inserción de palmetas con `codigo_qr`, `estado = 'operativo'`, `lote_ingreso` dinámico (`generateLoteIngreso` -> `LOTE-102026`).
   - Creación de tabla local SQLite `palmetas_pendientes` con helpers (`insertPendingPalmeta`, `getPendingPalmetas`, `getPendingPalmetasCount`, `markPalmetaAsSynced`).
   - Actualización del esquema Supabase Cloud en `palmetas_led`: columnas `codigo_qr` y `lote_ingreso`, índice único, trigger `tr_sync_palmeta_fields` y política RLS para inserción autenticada.

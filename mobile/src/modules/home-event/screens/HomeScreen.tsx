@@ -5,8 +5,8 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
   StatusBar,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,14 +15,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import {
-  getRecentActivity,
   getActiveLocalEvento,
   upsertLocalEvento,
   updateLocalEventoEstado,
-  LocalIncidencia,
   LocalEvento,
 } from '../../../core/db/database';
 import { supabase } from '../../../core/api/supabase';
+import {
+  fetchInventoryMetrics,
+  formatM2,
+  InventoryMetrics,
+  getEmptyInventoryMetrics,
+} from '../../../core/api/palmetas';
+import {
+  fetchHybridIncidents,
+  UnifiedIncident,
+} from '../../../core/api/incidencias';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
 
@@ -30,9 +38,11 @@ export const HomeScreen: React.FC = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
-  const [realIncidencias, setRealIncidencias] = useState<LocalIncidencia[]>([]);
   const [activeEvent, setActiveEvent] = useState<LocalEvento | null>(null);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
+  const [equipmentMetrics, setEquipmentMetrics] = useState<InventoryMetrics>(getEmptyInventoryMetrics());
+  const [recentIncidents, setRecentIncidents] = useState<UnifiedIncident[]>([]);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // Consulta híbrida: Supabase Cloud para datos frescos + SQLite local para offline
   const fetchActiveEvent = useCallback(async () => {
@@ -83,14 +93,41 @@ export const HomeScreen: React.FC = () => {
     }
   }, []);
 
-  // Recargar datos locales y evento activo cada vez que la pantalla entra en foco
+  // Consulta de métricas de inventario y actividad reciente híbrida (Supabase + SQLite)
+  const loadDynamicData = useCallback(async () => {
+    try {
+      const [metrics, incidents] = await Promise.all([
+        fetchInventoryMetrics(),
+        fetchHybridIncidents({ limit: 3 }),
+      ]);
+      setEquipmentMetrics(metrics);
+      setRecentIncidents(incidents);
+    } catch (err) {
+      console.warn('Error cargando métricas o incidencias dinámicas en HomeScreen:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Recargar datos dinámicos y evento activo cada vez que la pantalla entra en foco
   useFocusEffect(
     useCallback(() => {
-      const records = getRecentActivity(5);
-      setRealIncidencias(records);
       fetchActiveEvent();
-    }, [fetchActiveEvent])
+      loadDynamicData();
+    }, [fetchActiveEvent, loadDynamicData])
   );
+
+  const onRefresh = useCallback(() => {
+    triggerHaptic('medium');
+    setRefreshing(true);
+    fetchActiveEvent();
+    loadDynamicData();
+  }, [fetchActiveEvent, loadDynamicData]);
+
+  const handleGoToHistory = () => {
+    triggerHaptic('selection');
+    router.push('/activity-history');
+  };
 
   const handleActiveEventPress = () => {
     if (!activeEvent) return;
@@ -167,6 +204,14 @@ export const HomeScreen: React.FC = () => {
           { paddingTop: insets.top + 90 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primaryAmber}
+            colors={[colors.primaryAmber]}
+          />
+        }
       >
         {/* Card: Montaje Activo Dinámico o Estado Vacío (HU-10) */}
         {activeEvent ? (
@@ -238,12 +283,14 @@ export const HomeScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Sección: Estado de Equipos */}
+        {/* Sección: Estado de Equipos (Métricas Dinámicas HU-07 / HU-10) */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Estado de equipos</Text>
             <View style={styles.totalBadge}>
-              <Text style={styles.totalBadgeText}>Total: 140 m²</Text>
+              <Text style={styles.totalBadgeText}>
+                Total: {formatM2(equipmentMetrics.totalM2)} ({equipmentMetrics.totalPalmetas} palmetas)
+              </Text>
             </View>
           </View>
 
@@ -256,21 +303,28 @@ export const HomeScreen: React.FC = () => {
                 </View>
                 <View>
                   <Text style={styles.statusCategoryLabel}>Operativos disponibles</Text>
-                  <Text style={styles.statusMainValue}>70 m²</Text>
+                  <Text style={styles.statusMainValue}>{formatM2(equipmentMetrics.operativoM2)}</Text>
                 </View>
               </View>
 
               <View style={styles.statusRightBadgeGroup}>
                 <View style={styles.palmetasCountBadge}>
-                  <Text style={styles.palmetasCountText}>140 palmetas</Text>
+                  <Text style={styles.palmetasCountText}>{equipmentMetrics.operativoCount} palmetas</Text>
                 </View>
-                <Text style={styles.statusPercentageText}>50.0% disponible</Text>
+                <Text style={styles.statusPercentageText}>
+                  {equipmentMetrics.operativoPercentage.toFixed(1)}% disponible
+                </Text>
               </View>
             </View>
 
             {/* Barra de progreso horizontal */}
             <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBarFill, { width: '50%' }]} />
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${Math.min(100, Math.max(0, equipmentMetrics.operativoPercentage))}%` },
+                ]}
+              />
             </View>
           </View>
 
@@ -288,11 +342,11 @@ export const HomeScreen: React.FC = () => {
               </View>
 
               <Text style={styles.gridCardLabel}>En mantención</Text>
-              <Text style={styles.gridCardValue}>15 m²</Text>
+              <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.mantencionM2)}</Text>
 
               <View style={styles.gridCardFooter}>
                 <Ionicons name="warning-outline" size={13} color={colors.warning} style={{ marginRight: 4 }} />
-                <Text style={styles.gridFooterAmber}>30 palmetas</Text>
+                <Text style={styles.gridFooterAmber}>{equipmentMetrics.mantencionCount} palmetas</Text>
               </View>
             </View>
 
@@ -308,124 +362,120 @@ export const HomeScreen: React.FC = () => {
               </View>
 
               <Text style={styles.gridCardLabel}>Dados de baja</Text>
-              <Text style={styles.gridCardValue}>5 m²</Text>
+              <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.bajaM2)}</Text>
 
               <View style={styles.gridCardFooter}>
                 <Ionicons name="close-circle-outline" size={13} color={colors.danger} style={{ marginRight: 4 }} />
-                <Text style={styles.gridFooterRed}>10 palmetas</Text>
+                <Text style={styles.gridFooterRed}>{equipmentMetrics.bajaCount} palmetas</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Sección: Actividad Reciente */}
+        {/* Sección: Actividad Reciente Real */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Actividad reciente</Text>
-            <TouchableOpacity
-              onPress={() =>
-                Alert.alert(
-                  'Historial Completo',
-                  `Hay un total de ${realIncidencias.length} escaneos locales registrados en este dispositivo.`
-                )
-              }
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity onPress={handleGoToHistory} activeOpacity={0.7}>
               <Text style={styles.historyLinkText}>Historial &gt;</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Registros Reales de SQLite (si existen) */}
-          {realIncidencias.map((item) => {
-            const shortCode = item.qr_uuid.length > 8 ? item.qr_uuid.slice(-4).toUpperCase() : item.qr_uuid;
-            const itemStatus = item.tipo_falla?.toLowerCase().includes('baja')
-              ? '• Dado de Baja'
-              : item.tipo_falla?.toLowerCase().includes('mantención')
-                ? '• En Mantención'
-                : '• Operativo';
+          {/* Lista de las últimas 3 incidencias reales (Supabase + SQLite) */}
+          {recentIncidents.length > 0 ? (
+            recentIncidents.map((item) => {
+              const shortCode =
+                item.codigo_visible ||
+                (item.qr_uuid.length > 8 ? item.qr_uuid.slice(-4).toUpperCase() : item.qr_uuid);
 
-            return (
-              <TouchableOpacity
-                key={`real-${item.id}`}
-                style={styles.activityCard}
-                onPress={() =>
-                  handlePalmetaPress(
-                    item.qr_uuid,
-                    `Palmeta #${shortCode}`,
-                    itemStatus
-                  )
-                }
-                activeOpacity={0.8}
-              >
-                <View style={[styles.activityIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-                  <Ionicons name="qr-code-outline" size={18} color={colors.success} />
-                </View>
+              const isBaja =
+                item.tipo_falla.toLowerCase().includes('baja') ||
+                item.tipo_falla.toLowerCase().includes('crítica');
+              const isMant =
+                item.tipo_falla.toLowerCase().includes('manten') ||
+                item.tipo_falla.toLowerCase().includes('apagado') ||
+                item.tipo_falla.toLowerCase().includes('dañado') ||
+                item.tipo_falla.toLowerCase().includes('fuente') ||
+                item.tipo_falla.toLowerCase().includes('falla');
 
-                <View style={styles.activityDetails}>
-                  <View style={styles.activityTitleRow}>
-                    <Text style={styles.activityTitle}>Palmeta #{shortCode}</Text>
-                    <Text style={styles.activityTime}>{formatTimeAgo(item.fecha)}</Text>
+              const iconName: keyof typeof Ionicons.glyphMap = isBaja
+                ? 'close-circle-outline'
+                : isMant
+                  ? 'warning-outline'
+                  : 'checkmark-circle-outline';
+
+              const iconColor = isBaja ? colors.danger : isMant ? colors.warning : colors.success;
+              const iconBg = isBaja
+                ? 'rgba(239, 68, 68, 0.15)'
+                : isMant
+                  ? 'rgba(245, 158, 11, 0.15)'
+                  : 'rgba(16, 185, 129, 0.15)';
+
+              const statusText = isBaja
+                ? '• Dado de Baja'
+                : isMant
+                  ? '• En Mantención'
+                  : '• Operativo';
+
+              const shortCategoryLabel = isBaja
+                ? 'Dada de baja'
+                : isMant
+                  ? 'En mantención'
+                  : 'Operativa OK';
+
+              return (
+                <TouchableOpacity
+                  key={`recent-${item.id}`}
+                  style={styles.activityCard}
+                  onPress={() =>
+                    handlePalmetaPress(
+                      item.qr_uuid,
+                      `Palmeta #${shortCode}`,
+                      statusText
+                    )
+                  }
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.activityIconCircle, { backgroundColor: iconBg }]}>
+                    <Ionicons name={iconName} size={18} color={iconColor} />
                   </View>
-                  <Text style={styles.activitySubtitle} numberOfLines={1}>
-                    {item.tipo_falla || 'Escaneo en terreno'} · {item.sincronizado ? 'Sync OK' : 'Local'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
 
-          {/* Registros de Referencia del Diseño Oficial */}
-          <TouchableOpacity
-            style={styles.activityCard}
-            onPress={() =>
-              handlePalmetaPress(
-                'aleprod-p39-0045-cl',
-                'Palmeta #A45',
-                '• Dado de Baja'
-              )
-            }
-            activeOpacity={0.8}
-          >
-            <View style={[styles.activityIconCircle, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
-              <Ionicons name="close-circle-outline" size={18} color={colors.danger} />
-            </View>
-
-            <View style={styles.activityDetails}>
-              <View style={styles.activityTitleRow}>
-                <Text style={styles.activityTitle}>Palmeta #A45</Text>
-                <Text style={styles.activityTime}>Hace 12 min</Text>
+                  <View style={styles.activityDetails}>
+                    <View style={styles.activityTitleRow}>
+                      <Text style={styles.activityTitle}>Palmeta #{shortCode}</Text>
+                      <Text style={styles.activityTime}>{formatTimeAgo(item.fecha)}</Text>
+                    </View>
+                    <Text style={[styles.activitySubtitle, { color: iconColor }]} numberOfLines={1}>
+                      {shortCategoryLabel} · {item.tipo_falla}
+                    </Text>
+                    <View style={styles.activityEventRow}>
+                      <View style={styles.activityEventPill}>
+                        <Ionicons name="location-outline" size={10} color={colors.primaryAmber} style={{ marginRight: 3 }} />
+                        <Text style={styles.activityEventText} numberOfLines={1}>
+                          {item.evento_nombre || 'Evento en terreno'}
+                        </Text>
+                      </View>
+                      <View style={[styles.activitySyncPill, item.sincronizado ? styles.activitySyncCloud : styles.activitySyncLocal]}>
+                        <Text style={[styles.activitySyncText, { color: item.sincronizado ? colors.success : colors.warning }]}>
+                          {item.sincronizado ? 'Cloud' : 'Local'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <View style={styles.emptyActivityCard}>
+              <View style={styles.emptyActivityIconBox}>
+                <Ionicons name="shield-checkmark-outline" size={22} color={colors.success} />
               </View>
-              <Text style={[styles.activitySubtitle, { color: colors.danger }]} numberOfLines={1}>
-                Dada de baja por conector roto
+              <Text style={styles.emptyActivityTitle}>Sin incidencias recientes</Text>
+              <Text style={styles.emptyActivitySubtitle}>
+                Todos los equipos registrados se encuentran operativos.
               </Text>
             </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.activityCard}
-            onPress={() =>
-              handlePalmetaPress(
-                'aleprod-p39-0012-cl',
-                'Palmeta #B12',
-                '• Operativo'
-              )
-            }
-            activeOpacity={0.8}
-          >
-            <View style={[styles.activityIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-              <Ionicons name="checkmark-circle-outline" size={18} color={colors.success} />
-            </View>
-
-            <View style={styles.activityDetails}>
-              <View style={styles.activityTitleRow}>
-                <Text style={styles.activityTitle}>Palmeta #B12</Text>
-                <Text style={styles.activityTime}>Hace 35 min</Text>
-              </View>
-              <Text style={[styles.activitySubtitle, { color: colors.success }]} numberOfLines={1}>
-                Escaneada · Operativa OK
-              </Text>
-            </View>
-          </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -881,4 +931,72 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 12,
   },
+  activityEventRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    gap: 6,
+  },
+  activityEventPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    maxWidth: 160,
+  },
+  activityEventText: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  activitySyncPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  activitySyncCloud: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+  },
+  activitySyncLocal: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+  },
+  activitySyncText: {
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  emptyActivityCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  emptyActivityIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  emptyActivityTitle: {
+    color: colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  emptyActivitySubtitle: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    textAlign: 'center',
+  },
 });
+
