@@ -352,6 +352,25 @@ export const markAllAsSynced = (): number => {
 };
 
 /**
+ * Marca un conjunto de IDs locales específicos como sincronizados
+ */
+export const markIncidenciasAsSyncedByIds = (ids: number[]): number => {
+  if (ids.length === 0) return 0;
+  try {
+    const fecha = new Date().toISOString();
+    const placeholders = ids.map(() => '?').join(',');
+    const result = db.runSync(
+      `UPDATE incidencias_locales SET sincronizado = 1, sincronizado_at = ? WHERE id IN (${placeholders})`,
+      [fecha, ...ids]
+    );
+    return result.changes;
+  } catch (error) {
+    console.error("Error marcando IDs como sincronizados:", error);
+    return 0;
+  }
+};
+
+/**
  * HU-13: Inserta una palmeta en la cola local de pendientes cuando no hay conexión
  * Maneja duplicados locales automáticamente vía constraint UNIQUE
  */

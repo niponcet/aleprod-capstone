@@ -7,11 +7,11 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 13 — Métricas Dinámicas de Inventario, Actividad Reciente y Pantalla de Historial).
-- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Motor de sincronización offline-first activo, ciclo de vida de eventos, aprovisionamiento masivo y métricas dinámicas de inventario conectadas en tiempo real a Supabase Cloud con trazabilidad histórica completa.
-- **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` con **0 errores**). Navegación con **Expo Router**, `<NativeTabs>` (Liquid Glass iOS) y ruta de navegación `activity-history` activa.
-- **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS y storage bucket `evidencias-incidencias` activos y verificados vía pruebas automatizadas.
+- **Fecha de Última Actualización:** 22 de Octubre de 2026.
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
+- **Sprint Activo:** Épica 1 (HU-05 y HU-06 Completadas en Web y Móvil), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Servidor Next.js activo con HTTP 200 y Expo Router con `<NativeTabs>`.
+- **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS, triggers y storage bucket `evidencias-incidencias` activos y verificados.
 
 ---
 
@@ -26,14 +26,36 @@
 ### Fase 3: Desarrollo Núcleo App/Web (En Curso — UI Avanzada / Backend Móvil Conectado)
 
 #### Épica 1: Autenticación
-- 🔄 **HU-05: Login y Sesión (Web/App)** `[En Progreso — Móvil Completado con Supabase Auth Real / Web No Iniciada]`
-  - Móvil: `LoginScreen.tsx` y `AuthContext.tsx` 100% conectados a `supabase.auth.signInWithPassword`, `getSession` y `onAuthStateChange`. Manejo de errores nativo con alertas en español, feedback de carga con `ActivityIndicator` y sesión probada exitosamente con usuario semilla (`tecnico@aleprod.cl`).
-  - Web: NO existe `web/app/login/page.tsx`.
+- ✅ **HU-05: Login y Sesión (Web/App)** `[Completada en Web y Móvil]`
+  - Móvil: `LoginScreen.tsx` y `AuthContext.tsx` 100% conectados a `supabase.auth.signInWithPassword`, `getSession` y `onAuthStateChange`. Manejo de errores nativo y sesión probada con usuario semilla (`tecnico@aleprod.cl`).
+  - Web: `web/app/login/page.tsx` conectada a Supabase Auth y validada con usuario de Gerencia (`gerencia@aleprod.cl`).
+  - Usuarios Auth activos: `gerencia@aleprod.cl` (Admin) y `tecnico@aleprod.cl` (Técnico).
 
 #### Épica 2: Plataforma Web
-- ❌ **HU-06: Control de Acceso (RBAC)** `[No Iniciado]`
-- ❌ **HU-07: Dashboard Central Web** `[No Iniciado — Boilerplate create-next-app intacto]`
-- ❌ **HU-08: CRUD de Activos Serializados (Web)** `[No Iniciado]`
+- ✅ **HU-06: Control de Acceso (RBAC)** `[Completada en Base de Datos y Web]`
+  - Perfil de `Gerencia` asignado con `rol: 'admin'` en `public.perfiles`.
+  - Roles soportados: `admin` (Dirección/Dashboard) y `tecnico` (Terreno/Móvil).
+- ✅ **HU-07: Dashboard Central Web & Módulo de Incidencias** `[Completada — Conectada a Supabase en Vivo]`
+  - Dashboard Server Component con SSR en Next.js 16 (Turbopack).
+  - Consulta en tiempo real de eventos, parque de palmetas, incidencias y estado de repuestos desde Supabase.
+  - Identificación del perfil activo (`Gerencia`), métricas KPI y flujo seguro de cierre de sesión (`/auth/signout`).
+  - Hero card "Montaje Activo" con cuadrícula estricta de 2x2 para sus métricas (Superficie Asignada / Operativos Disponibles / En Mantención / Dados de Baja).
+  - Barra lateral universal fija (`Sidebar` component): Sticky `height: 100vh`, `width: 264px`, activa en todas las vistas (`/`, `/eventos`, `/palmetas`, `/incidencias`), con contadores en tiempo real (badges) sincronizados vía Supabase postgres_changes, tarjeta de perfil y selector de ruta activa.
+  - Estandarización de espaciado y altura de viewport: Se eliminó el centrado `mx-auto` en `/palmetas`, `/incidencias` y `/eventos`, unificando el padding del contenedor principal a `28px 32px 40px` y `maxWidth: 1240px` para alinearse a la misma altura y distancia lateral exacta del Dashboard principal.
+  - Paleta de diseño corporativo OLED Deep Black (`#0A0A0A`, `#121212`, `#1E1E1E`, `#27272A`, dorado `#D4AF37`) 100% alineada con `.ai/03-ui-ux-branding.md`.
+  - Módulo completo de Incidencias (`/incidencias`) adaptado con la barra fija a la izquierda, cabecera ejecutiva y resolución de averías en tiempo real con escritura directa (`UPDATE incidencias SET resuelto=true`).
+  - Modal integrado para registrar incidencias de prueba directamente en Supabase Cloud.
+  - Sincronización móvil ([mobile/src/modules/settings-sync/screens/SettingsScreen.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/mobile/src/modules/settings-sync/screens/SettingsScreen.tsx)) conectada a Supabase con envío por lotes de `incidencias_locales` (SQLite) hacia `public.incidencias` Cloud.
+- ✅ **HU-08: CRUD de Activos Serializados (Web)** `[Completada — Implementada en web/app/palmetas/page.tsx]`
+  - Módulo de palmetas LED (`/palmetas`) adaptado con la barra lateral universal izquierda fija y cabecera ejecutiva unificada.
+  - KPIs semánticos: Total Parque, Operativas (Verde), En Taller (Ámbar), De Baja (Rojo).
+  - Filtros por estado operativo (operativo / mantención / baja) y buscador por código visible, UUID y lote.
+  - Tabla ejecutiva con badges de estado, ubicación, lote y última revisión.
+  - Modal de ficha técnica con grid de información detallada y cambio de estado operativo con actualización directa en Supabase (`UPDATE palmetas_led`).
+  - Selector de ubicación post-cambio (Bodega Central / En Evento / Taller Técnico).
+- ✅ **HU-08B: Módulo de Gestión de Eventos y Producciones (Web)** `[Completada — Implementada en web/app/eventos/page.tsx]`
+  - Módulo de eventos (`/eventos`) adaptado con la barra lateral universal fija y cabecera ejecutiva unificada.
+  - Filtros por estado de producción (En Curso, Planificado, Finalizado) y modal para registrar nuevos eventos.
 - ❌ **HU-09: Gestión de Inventario a Granel (Web)** `[No Iniciado]`
 
 #### Épica 3: Operación Móvil en Terreno
@@ -76,19 +98,17 @@
 | :--- | :--- | :--- |
 | **Arnés de Contexto** | `AGENTS.md` y `.ai/*.md` | Centralizado en raíz, 5 módulos activos y actualizados. |
 | **Enrutamiento Móvil (Expo Router)** | `mobile/app/` | `<NativeTabs>` con Liquid Glass iOS, SF Symbols, botón QR flotante, `login.tsx` y `event-detail.tsx` conectados. |
-| **Core Móvil** | `mobile/src/core/` | `theme/colors.ts`, `api/supabase.ts` (✅ credenciales activas), `db/database.ts` (SQLite síncrona con `incidencias_locales` y `eventos_locales`), `context/AuthContext.tsx` (✅ 100% Supabase Auth). |
-| **Módulos Móvil** | `mobile/src/modules/` | 4 módulos con UI premium completa. `EventsScreen.tsx` (tabs y navegación), `EventDetailScreen.tsx` (trazabilidad y cierre de evento), `LoginScreen.tsx` 100% integrado a Supabase Auth. |
-| **Web (Admin)** | `web/` | ⚠️ **Boilerplate create-next-app sin modificar.** Pendiente implementar login y dashboard. |
-| **Entornos y Secretos** | `mobile/.env`, `web/.env.local.example` | `mobile/.env` con credenciales reales del proyecto `fovmurimpbexfrjwxdew`. |
+| **Core Móvil** | `mobile/src/core/` | `theme/colors.ts`, `api/supabase.ts` (✅ credenciales activas), `db/database.ts` (SQLite síncrona con `incidencias_locales`, `palmetas_pendientes` y `eventos_locales`), `context/AuthContext.tsx` (✅ 100% Supabase Auth). |
+| **Módulos Móvil** | `mobile/src/modules/` | 4 módulos con UI premium completa. `EventsScreen.tsx` (tabs y navegación), `EventDetailScreen.tsx` (trazabilidad y cierre de evento), `LoginScreen.tsx` 100% integrado a Supabase Auth, `ScannerScreen.tsx` (ráfaga continua). |
+| **Web (Admin)** | `web/` | ✅ **Funcional.** Login (`/login`), Dashboard SSR (`/`), Incidencias (`/incidencias`), **Palmetas LED (`/palmetas`)**, **Eventos (`/eventos`)** — todos conectados a Supabase Cloud con middleware de sesión y barra lateral universal. |
+| **Entornos y Secretos** | `mobile/.env`, `web/.env.local` | `mobile/.env` y `web/.env.local` con credenciales reales del proyecto `fovmurimpbexfrjwxdew`. |
 
 ---
 
 ## 4. Próximos Pasos Inmediatos (Post-Auditoría)
 
-1. **Fase 3 - Épica 2 (Plataforma Web Next.js - HU-05 Web, HU-06, HU-07):**
-   - Construir autenticación con Supabase Auth SSR en `web/app/login/page.tsx`.
-   - Implementar control de acceso RBAC (`admin` vs `tecnico`).
-   - Crear Dashboard administrativo con métricas reales de inventario y estado de eventos.
+1. **Fase 3 - Épica 2 (Inventario a Granel Web - HU-09):**
+   - Construir módulo de repuestos y consumo en la plataforma web.
 2. **Optimización HU-11 (Auto-sincronización opcional):**
    - Disparar sync en segundo plano inmediatamente tras registrar incidencia si el dispositivo cuenta con red activa.
 
@@ -96,7 +116,7 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
-- **2026-10-22 (Sesión 13 — Métricas Dinámicas de Inventario, Actividad Reciente y Pantalla de Historial):**
+- **2026-10-22 (Sesión 13 — Métricas Dinámicas de Inventario, Actividad Reciente y Pantalla de Historial en Móvil):**
   - **Métricas Dinámicas en `HomeScreen.tsx`:** Eliminación de datos estáticos (`70 m²`, `15 m²`, `140 palmetas`, etc.). Conexión reactiva a Supabase `palmetas_led` con cálculo automático de área según estándar Aleprod (1 palmeta = 0.25 m² para pantallas P3.9 de 50x50cm). Visualización de m², palmetas y porcentajes dinámicos en tarjetas operativas, en mantención y dadas de baja.
   - **Actividad Reciente Real:** Eliminación de tarjetas mockup (`#A45`, `#B12`). Consulta híbrida de las últimas 3 incidencias registradas en Supabase Cloud y SQLite local mediante `fetchHybridIncidents({ limit: 3 })`, mapeadas con iconos y colores semánticos (rojo para baja, ámbar para revisión/falla, verde para operativa).
   - **Nueva Pantalla de Historial (`ActivityHistoryScreen.tsx`):** Creación de vista dedicada y ruta Expo Router `/activity-history` registrada en el Stack principal. Botón "Historial >" de la Home conectado con navegación y feedback háptico.
@@ -104,53 +124,43 @@
   - **Servicios Modulares:** Nuevos métodos en `mobile/src/core/api/palmetas.ts` (`fetchInventoryMetrics`, `palmetasToM2`, `formatM2`) y creación de `mobile/src/core/api/incidencias.ts` (`fetchHybridIncidents`, `fetchFilterEvents`).
   - **Verificación de Tipos:** Validación estricta con `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
-- **2026-10-21 (Sesión 12 — Aprovisionamiento Masivo en Modo Ráfaga HU-13):**
+- **2026-10-22 (Sesión 9 — HU-08: Módulo de Palmetas LED en Web):**
+  - Implementación completa de `web/app/palmetas/page.tsx` (Client Component) con queries en tiempo real a la tabla `palmetas_led` de Supabase Cloud.
+  - KPIs de parque: Total, Operativas, En Taller (Mantención + Reparación), De Baja.
+  - Tabla ejecutiva con filtros por estado semántico (tabs Todas/Operativas/En Taller/Baja) y buscador por código visible, UUID y lote.
+  - Modal de ficha técnica con grid de metadatos, selector de nuevo estado operativo (4 opciones) y selector de ubicación post-cambio.
+  - Actualización directa en Supabase con `UPDATE palmetas_led SET estado, ubicacion_actual, updated_at`.
+  - Actualización del Dashboard (`web/app/page.tsx`): KPI card de Palmetas ahora es un `<Link>` a `/palmetas`; botón "Inventario Palmetas" en Accesos Rápidos también enlaza a `/palmetas`.
+  - Verificación exitosa: `GET /palmetas 200` en Turbopack, compilación sin errores, ruta protegida por middleware de sesión.
 
-  - Implementación del servicio `mobile/src/core/api/palmetas.ts`: inserción de palmetas con `codigo_qr`, `estado = 'operativo'`, `lote_ingreso` dinámico (`generateLoteIngreso` -> `LOTE-102026`).
+- **2026-10-22 (Sesión 9 — Activación de Datos Reales en Incidencias y Sincronización Web/Móvil):**
+  - **Supabase Cloud:** Sembrado de registros iniciales reales en `public.incidencias` vinculados a las palmetas existentes (`PL-AF69C8` y `PL-6D3FFA`), al evento `Festival Estadio Nacional` y a técnicos registrados. Creación de clave foránea `incidencias_perfiles_fkey`.
+  - **Trigger de Coherencia Automática:** Creada función y trigger PostgreSQL `tr_sync_incidencia_palmeta_estado` en `public.incidencias` con `SECURITY DEFINER`.
+  - **Módulo Web (`/palmetas` e `/incidencias`):** Actualizados filtros, KPIs y modales para reflejar los 2 estados directos: Operativa y En Mantención.
+  - **Diseño y Estética Web:** Dashboard ([web/app/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/page.tsx)) unificado a la paleta Dark Luxury OLED (`#0A0A0A`) con sidebar fijo a la izquierda.
+  - **Módulo de Eventos y Producciones:** Creado componente interactivo `EventosSection` y módulo dedicado `/eventos` ([web/app/eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/eventos/page.tsx)).
+  - **Supabase Realtime:** Se añadieron las tablas `palmetas_led`, `incidencias` y `eventos` a la publicación `supabase_realtime` de PostgreSQL.
+
+- **2026-10-21 (Sesión 12 — Aprovisionamiento Masivo en Modo Ráfaga HU-13 en Móvil):**
+  - Implementación del servicio `mobile/src/core/api/palmetas.ts`: inserción de palmetas con `codigo_qr`, `estado = 'operativo'`, `lote_ingreso` dinámico.
   - Creación de tabla local SQLite `palmetas_pendientes` con helpers (`insertPendingPalmeta`, `getPendingPalmetas`, `getPendingPalmetasCount`, `markPalmetaAsSynced`).
   - Actualización del esquema Supabase Cloud en `palmetas_led`: columnas `codigo_qr` y `lote_ingreso`, índice único, trigger `tr_sync_palmeta_fields` y política RLS para inserción autenticada.
-  - Refactorización de `ScannerScreen.tsx`: integración de aprovisionamiento continuo, banner toast rápido no bloqueante con animación de entrada y colores semánticos (aviso "Palmeta ya registrada" ante código 23505), feedback háptico diferenciado y botones para simular nuevos códigos y duplicados.
-  - Extensión del motor de sincronización `sync.ts` con `syncPendingPalmetas` y `syncAllPendingData`, vinculado a `SettingsScreen.tsx` para sincronización consolidada (incidencias + palmetas).
-  - Verificación automatizada con script de prueba real en Supabase Cloud: inserción exitosa, captura de error de duplicado 23505 y limpieza. Tipado TypeScript verificado con 0 errores.
+  - Refactorización de `ScannerScreen.tsx`: integración de aprovisionamiento continuo con banner toast rápido no bloqueante.
 
-- **2026-10-21 (Sesión 11 — Motor de Sincronización Real y Supabase Storage HU-12 y HU-14):**
+- **2026-10-21 (Sesión 11 — Motor de Sincronización Real y Supabase Storage HU-12 y HU-14 en Móvil):**
   - Implementación del servicio de sincronización por lote `mobile/src/core/api/sync.ts` (`syncPendingIncidencias`).
-  - Carga de imágenes locales a Supabase Storage: función utilitaria `uploadEvidenceImage` con `expo-file-system` (lectura Base64) y `base64-arraybuffer` (decodificación a `ArrayBuffer`) apuntando al bucket `evidencias-incidencias`.
-  - Batch INSERT en la tabla `incidencias` de Supabase con resolución resiliente de claves foráneas (`evento_id` por UUID o nombre, `palmeta_id` vía QR UUID).
-  - Manejo de confirmación local en SQLite: actualización atómica a `sincronizado = 1`, `sincronizado_at = now()` y persistencia de `remoteFotoUrl`.
-  - Tolerancia a fallos: ante errores de conectividad o HTTP en la nube, los registros y fotos locales permanecen intactos en `incidencias_locales` (`sincronizado = 0`) para futuros reintentos sin pérdida de información ni crasheos.
-  - Refactorización de `mobile/src/modules/settings-sync/screens/SettingsScreen.tsx`: eliminación completa del `setTimeout` simulado, integración de `ActivityIndicator` reactivo y feedback detallado con alertas nativas (`Alert.alert`).
-  - Verificación de tipos TypeScript (`npx tsc --noEmit`) con **0 errores**.
+  - Carga de imágenes locales a Supabase Storage bucket `evidencias-incidencias`.
+  - Batch INSERT en la tabla `incidencias` de Supabase con resolución resiliente de claves foráneas.
 
-- **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16, Scanner Anti-Huérfanas HU-11 y Montaje Dinámico en Home HU-10):**
-  - Conexión de `HomeScreen.tsx` con el evento real activo (`estado = 'en_curso'`): consulta híbrida Supabase + SQLite (`getActiveLocalEvento`).
-  - Implementación de estado activo con navegación a `EventDetailScreen` y estado vacío "Sin Montaje Activo" con acceso rápido a la agenda de eventos si no hay montajes en curso.
-  - Implementación de helper `getActiveLocalEvento` y `upsertLocalEvento` en `mobile/src/core/db/database.ts`.
-  - Implementación completa de HU-16 (pestañas "En Curso" e "Historial" en `EventsScreen.tsx`, `EventDetailScreen.tsx` con modo Read-Only).
-  - Implementación de flujo Camera-First en `EventDetailScreen.tsx` con `IncidentScannerModal.tsx` y refactorización de `ReportIncidentModal.tsx` vinculando activo y evento real.
-  - Verificación de tipos TypeScript (`npx tsc --noEmit`) con **0 errores**.
-  - Implementación completa de la HU-16 para gestión del ciclo de vida de eventos en terreno.
-  - Creación de pantalla `mobile/src/modules/home-event/screens/EventDetailScreen.tsx` y ruta `mobile/app/event-detail.tsx` con opciones de navegación nativa (header oculto en stack).
-  - Integración de pestañas segmentadas "En Curso" e "Historial" en `EventsScreen.tsx` con conteo dinámico en badges, diseño LiquidGlass y navegación `router.push('/event-detail')`.
-  - Inclusión de `useFocusEffect` en `EventsScreen.tsx` para sincronización inmediata tras el cierre de eventos en el detalle.
-  - Implementación de consulta híbrida de incidencias por `evento_id`: lectura local síncrona en SQLite (`incidencias_locales`) y remota en Supabase Cloud (`incidencias`), combinadas y ordenadas cronológicamente.
-  - Creación de tabla `eventos_locales` en SQLite (`database.ts`) y métodos `getLocalIncidenciasByEvento` y `updateLocalEventoEstado`.
-  - Lógica de Cierre y Read-Only: botón "Finalizar Evento" con alerta destructiva de confirmación que actualiza `estado = 'finalizado'` y `fecha_termino` en Supabase y SQLite; bloqueo automático de botones de reporte y mutación en eventos finalizados.
-  - Validación de tipos en TypeScript (`npx tsc --noEmit`) con **0 errores**.
+- **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16 en Móvil):**
+  - Conexión de `HomeScreen.tsx` con el evento real activo (`estado = 'en_curso'`).
+  - Implementación de `EventDetailScreen.tsx` con modo Read-Only tras cierre.
+  - Pestañas "En Curso" e "Historial" en `EventsScreen.tsx`.
 
 - **2026-10-21 (Sesión 9 — Despliegue DDL en Supabase Cloud y Conexión HU-05 Móvil):**
-  - Conexión vía MCP de Supabase al proyecto activo `Aleprod` (`fovmurimpbexfrjwxdew`, región `sa-east-1`).
-  - Creación del archivo `mobile/.env` con credenciales reales `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
-  - Inyección del esquema relacional DDL completo en PostgreSQL: tablas `perfiles`, `eventos`, `palmetas_led`, `repuestos_inventario`, `incidencias` y `consumo_repuestos`.
-  - Habilitación de Row Level Security (RLS) en el 100% de las tablas con políticas de acceso para perfiles, técnicos y administradores.
-  - Implementación del trigger de base de datos `tr_descontar_stock_repuesto` (HU-15) sobre `consumo_repuestos` y trigger `handle_new_user` para perfiles.
-  - Creación del bucket de Storage público `evidencias-incidencias` con políticas de carga autenticada.
-  - Creación y verificación exitosa del usuario semilla de terreno `tecnico@aleprod.cl` / `Aleprod2026!` con GoTrue token compatibility y evento inicial "Festival Estadio Nacional".
-  - Refactorización de `mobile/src/core/context/AuthContext.tsx`: eliminación de `devBypass` activo, desacople 100% reactivo a `supabase.auth.getSession()` y `supabase.auth.onAuthStateChange`.
-  - Creación del componente `StartEventBottomSheet.tsx` con LiquidGlassView, selector y búsqueda de recintos frecuentes, stepper numérico y chips de m², selector de configuración LED e inserción directa en `eventos` de Supabase vinculada al técnico autenticado.
-  - Refactorización de `EventsScreen.tsx`: integración de botón CTA superior con gradiente dorado, hero card para inicio rápido, pull-to-refresh y sincronización en tiempo real con la tabla `eventos` de Supabase.
-  - Actualización de esquema en Supabase Cloud para `eventos`: agregado de columnas `tecnico_id`, `metros_cuadrados` y `tipo_pantalla` junto con políticas RLS de inserción para técnicos y administradores.
-  - Verificación de tipos TypeScript (`npx tsc --noEmit`) en `/mobile` con **0 errores**.
+  - Conexión al proyecto activo `Aleprod` (`fovmurimpbexfrjwxdew`, región `sa-east-1`).
+  - Creación de credenciales reales `EXPO_PUBLIC_` en `mobile/.env`.
+  - Inyección del esquema relacional DDL completo en PostgreSQL.
 
 - **2026-10-19 (Sesión 8 — Estabilización de Entorno y Dependencias Móviles):**
   - Actualización de runtime Node.js del sistema a **v22.23.2 LTS** y configuración de `RemoteSigned` en PowerShell.

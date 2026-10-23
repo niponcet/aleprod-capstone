@@ -1,0 +1,999 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { Sidebar } from "@/app/components/sidebar";
+
+/* ─── Interfaces ─── */
+interface Incidencia {
+  id: string;
+  palmeta_id: string | null;
+  qr_uuid: string;
+  evento_id: string | null;
+  tecnico_id: string | null;
+  tipo_falla: string;
+  descripcion?: string | null;
+  foto_url?: string | null;
+  fecha_ocurrencia: string;
+  resuelto: boolean;
+  solucion_tecnica?: string | null;
+  created_at: string;
+  // Joins relacionales
+  codigo_palmeta: string;
+  evento_nombre: string;
+  tecnico_nombre: string;
+}
+
+interface PalmetaOpcion {
+  id: string;
+  codigo_visible: string;
+  qr_uuid: string;
+}
+
+interface EventoOpcion {
+  id: string;
+  nombre: string;
+}
+
+export default function IncidenciasPage() {
+  const supabase = createClient();
+
+  /* ─── Estados ─── */
+  const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filtro, setFiltro] = useState<"todas" | "pendientes" | "resueltas">("todas");
+  const [busqueda, setBusqueda] = useState("");
+  const [incidenciaSeleccionada, setIncidenciaSeleccionada] = useState<Incidencia | null>(null);
+  const [solucionInput, setSolucionInput] = useState("");
+  const [resolviendo, setResolviendo] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+
+  /* ─── Modal Nueva Incidencia ─── */
+  const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
+  const [palmetasDisponibles, setPalmetasDisponibles] = useState<PalmetaOpcion[]>([]);
+  const [eventosDisponibles, setEventosDisponibles] = useState<EventoOpcion[]>([]);
+  const [guardandoNueva, setGuardandoNueva] = useState(false);
+  const [nuevaPalmetaId, setNuevaPalmetaId] = useState("");
+  const [nuevoEventoId, setNuevoEventoId] = useState("");
+  const [nuevoTipoFalla, setNuevoTipoFalla] = useState("Módulo LED Quemado");
+  const [nuevaDescripcion, setNuevaDescripcion] = useState("");
+
+  /* ─── Carga de Datos desde Supabase ─── */
+  const fetchIncidencias = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("incidencias")
+        .select(`
+          id,
+          palmeta_id,
+          qr_uuid,
+          evento_id,
+          tecnico_id,
+          tipo_falla,
+          descripcion,
+          foto_url,
+          fecha_ocurrencia,
+          resuelto,
+          solucion_tecnica,
+          created_at,
+          palmetas_led ( codigo_visible ),
+          eventos ( nombre ),
+          perfiles:tecnico_id ( nombre_completo )
+        `)
+        .order("fecha_ocurrencia", { ascending: false });
+
+      if (error) {
+        console.error("Error al obtener incidencias:", error);
+      } else if (data) {
+        // Mapear resultado relacional a estructura amigable
+        const mapeadas: Incidencia[] = data.map((item: any) => ({
+          id: item.id,
+          palmeta_id: item.palmeta_id,
+          qr_uuid: item.qr_uuid,
+          evento_id: item.evento_id,
+          tecnico_id: item.tecnico_id,
+          tipo_falla: item.tipo_falla,
+          descripcion: item.descripcion,
+          foto_url: item.foto_url,
+          fecha_ocurrencia: item.fecha_ocurrencia,
+          resuelto: item.resuelto,
+          solucion_tecnica: item.solucion_tecnica,
+          created_at: item.created_at,
+          codigo_palmeta: item.palmetas_led?.codigo_visible || "Palmeta N/A",
+          evento_nombre: item.eventos?.nombre || "Evento no asignado",
+          tecnico_nombre: item.perfiles?.nombre_completo || "Técnico en Terreno",
+        }));
+        setIncidencias(mapeadas);
+      }
+    } catch (err) {
+      console.error("Error inesperado:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
+
+  /* ─── Cargar Catálogos para Crear Incidencias ─── */
+  const fetchCatalogos = useCallback(async () => {
+    try {
+      const [{ data: palmetas }, { data: eventos }] = await Promise.all([
+        supabase.from("palmetas_led").select("id, codigo_visible, qr_uuid").order("codigo_visible"),
+        supabase.from("eventos").select("id, nombre").order("nombre"),
+      ]);
+
+      if (palmetas && palmetas.length > 0) {
+        setPalmetasDisponibles(palmetas as PalmetaOpcion[]);
+        setNuevaPalmetaId(palmetas[0].id);
+      }
+      if (eventos && eventos.length > 0) {
+        setEventosDisponibles(eventos as EventoOpcion[]);
+        setNuevoEventoId(eventos[0].id);
+      }
+    } catch (err) {
+      console.error("Error al cargar catálogos:", err);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchIncidencias();
+    fetchCatalogos();
+
+    // Suscripción en tiempo real a cambios en incidencias
+    const channel = supabase
+      .channel("incidencias-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "incidencias" },
+        () => {
+          fetchIncidencias();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchIncidencias, fetchCatalogos, supabase]);
+
+  /* ─── Resolver Incidencia en Supabase ─── */
+  async function resolverIncidencia(id: string) {
+    if (!solucionInput.trim()) return;
+
+    setResolviendo(true);
+    try {
+      const { error } = await supabase
+        .from("incidencias")
+        .update({
+          resuelto: true,
+          solucion_tecnica: solucionInput.trim(),
+        })
+        .eq("id", id);
+
+      if (error) {
+        alert("Error al resolver la incidencia: " + error.message);
+      } else {
+        // Doble garantía: actualizar explícitamente el parque de palmetas
+        if (incidenciaSeleccionada?.palmeta_id) {
+          await supabase
+            .from("palmetas_led")
+            .update({
+              estado: "operativo",
+              ubicacion_actual: "bodega_central",
+              ultima_revision: new Date().toISOString(),
+            })
+            .eq("id", incidenciaSeleccionada.palmeta_id);
+        }
+
+        setSuccessMsg("Incidencia resuelta exitosamente. Palmeta sincronizada a Operativa.");
+        setTimeout(() => setSuccessMsg(""), 3500);
+        await fetchIncidencias();
+        setIncidenciaSeleccionada(null);
+        setSolucionInput("");
+      }
+    } catch (err) {
+      console.error("Error al resolver:", err);
+    } finally {
+      setResolviendo(false);
+    }
+  }
+
+  /* ─── Crear Incidencia Real en Supabase ─── */
+  async function handleCrearIncidencia(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nuevaPalmetaId || !nuevoTipoFalla.trim()) return;
+
+    setGuardandoNueva(true);
+    try {
+      const palmetaSeleccionada = palmetasDisponibles.find((p) => p.id === nuevaPalmetaId);
+      const { data: authData } = await supabase.auth.getUser();
+
+      const { error } = await supabase.from("incidencias").insert({
+        palmeta_id: nuevaPalmetaId,
+        qr_uuid: palmetaSeleccionada?.qr_uuid || "QR-MANUAL-" + Date.now(),
+        evento_id: nuevoEventoId || null,
+        tecnico_id: authData?.user?.id || null,
+        tipo_falla: nuevoTipoFalla,
+        descripcion: nuevaDescripcion.trim() || null,
+        fecha_ocurrencia: new Date().toISOString(),
+        resuelto: false,
+      });
+
+      if (error) {
+        alert("Error al registrar incidencia: " + error.message);
+      } else {
+        // Doble garantía: sincronizar la palmeta a taller de inmediato
+        await supabase
+          .from("palmetas_led")
+          .update({
+            estado: "mantencion",
+            ubicacion_actual: "taller",
+          })
+          .eq("id", nuevaPalmetaId);
+
+        setSuccessMsg("Nueva incidencia registrada. Palmeta enviada a Taller.");
+        setTimeout(() => setSuccessMsg(""), 3500);
+        setModalCrearAbierto(false);
+        setNuevaDescripcion("");
+        await fetchIncidencias();
+      }
+    } catch (err) {
+      console.error("Error al crear:", err);
+    } finally {
+      setGuardandoNueva(false);
+    }
+  }
+
+  /* ─── Filtrado y Métricas ─── */
+  const incidenciasFiltradas = incidencias.filter((item) => {
+    const coincideFiltro =
+      filtro === "todas" ? true : filtro === "pendientes" ? !item.resuelto : item.resuelto;
+
+    const coincideBusqueda =
+      item.codigo_palmeta.toLowerCase().includes(busqueda.toLowerCase()) ||
+      item.tipo_falla.toLowerCase().includes(busqueda.toLowerCase()) ||
+      item.evento_nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+      item.qr_uuid.toLowerCase().includes(busqueda.toLowerCase());
+
+    return coincideFiltro && coincideBusqueda;
+  });
+
+  const total = incidencias.length;
+  const pendientes = incidencias.filter((i) => !i.resuelto).length;
+  const resueltas = incidencias.filter((i) => i.resuelto).length;
+
+  return (
+    <div
+      data-theme="dark"
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        color: "var(--tx)",
+        display: "flex",
+        alignItems: "stretch",
+      }}
+      className="font-['Inter',sans-serif] selection:bg-[#D4AF37]/20 selection:text-[#D4AF37]"
+    >
+      {/* ── Fixed Universal Left Sidebar ── */}
+      <Sidebar />
+
+      {/* ── Main Viewport ── */}
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+        {/* ── Resplandor Ambiental Sutil ── */}
+        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[150px]" />
+        </div>
+
+        {/* ── Top Bar ── */}
+        <header
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 32px",
+            borderBottom: "1px solid var(--bd)",
+            background: "var(--sf)",
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Link
+              href="/"
+              style={{
+                fontSize: "12px",
+                color: "var(--mu)",
+                fontWeight: 500,
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              Inicio
+            </Link>
+            <span style={{ color: "var(--bd)", fontSize: "12px" }}>/</span>
+            <span
+              style={{
+                fontSize: "14px",
+                color: "var(--tx)",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span className="material-symbols-outlined text-base" style={{ color: "var(--er)" }}>
+                warning
+              </span>
+              Módulo de Incidencias Técnicas
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button
+              type="button"
+              onClick={() => fetchIncidencias()}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                height: "38px",
+                padding: "0 14px",
+                borderRadius: "10px",
+                border: "1px solid var(--bd)",
+                background: "var(--sf2)",
+                color: "var(--tx)",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title="Recargar incidencias"
+            >
+              <span className="material-symbols-outlined text-base">refresh</span>
+              Actualizar
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModalCrearAbierto(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                height: "38px",
+                padding: "0 14px",
+                borderRadius: "10px",
+                border: "none",
+                background: "var(--go)",
+                color: "var(--gt)",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Nueva Incidencia
+            </button>
+          </div>
+        </header>
+
+        {/* ── Notificación Flotante de Éxito ── */}
+        {successMsg && (
+          <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981] text-xs font-['Outfit'] font-semibold shadow-2xl backdrop-blur-md animate-in slide-in-from-top-2">
+            <span className="material-symbols-outlined text-lg">check_circle</span>
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* ── Contenido Principal ── */}
+        <main
+          style={{
+            padding: "28px 32px 40px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+            maxWidth: "1240px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+          className="flex-1"
+        >
+        {/* Banner de Título */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C24C44]/10 border border-[#C24C44]/25 text-[#C24C44] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C24C44]" />
+              Base de Datos Supabase en Vivo
+            </div>
+            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+              Gestión de Incidencias Técnicas
+            </h1>
+            <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1">
+              Control en tiempo real de averías en terreno, trazabilidad de piezas y bitácora técnica de taller.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fetchIncidencias()}
+              disabled={loading}
+              className="px-3.5 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider text-[#A1A1AA] hover:text-[#FFFFFF] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Refrescar datos en vivo"
+            >
+              <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
+                sync
+              </span>
+              <span className="hidden sm:inline">Refrescar</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModalCrearAbierto(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/15 cursor-pointer active:scale-95"
+            >
+              <span className="material-symbols-outlined text-lg">add_circle</span>
+              <span>Reportar Incidencia</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Métricas Rápidas (KPIs Semánticos) ── */}
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Card: Total */}
+          <div className="p-5 rounded-xl bg-[#121212] border border-[#27272A] shadow-md flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#A1A1AA] font-semibold">
+                Total Registradas
+              </span>
+              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+                {total}
+              </span>
+              <span className="text-[11px] text-[#71717A] mt-0.5">En Supabase Cloud</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#27272A]/50 border border-[#27272A] flex items-center justify-center text-[#D4AF37]">
+              <span className="material-symbols-outlined text-2xl">report</span>
+            </div>
+          </div>
+
+          {/* Card: Pendientes (Rojo Atenuado Elegante) */}
+          <div className="p-5 rounded-xl bg-[#121212] border border-[#C24C44]/25 shadow-md flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#C24C44]/08 to-transparent pointer-events-none" />
+            <div className="flex flex-col">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#C24C44] font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#C24C44]" />
+                Pendientes en Taller
+              </span>
+              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+                {pendientes}
+              </span>
+              <span className="text-[11px] text-[#A1A1AA] mt-0.5">Requieren reparación técnica</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#C24C44]/12 border border-[#C24C44]/25 flex items-center justify-center text-[#C24C44]">
+              <span className="material-symbols-outlined text-2xl">build_circle</span>
+            </div>
+          </div>
+
+          {/* Card: Resueltas (Verde Esmeralda) */}
+          <div className="p-5 rounded-xl bg-[#121212] border border-[#10B981]/30 shadow-md flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/10 to-transparent pointer-events-none" />
+            <div className="flex flex-col">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#10B981] font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+                Solucionadas / Operativas
+              </span>
+              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+                {resueltas}
+              </span>
+              <span className="text-[11px] text-[#A1A1AA] mt-0.5">Listas para el próximo evento</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#10B981]/12 border border-[#10B981]/30 flex items-center justify-center text-[#10B981]">
+              <span className="material-symbols-outlined text-2xl">verified</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Barra de Filtros y Búsqueda ── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          {/* Tabs de Filtro */}
+          <div className="inline-flex p-1 rounded-xl bg-[#121212] border border-[#27272A] self-start">
+            <button
+              type="button"
+              onClick={() => setFiltro("todas")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
+                filtro === "todas"
+                  ? "bg-[#D4AF37] text-[#0A0A0A] shadow-md shadow-[#D4AF37]/10"
+                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+              }`}
+            >
+              Todas ({total})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltro("pendientes")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                filtro === "pendientes"
+                  ? "bg-[#C24C44] text-[#FFFFFF] shadow-md shadow-[#C24C44]/20"
+                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C24C44]" />
+              Pendientes ({pendientes})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltro("resueltas")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                filtro === "resueltas"
+                  ? "bg-[#10B981] text-[#FFFFFF] shadow-md shadow-[#10B981]/20"
+                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+              Resueltas ({resueltas})
+            </button>
+          </div>
+
+          {/* Buscador de Palmetas / Evento */}
+          <div className="relative flex-1 max-w-md">
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#71717A] text-lg pointer-events-none">
+              search
+            </span>
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por código (PL-AF69C8), evento o falla..."
+              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* ── Tabla Ejecutiva de Incidencias ── */}
+        <div className="w-full rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold">
+                  <th className="py-3.5 px-4 sm:px-6">Palmeta / UUID</th>
+                  <th className="py-3.5 px-4">Falla Reportada</th>
+                  <th className="py-3.5 px-4">Evento de Origen</th>
+                  <th className="py-3.5 px-4">Fecha &amp; Técnico</th>
+                  <th className="py-3.5 px-4">Estado</th>
+                  <th className="py-3.5 px-4 sm:px-6 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#27272A]">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-sm text-[#A1A1AA]">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg animate-spin text-[#D4AF37]">
+                          progress_activity
+                        </span>
+                        <span>Cargando incidencias reales desde Supabase...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : incidenciasFiltradas.length > 0 ? (
+                  incidenciasFiltradas.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-[#1E1E1E]/50 transition-colors group"
+                    >
+                      {/* Palmeta / UUID */}
+                      <td className="py-4 px-4 sm:px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="min-w-[64px] h-9 px-2.5 rounded-lg bg-[#1E1E1E] border border-[#27272A] flex items-center justify-center text-[#D4AF37] font-['Outfit'] font-bold text-xs tracking-wide shadow-inner shrink-0">
+                            {item.codigo_palmeta}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-sm text-[#FFFFFF] group-hover:text-[#D4AF37] transition-colors">
+                              {item.codigo_palmeta}
+                            </span>
+                            <span className="font-mono text-[10px] text-[#71717A]">
+                              {item.qr_uuid?.substring(0, 16)}...
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Falla Reportada */}
+                      <td className="py-4 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-[#FFFFFF] text-xs">
+                            {item.tipo_falla}
+                          </span>
+                          {item.descripcion && (
+                            <span className="text-[11px] text-[#71717A] line-clamp-1 mt-0.5">
+                              {item.descripcion}
+                            </span>
+                          )}
+                          {item.foto_url && (
+                            <span className="text-[10.5px] text-[#D4AF37] inline-flex items-center gap-1 mt-0.5">
+                              <span className="material-symbols-outlined text-xs">image</span>
+                              Foto adjunta
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Evento */}
+                      <td className="py-4 px-4">
+                        <span className="text-xs text-[#A1A1AA] font-medium">
+                          {item.evento_nombre}
+                        </span>
+                      </td>
+
+                      {/* Fecha y Técnico */}
+                      <td className="py-4 px-4">
+                        <div className="flex flex-col">
+                          <span className="text-xs text-[#FFFFFF]">
+                            {new Date(item.fecha_ocurrencia).toLocaleString("es-CL", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          <span className="text-[10px] text-[#71717A]">
+                            {item.tecnico_nombre}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Estado */}
+                      <td className="py-4 px-4">
+                        {item.resuelto ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                            Resuelto
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C24C44]/12 border border-[#C24C44]/30 text-[#E59892] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#C24C44]" />
+                            Pendiente
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Acción */}
+                      <td className="py-4 px-4 sm:px-6 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIncidenciaSeleccionada(item);
+                            setSolucionInput(item.solucion_tecnica || "");
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                            item.resuelto
+                              ? "bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] border border-[#27272A]"
+                              : "bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] shadow-md shadow-[#D4AF37]/10"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-sm">
+                            {item.resuelto ? "visibility" : "build"}
+                          </span>
+                          <span>{item.resuelto ? "Ver Bitácora" : "Gestionar"}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-sm text-[#71717A]">
+                      No se encontraron incidencias con los filtros seleccionados.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      {/* ── Modal de Detalle y Resolución Técnica ── */}
+      {incidenciaSeleccionada && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-[#121212] border border-[#27272A] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header Modal */}
+            <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="min-w-[64px] h-10 px-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-['Outfit'] font-bold text-sm tracking-wide shrink-0">
+                  {incidenciaSeleccionada.codigo_palmeta}
+                </div>
+                <div>
+                  <h3 className="font-['Outfit'] text-lg font-semibold text-[#FFFFFF]">
+                    Detalle de Falla — {incidenciaSeleccionada.codigo_palmeta}
+                  </h3>
+                  <span className="text-[11px] text-[#71717A]">
+                    UUID: {incidenciaSeleccionada.qr_uuid}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIncidenciaSeleccionada(null)}
+                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            {/* Ficha Resumen */}
+            <div className="grid grid-cols-2 gap-3 text-xs bg-[#1E1E1E]/60 p-4 rounded-xl border border-[#27272A]">
+              <div>
+                <span className="text-[#71717A] block">Tipo de Falla:</span>
+                <span className="font-semibold text-[#FFFFFF] mt-0.5 block">
+                  {incidenciaSeleccionada.tipo_falla}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#71717A] block">Evento de Ocurrencia:</span>
+                <span className="font-medium text-[#D4AF37] mt-0.5 block">
+                  {incidenciaSeleccionada.evento_nombre}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#71717A] block">Técnico que reportó:</span>
+                <span className="text-[#FFFFFF] mt-0.5 block">
+                  {incidenciaSeleccionada.tecnico_nombre}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#71717A] block">Fecha de Ocurrencia:</span>
+                <span className="text-[#FFFFFF] mt-0.5 block">
+                  {new Date(incidenciaSeleccionada.fecha_ocurrencia).toLocaleString("es-CL")}
+                </span>
+              </div>
+            </div>
+
+            {/* Descripción detallada si existe */}
+            {incidenciaSeleccionada.descripcion && (
+              <div className="flex flex-col gap-1 text-xs">
+                <span className="text-[#71717A]">Observaciones en Terreno:</span>
+                <p className="text-[#FFFFFF] bg-[#1E1E1E]/40 p-3 rounded-xl border border-[#27272A]/70">
+                  {incidenciaSeleccionada.descripcion}
+                </p>
+              </div>
+            )}
+
+            {/* Evidencia Fotográfica (si existe) */}
+            {incidenciaSeleccionada.foto_url && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Evidencia Capturada en Terreno
+                </span>
+                <div className="w-full h-44 rounded-xl overflow-hidden border border-[#27272A] relative bg-[#1E1E1E]">
+                  <img
+                    src={incidenciaSeleccionada.foto_url}
+                    alt="Evidencia técnica"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-md text-[10px] text-[#FFFFFF] flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs text-[#D4AF37]">
+                      photo_camera
+                    </span>
+                    Captura in situ
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Formulario de Cierre de Falla / Solución Técnica */}
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="solucion-textarea"
+                className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']"
+              >
+                {incidenciaSeleccionada.resuelto
+                  ? "Bitácora de Reparación Aplicada:"
+                  : "Registrar Solución Técnica de Taller:"}
+              </label>
+
+              {incidenciaSeleccionada.resuelto ? (
+                <div className="p-3.5 rounded-xl bg-[#10B981]/10 border border-[#10B981]/20 text-xs text-[#FFFFFF] leading-relaxed">
+                  {incidenciaSeleccionada.solucion_tecnica || "Sin notas técnicas registradas."}
+                </div>
+              ) : (
+                <textarea
+                  id="solucion-textarea"
+                  rows={3}
+                  value={solucionInput}
+                  onChange={(e) => setSolucionInput(e.target.value)}
+                  placeholder="Ej: Módulo LED cambiado por repuesto SKU MOD-LED-01. Soldadura de conector y prueba de 2 horas sin fallas."
+                  className="w-full p-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all resize-none"
+                />
+              )}
+            </div>
+
+            {/* Botones de Acción */}
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#27272A]">
+              <button
+                type="button"
+                onClick={() => setIncidenciaSeleccionada(null)}
+                className="px-4 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+
+              {!incidenciaSeleccionada.resuelto && (
+                <button
+                  type="button"
+                  disabled={!solucionInput.trim() || resolviendo}
+                  onClick={() => resolverIncidencia(incidenciaSeleccionada.id)}
+                  className="px-4 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all shadow-lg shadow-[#10B981]/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <span className={`material-symbols-outlined text-base ${resolviendo ? "animate-spin" : ""}`}>
+                    {resolviendo ? "progress_activity" : "check_circle"}
+                  </span>
+                  <span>{resolviendo ? "Guardando en Supabase..." : "Marcar como Resuelta"}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Nueva Incidencia (Pruebas & Registro Manual) ── */}
+      {modalCrearAbierto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-[#121212] border border-[#27272A] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header Modal */}
+            <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                  <span className="material-symbols-outlined text-xl">report_problem</span>
+                </div>
+                <div>
+                  <h3 className="font-['Outfit'] text-lg font-semibold text-[#FFFFFF]">
+                    Reportar Incidencia
+                  </h3>
+                  <span className="text-[11px] text-[#A1A1AA]">
+                    Registro directo en Supabase Cloud
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalCrearAbierto(false)}
+                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={handleCrearIncidencia} className="flex flex-col gap-4">
+              {/* Selector Palmeta */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Palmeta LED Afectada
+                </label>
+                <select
+                  value={nuevaPalmetaId}
+                  onChange={(e) => setNuevaPalmetaId(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  required
+                >
+                  {palmetasDisponibles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.codigo_visible} ({p.qr_uuid})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Selector Evento */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Evento de Ocurrencia
+                </label>
+                <select
+                  value={nuevoEventoId}
+                  onChange={(e) => setNuevoEventoId(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                >
+                  <option value="">(Sin evento específico)</option>
+                  {eventosDisponibles.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tipo de Falla */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Tipo de Falla Técnica
+                </label>
+                <select
+                  value={nuevoTipoFalla}
+                  onChange={(e) => setNuevoTipoFalla(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  required
+                >
+                  <option value="Módulo LED Quemado">Módulo LED Quemado (Píxeles muertos / apagado)</option>
+                  <option value="Conector PowerCON Dañado">Conector PowerCON Dañado / Traba rota</option>
+                  <option value="Pérdida de Señal EtherCON">Pérdida de Señal EtherCON (Recepción intermitente)</option>
+                  <option value="Fisura en Acrílico Superior">Fisura en Acrílico Superior (Impacto / pisada)</option>
+                  <option value="Fuente de Poder Sobrecalentada">Fuente de Poder Sobrecalentada</option>
+                  <option value="Escaneo Operativo Terreno">Escaneo Operativo Terreno</option>
+                </select>
+              </div>
+
+              {/* Descripción / Observaciones */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Observaciones Técnicas (Opcional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={nuevaDescripcion}
+                  onChange={(e) => setNuevaDescripcion(e.target.value)}
+                  placeholder="Detalles observados en terreno o motivo del reporte..."
+                  className="w-full p-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all resize-none"
+                />
+              </div>
+
+              {/* Botones */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#27272A]">
+                <button
+                  type="button"
+                  onClick={() => setModalCrearAbierto(false)}
+                  className="px-4 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardandoNueva}
+                  className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all shadow-md shadow-[#D4AF37]/15 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <span className={`material-symbols-outlined text-base ${guardandoNueva ? "animate-spin" : ""}`}>
+                    {guardandoNueva ? "progress_activity" : "add_task"}
+                  </span>
+                  <span>{guardandoNueva ? "Guardando..." : "Guardar Incidencia"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Footer ── */}
+      <footer
+        style={{
+          padding: "16px 32px",
+          borderTop: "1px solid var(--bd)",
+          background: "var(--bg)",
+          fontSize: "12px",
+          color: "var(--mu)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1240px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          <span>Alejandra Producciones SpA • Dirección y Operaciones Técnicas</span>
+          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[#D4AF37] font-semibold">
+            Módulo de Incidencias v2.0 (Supabase Real-Time)
+          </span>
+        </div>
+      </footer>
+    </div>
+  </div>
+);
+}

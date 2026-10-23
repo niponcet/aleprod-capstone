@@ -1,26 +1,292 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ─── Design Tokens: Alejandra Producciones ─── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Tipografía */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Fondos Base */
+  --color-background: #0A0A0A;
+  --color-foreground: #FFFFFF;
+  --color-surface: #121212;
+  --color-surface-elevated: #1E1E1E;
+
+  /* Dorado Corporativo */
+  --color-gold: #D4AF37;
+  --color-gold-hover: #C5A059;
+  --color-gold-dim: rgba(212, 175, 55, 0.15);
+  --color-gold-glow: rgba(212, 175, 55, 0.08);
+
+  /* Bordes y Separadores */
+  --color-border: #27272A;
+  --color-border-light: #3F3F46;
+
+  /* Texto */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
+  --color-text-muted: #71717A;
+
+  /* Semáforo Semántico */
+  --color-success: #10B981;
+  --color-success-dark: #059669;
+  --color-warning: #F59E0B;
+  --color-warning-dark: #D97706;
+  --color-danger: #EF4444;
+  --color-danger-dark: #DC2626;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base Styles ─── */
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ─── Scrollbar corporativa ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-light);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+/* ─── Focus Ring global ─── */
+*:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* ─── Login Animations ─── */
+@keyframes float-orb {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+  25% { transform: translate(30px, -50px) scale(1.1); opacity: 0.5; }
+  50% { transform: translate(-20px, -80px) scale(0.9); opacity: 0.35; }
+  75% { transform: translate(40px, -30px) scale(1.05); opacity: 0.45; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(212, 175, 55, 0); }
+}
+
+.animate-float-orb {
+  animation: float-orb 8s ease-in-out infinite;
+}
+
+.animate-float-orb-delayed {
+  animation: float-orb 10s ease-in-out 2s infinite;
+}
+
+.animate-float-orb-slow {
+  animation: float-orb 12s ease-in-out 4s infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up-delayed {
+  animation: fade-in-up 0.6s ease-out 0.15s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delayed-2 {
+  animation: fade-in-up 0.6s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+/* ─── Glass Effect ─── */
+.glass {
+  background: rgba(18, 18, 18, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+/* ─── Gold gradient text ─── */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #F5D678 50%, #C5A059 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Input styles ─── */
+.input-field {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  transition: all 0.25s ease;
+}
+
+.input-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input-field:hover {
+  border-color: var(--color-border-light);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.04);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+/* ─── Button Styles ─── */
+.btn-gold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%);
+  color: #000000;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.025em;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gold::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
+}
+
+.btn-gold:hover::before {
+  left: 100%;
+}
+
+.btn-gold:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+}
+
+.btn-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-gold:disabled:hover::before {
+  left: -100%;
+}
+
+/* ─── Dashboard Executive Theme Tokens (Alejandra Producciones Branding - 03-UI-UX) ─── */
+[data-theme="dark"] {
+  --bg: #0A0A0A;                  /* Negro Profundo OLED */
+  --sf: #121212;                  /* Superficie de tarjetas / sidebar */
+  --sf2: #1E1E1E;                 /* Superficie elevada / contenedores */
+  --bd: #27272A;                  /* Bordes neutros */
+  --tx: #FFFFFF;                  /* Blanco Puro */
+  --mu: #A1A1AA;                  /* Texto secundario neutro */
+  --pr: #D4AF37;                  /* Dorado Primario Corporativo */
+  --lk: #D4AF37;                  /* Dorado para enlaces y acentos */
+  --prs: rgba(212, 175, 55, 0.15); /* Dorado translúcido / Glow */
+  --ok: #10B981;                  /* Verde Esmeralda Operativo */
+  --oks: rgba(16, 185, 129, 0.12); /* Verde translúcido */
+  --wa: #F59E0B;                  /* Ámbar Cálido En Mantención */
+  --was: rgba(245, 158, 11, 0.12); /* Ámbar translúcido */
+  --er: #EF4444;                  /* Rojo Coral Falla Crítica / Baja */
+  --ers: rgba(239, 68, 68, 0.12);  /* Rojo translúcido */
+  --go: #D4AF37;                  /* Dorado Primario */
+  --gt: #0A0A0A;                  /* Texto alto contraste sobre dorado */
+}
+
+[data-theme="light"] {
+  --bg: #F8F9FA;
+  --sf: #FFFFFF;
+  --sf2: #F1F3F5;
+  --bd: #E4E4E7;
+  --tx: #0A0A0A;
+  --mu: #71717A;
+  --pr: #D4AF37;
+  --lk: #B89628;
+  --prs: rgba(212, 175, 55, 0.15);
+  --ok: #059669;
+  --oks: rgba(16, 185, 129, 0.12);
+  --wa: #D97706;
+  --was: rgba(245, 158, 11, 0.12);
+  --er: #DC2626;
+  --ers: rgba(239, 68, 68, 0.12);
+  --go: #D4AF37;
+  --gt: #0A0A0A;
+}
+
+.dash-nav:hover {
+  background: var(--sf2);
+  color: var(--tx);
+}
+
+.dash-row:hover {
+  background: var(--sf2);
+}
+
+.dash-btn:hover {
+  filter: brightness(1.08);
+}
+

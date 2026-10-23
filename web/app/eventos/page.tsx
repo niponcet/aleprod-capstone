@@ -1,0 +1,804 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { Sidebar } from "@/app/components/sidebar";
+
+/* ─── Interfaces ─── */
+interface Evento {
+  id: string;
+  nombre: string;
+  locacion: string;
+  fecha_inicio: string;
+  fecha_termino: string | null;
+  estado: "planificado" | "en_curso" | "finalizado";
+  metros_cuadrados: number | null;
+  tipo_pantalla: string | null;
+  created_at: string;
+}
+
+type FiltroEstado = "todas" | "en_curso" | "planificado" | "finalizado";
+
+export default function EventosPage() {
+  const supabase = createClient();
+
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filtro, setFiltro] = useState<FiltroEstado>("todas");
+  const [busqueda, setBusqueda] = useState("");
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [actualizandoId, setActualizandoId] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState("");
+
+  /* ─── Formulario ─── */
+  const [nombre, setNombre] = useState("");
+  const [locacion, setLocacion] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaTermino, setFechaTermino] = useState("");
+  const [metrosCuadrados, setMetrosCuadrados] = useState("80");
+  const [tipoPantalla, setTipoPantalla] = useState("Pantalla Escenario P3.9 Outdoor");
+  const [estadoInicial, setEstadoInicial] = useState<"planificado" | "en_curso">("planificado");
+
+  /* ─── Fetch Eventos ─── */
+  const fetchEventos = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("eventos")
+        .select("*")
+        .order("fecha_inicio", { ascending: false });
+
+      if (error) {
+        console.error("Error al cargar eventos:", error);
+      } else if (data) {
+        setEventos(data as Evento[]);
+      }
+    } catch (err) {
+      console.error("Error inesperado:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchEventos();
+  }, [fetchEventos]);
+
+  /* ─── Cambiar Estado de un Evento ─── */
+  const handleCambiarEstado = async (eventoId: string, nuevoEstado: Evento["estado"]) => {
+    setActualizandoId(eventoId);
+    try {
+      const updateData: any = { estado: nuevoEstado };
+      if (nuevoEstado === "finalizado") {
+        updateData.fecha_termino = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from("eventos")
+        .update(updateData)
+        .eq("id", eventoId);
+
+      if (error) {
+        alert("Error al actualizar evento: " + error.message);
+      } else {
+        setToastMsg(`Estado cambiado a "${nuevoEstado.replace("_", " ").toUpperCase()}"`);
+        setTimeout(() => setToastMsg(""), 3500);
+        await fetchEventos();
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setActualizandoId(null);
+    }
+  };
+
+  /* ─── Guardar Nuevo Evento ─── */
+  const handleCrearEvento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim() || !locacion.trim() || !fechaInicio) return;
+
+    setGuardando(true);
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+
+      const { error } = await supabase.from("eventos").insert({
+        nombre: nombre.trim(),
+        locacion: locacion.trim(),
+        fecha_inicio: new Date(fechaInicio).toISOString(),
+        fecha_termino: fechaTermino ? new Date(fechaTermino).toISOString() : null,
+        estado: estadoInicial,
+        metros_cuadrados: parseFloat(metrosCuadrados) || 0,
+        tipo_pantalla: tipoPantalla,
+        tecnico_id: authData?.user?.id || null,
+      });
+
+      if (error) {
+        alert("Error al registrar evento: " + error.message);
+      } else {
+        setToastMsg("¡Evento registrado exitosamente en Supabase!");
+        setTimeout(() => setToastMsg(""), 3500);
+        setModalAbierto(false);
+        setNombre("");
+        setLocacion("");
+        setFechaInicio("");
+        setFechaTermino("");
+        setMetrosCuadrados("80");
+        await fetchEventos();
+      }
+    } catch (err) {
+      console.error("Error al registrar:", err);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  /* ─── Métricas y Filtros ─── */
+  const totalEventos = eventos.length;
+  const enCurso = eventos.filter((e) => e.estado === "en_curso").length;
+  const planificados = eventos.filter((e) => e.estado === "planificado").length;
+  const finalizados = eventos.filter((e) => e.estado === "finalizado").length;
+
+  const eventosFiltrados = eventos.filter((ev) => {
+    const coincideFiltro =
+      filtro === "todas" ? true : ev.estado === filtro;
+
+    const q = busqueda.toLowerCase();
+    const coincideBusqueda =
+      !q ||
+      ev.nombre.toLowerCase().includes(q) ||
+      ev.locacion.toLowerCase().includes(q) ||
+      (ev.tipo_pantalla || "").toLowerCase().includes(q);
+
+    return coincideFiltro && coincideBusqueda;
+  });
+
+  return (
+    <div
+      data-theme="dark"
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        color: "var(--tx)",
+        display: "flex",
+        alignItems: "stretch",
+      }}
+      className="font-['Inter',sans-serif] selection:bg-[#D4AF37]/20 selection:text-[#D4AF37]"
+    >
+      {/* ── Fixed Universal Left Sidebar ── */}
+      <Sidebar />
+
+      {/* ── Main Viewport ── */}
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+        {/* ── Resplandor Ambiental Sutil ── */}
+        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[150px]" />
+        </div>
+
+        {/* ── Top Bar ── */}
+        <header
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 32px",
+            borderBottom: "1px solid var(--bd)",
+            background: "var(--sf)",
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Link
+              href="/"
+              style={{
+                fontSize: "12px",
+                color: "var(--mu)",
+                fontWeight: 500,
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              Inicio
+            </Link>
+            <span style={{ color: "var(--bd)", fontSize: "12px" }}>/</span>
+            <span
+              style={{
+                fontSize: "14px",
+                color: "var(--tx)",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span className="material-symbols-outlined text-base" style={{ color: "var(--pr)" }}>
+                calendar_month
+              </span>
+              Gestión de Eventos y Producciones
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button
+              type="button"
+              onClick={() => fetchEventos()}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                height: "38px",
+                padding: "0 14px",
+                borderRadius: "10px",
+                border: "1px solid var(--bd)",
+                background: "var(--sf2)",
+                color: "var(--tx)",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              title="Recargar eventos"
+            >
+              <span className="material-symbols-outlined text-base">refresh</span>
+              Actualizar
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModalAbierto(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                height: "38px",
+                padding: "0 14px",
+                borderRadius: "10px",
+                border: "none",
+                background: "var(--go)",
+                color: "var(--gt)",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Nuevo Evento
+            </button>
+          </div>
+        </header>
+
+        {/* ── Toast de Confirmación ── */}
+        {toastMsg && (
+          <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981] text-xs font-['Outfit'] font-semibold shadow-2xl backdrop-blur-md animate-in slide-in-from-top-2">
+            <span className="material-symbols-outlined text-lg">check_circle</span>
+            <span>{toastMsg}</span>
+          </div>
+        )}
+
+        {/* ── Contenido Principal ── */}
+        <main
+          style={{
+            padding: "28px 32px 40px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+            maxWidth: "1240px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+          className="flex-1"
+        >
+        {/* Banner de Título */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+              Planificación y Montaje Operativo
+            </div>
+            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+              Producciones y Eventos
+            </h1>
+            <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1">
+              Administración de fechas, recintos, metraje de pantalla y estado de activación para técnicos en terreno.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fetchEventos()}
+              disabled={loading}
+              className="px-3.5 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider text-[#A1A1AA] hover:text-[#FFFFFF] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
+                sync
+              </span>
+              <span className="hidden sm:inline">Refrescar</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModalAbierto(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/15 cursor-pointer active:scale-95"
+            >
+              <span className="material-symbols-outlined text-lg">add_circle</span>
+              <span>Nueva Producción</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── KPIs Ejecutivos ── */}
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {/* Total */}
+          <div className="p-5 rounded-xl bg-[#121212] border border-[#27272A] shadow-md flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#A1A1AA] font-semibold">
+                Total Registrados
+              </span>
+              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+                {totalEventos}
+              </span>
+              <span className="text-[11px] text-[#71717A] mt-0.5">Producciones anuales</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#27272A]/50 border border-[#27272A] flex items-center justify-center text-[#D4AF37]">
+              <span className="material-symbols-outlined text-2xl">stadium</span>
+            </div>
+          </div>
+
+          {/* En Curso */}
+          <div className="p-5 rounded-xl bg-[#121212] border border-[#10B981]/30 shadow-md flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/10 to-transparent pointer-events-none" />
+            <div className="flex flex-col">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#10B981] font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+                En Curso
+              </span>
+              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+                {enCurso}
+              </span>
+              <span className="text-[11px] text-[#10B981]/80 mt-0.5">Activos en terreno</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#10B981]/12 border border-[#10B981]/30 flex items-center justify-center text-[#10B981]">
+              <span className="material-symbols-outlined text-2xl">play_circle</span>
+            </div>
+          </div>
+
+          {/* Planificados */}
+          <div className="p-5 rounded-xl bg-[#121212] border border-[#D4AF37]/30 shadow-md flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#D4AF37]/08 to-transparent pointer-events-none" />
+            <div className="flex flex-col">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#D4AF37] font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+                Planificados
+              </span>
+              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+                {planificados}
+              </span>
+              <span className="text-[11px] text-[#D4AF37]/80 mt-0.5">Próximas fechas</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/12 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+              <span className="material-symbols-outlined text-2xl">event_upcoming</span>
+            </div>
+          </div>
+
+          {/* Finalizados */}
+          <div className="p-5 rounded-xl bg-[#121212] border border-[#27272A] shadow-md flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#71717A] font-semibold">
+                Finalizados
+              </span>
+              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+                {finalizados}
+              </span>
+              <span className="text-[11px] text-[#71717A] mt-0.5">Historial cerrado</span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#27272A]/50 border border-[#27272A] flex items-center justify-center text-[#71717A]">
+              <span className="material-symbols-outlined text-2xl">task_alt</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Filtros y Buscador ── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="inline-flex p-1 rounded-xl bg-[#121212] border border-[#27272A] self-start overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setFiltro("todas")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
+                filtro === "todas"
+                  ? "bg-[#D4AF37] text-[#0A0A0A] shadow-md"
+                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+              }`}
+            >
+              Todos ({totalEventos})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltro("en_curso")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                filtro === "en_curso"
+                  ? "bg-[#10B981] text-[#FFFFFF] shadow-md"
+                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+              En Curso ({enCurso})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltro("planificado")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                filtro === "planificado"
+                  ? "bg-[#78580a] text-[#FFFFFF] border border-[#D4AF37]/40 shadow-md"
+                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+              Planificados ({planificados})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltro("finalizado")}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
+                filtro === "finalizado"
+                  ? "bg-[#27272A] text-[#FFFFFF]"
+                  : "text-[#71717A] hover:text-[#FFFFFF]"
+              }`}
+            >
+              Finalizados ({finalizados})
+            </button>
+          </div>
+
+          <div className="relative flex-1 max-w-md">
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#71717A] text-lg pointer-events-none">
+              search
+            </span>
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar evento por nombre, locación o pantalla..."
+              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+            />
+          </div>
+        </div>
+
+        {/* ── Tabla de Eventos ── */}
+        <div className="w-full rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold">
+                  <th className="py-3.5 px-4 sm:px-6">Producción / Locación</th>
+                  <th className="py-3.5 px-4">Configuración Técnica</th>
+                  <th className="py-3.5 px-4">Metraje</th>
+                  <th className="py-3.5 px-4">Fechas</th>
+                  <th className="py-3.5 px-4">Estado</th>
+                  <th className="py-3.5 px-4 sm:px-6 text-right">Gestión</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#27272A]">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-sm text-[#A1A1AA]">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg animate-spin text-[#D4AF37]">
+                          progress_activity
+                        </span>
+                        <span>Cargando eventos desde Supabase Cloud...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : eventosFiltrados.length > 0 ? (
+                  eventosFiltrados.map((ev) => (
+                    <tr key={ev.id} className="hover:bg-[#1E1E1E]/50 transition-colors group">
+                      {/* Nombre y Locación */}
+                      <td className="py-4 px-4 sm:px-6">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-3.5 h-3.5 rounded-full shrink-0 ${
+                              ev.estado === "en_curso"
+                                ? "bg-[#10B981] animate-pulse"
+                                : ev.estado === "planificado"
+                                ? "bg-[#D4AF37]"
+                                : "bg-[#71717A]"
+                            }`}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-sm text-[#FFFFFF] group-hover:text-[#D4AF37] transition-colors">
+                              {ev.nombre}
+                            </span>
+                            <span className="text-xs text-[#A1A1AA] flex items-center gap-1 mt-0.5">
+                              <span className="material-symbols-outlined text-xs text-[#71717A]">
+                                location_on
+                              </span>
+                              {ev.locacion}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Tipo de Pantalla */}
+                      <td className="py-4 px-4">
+                        <span className="text-xs text-[#FFFFFF]">
+                          {ev.tipo_pantalla || "No especificada"}
+                        </span>
+                      </td>
+
+                      {/* Metraje */}
+                      <td className="py-4 px-4">
+                        <span className="px-2.5 py-1 rounded-md bg-[#1E1E1E] border border-[#27272A] text-xs font-mono font-bold text-[#D4AF37]">
+                          {ev.metros_cuadrados || 0} m²
+                        </span>
+                      </td>
+
+                      {/* Fechas */}
+                      <td className="py-4 px-4">
+                        <div className="flex flex-col">
+                          <span className="text-xs text-[#FFFFFF]">
+                            {new Date(ev.fecha_inicio).toLocaleDateString("es-CL", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span className="text-[10px] text-[#71717A]">
+                            {ev.fecha_termino
+                              ? `Termina: ${new Date(ev.fecha_termino).toLocaleDateString("es-CL", {
+                                  day: "2-digit",
+                                  month: "short",
+                                })}`
+                              : "En desarrollo"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Estado */}
+                      <td className="py-4 px-4">
+                        {ev.estado === "en_curso" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                            En Curso
+                          </span>
+                        ) : ev.estado === "planificado" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                            Planificado
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#27272A] text-[#71717A] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#71717A]" />
+                            Finalizado
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Selector de Estado Rápido */}
+                      <td className="py-4 px-4 sm:px-6 text-right">
+                        <select
+                          value={ev.estado}
+                          disabled={actualizandoId === ev.id}
+                          onChange={(e) =>
+                            handleCambiarEstado(ev.id, e.target.value as Evento["estado"])
+                          }
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold bg-[#1E1E1E] border border-[#27272A] hover:border-[#D4AF37] text-[#FFFFFF] cursor-pointer transition-all focus:outline-none"
+                        >
+                          <option value="en_curso">● En Curso</option>
+                          <option value="planificado">● Planificado</option>
+                          <option value="finalizado">● Finalizado</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-sm text-[#71717A]">
+                      No se encontraron eventos con los filtros seleccionados.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      {/* ── Modal Nueva Producción ── */}
+      {modalAbierto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-[#121212] border border-[#27272A] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header Modal */}
+            <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                  <span className="material-symbols-outlined text-xl">event_available</span>
+                </div>
+                <div>
+                  <h3 className="font-['Outfit'] text-lg font-semibold text-[#FFFFFF]">
+                    Registrar Nueva Producción
+                  </h3>
+                  <span className="text-[11px] text-[#71717A]">
+                    Planificación y montaje en Supabase Cloud
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalAbierto(false)}
+                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={handleCrearEvento} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Nombre del Evento / Producción
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Ej: Lollapalooza 2026 · Escenario Perry's"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Locación / Recinto
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={locacion}
+                  onChange={(e) => setLocacion(e.target.value)}
+                  placeholder="Ej: Parque Bicentenario de Cerrillos, Santiago"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                    Fecha y Hora de Inicio
+                  </label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                    Fecha de Término (Opcional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={fechaTermino}
+                    onChange={(e) => setFechaTermino(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                    Metros Cuadrados (m²)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={metrosCuadrados}
+                    onChange={(e) => setMetrosCuadrados(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                    Estado Inicial
+                  </label>
+                  <select
+                    value={estadoInicial}
+                    onChange={(e) =>
+                      setEstadoInicial(e.target.value as "planificado" | "en_curso")
+                    }
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  >
+                    <option value="planificado">● Planificado (Próximo)</option>
+                    <option value="en_curso">● En Curso (Activar Ahora)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  Configuración Técnica
+                </label>
+                <select
+                  value={tipoPantalla}
+                  onChange={(e) => setTipoPantalla(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                >
+                  <option value="Pantalla Escenario P3.9 Outdoor">
+                    Pantalla Escenario P3.9 Outdoor (Alta Luminosidad)
+                  </option>
+                  <option value="Pantalla P2.9 Indoor">
+                    Pantalla P2.9 Indoor (Alta Definición)
+                  </option>
+                  <option value="Pista de Baile LED Interactiva">
+                    Pista de Baile LED Interactiva (Vidrio Templado)
+                  </option>
+                  <option value="Tótem LED Publicitario">
+                    Tótem LED Publicitario / Vertical
+                  </option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#27272A]">
+                <button
+                  type="button"
+                  onClick={() => setModalAbierto(false)}
+                  className="px-4 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardando}
+                  className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all shadow-md shadow-[#D4AF37]/15 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <span className={`material-symbols-outlined text-base ${guardando ? "animate-spin" : ""}`}>
+                    {guardando ? "progress_activity" : "event_available"}
+                  </span>
+                  <span>{guardando ? "Guardando..." : "Guardar Producción"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Footer ── */}
+      <footer
+        style={{
+          padding: "16px 32px",
+          borderTop: "1px solid var(--bd)",
+          background: "var(--bg)",
+          fontSize: "12px",
+          color: "var(--mu)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1240px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          <span>Alejandra Producciones SpA • Dirección y Operaciones Técnicas</span>
+          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[#D4AF37] font-semibold">
+            Módulo de Producciones v1.0
+          </span>
+        </div>
+      </footer>
+    </div>
+  </div>
+);
+}
