@@ -220,12 +220,12 @@ export const HomeScreen: React.FC = () => {
             <Ionicons
               name={pendingSyncCount > 0 ? 'cloud-upload-outline' : 'cloud-done-outline'}
               size={20}
-              color={pendingSyncCount > 0 ? '#FBBF24' : '#34D399'}
+              color={pendingSyncCount > 0 ? '#F59E0B' : '#10B981'}
             />
             <View
               style={[
                 styles.cloudBadgeDot,
-                { backgroundColor: pendingSyncCount > 0 ? '#FBBF24' : '#10B981' },
+                { backgroundColor: pendingSyncCount > 0 ? '#F59E0B' : '#10B981' },
               ]}
             />
           </TouchableOpacity>
@@ -380,7 +380,7 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.gridCard}>
               <View style={styles.gridCardHeader}>
                 <View style={styles.gridIconBoxAmber}>
-                  <Ionicons name="build" size={15} color="#FBBF24" />
+                  <Ionicons name="build" size={15} color="#F59E0B" />
                 </View>
                 <View style={styles.revisionBadge}>
                   <Text style={styles.revisionBadgeText}>Revisión</Text>
@@ -391,7 +391,7 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.mantencionM2)}</Text>
 
               <View style={styles.gridCardFooter}>
-                <Ionicons name="warning-outline" size={12} color="#FBBF24" style={{ marginRight: 4 }} />
+                <Ionicons name="warning-outline" size={12} color="#F59E0B" style={{ marginRight: 4 }} />
                 <Text style={styles.gridFooterAmber}>
                   {equipmentMetrics.mantencionCount}{' '}
                   {equipmentMetrics.mantencionCount === 1 ? 'palmeta' : 'palmetas'}
@@ -403,7 +403,7 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.gridCard}>
               <View style={styles.gridCardHeader}>
                 <View style={styles.gridIconBoxRed}>
-                  <Ionicons name="alert-circle-outline" size={16} color="#F87171" />
+                  <Ionicons name="alert-circle-outline" size={16} color="#EF4444" />
                 </View>
                 <View style={styles.bajaBadge}>
                   <Text style={styles.bajaBadgeText}>Baja</Text>
@@ -414,7 +414,7 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.bajaM2)}</Text>
 
               <View style={styles.gridCardFooter}>
-                <Ionicons name="close-circle-outline" size={12} color="#F87171" style={{ marginRight: 4 }} />
+                <Ionicons name="close-circle-outline" size={12} color="#EF4444" style={{ marginRight: 4 }} />
                 <Text style={styles.gridFooterRed}>
                   {equipmentMetrics.bajaCount}{' '}
                   {equipmentMetrics.bajaCount === 1 ? 'palmeta' : 'palmetas'}
@@ -462,12 +462,12 @@ export const HomeScreen: React.FC = () => {
                   ? 'warning-outline'
                   : 'checkmark-circle-outline';
 
-              const iconColor = isBaja ? '#F87171' : isMant ? '#FBBF24' : '#34D399';
+              const iconColor = isBaja ? '#EF4444' : isMant ? '#F59E0B' : '#10B981';
               const iconBg = isBaja
-                ? 'rgba(239, 68, 68, 0.15)'
+                ? 'rgba(239, 68, 68, 0.10)'
                 : isMant
-                  ? 'rgba(245, 158, 11, 0.15)'
-                  : 'rgba(16, 185, 129, 0.15)';
+                  ? 'rgba(245, 158, 11, 0.10)'
+                  : 'rgba(16, 185, 129, 0.10)';
 
               const statusText = isBaja
                 ? '• Dado de Baja'
@@ -514,7 +514,7 @@ export const HomeScreen: React.FC = () => {
                         </Text>
                       </View>
                       <View style={[styles.activitySyncPill, item.sincronizado ? styles.activitySyncCloud : styles.activitySyncLocal]}>
-                        <Text style={[styles.activitySyncText, { color: item.sincronizado ? '#34D399' : '#FBBF24' }]}>
+                        <Text style={[styles.activitySyncText, { color: item.sincronizado ? '#10B981' : '#F59E0B' }]}>
                           {item.sincronizado ? 'Cloud' : 'Local'}
                         </Text>
                       </View>
@@ -839,9 +839,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: 'rgba(16, 185, 129, 0.16)',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.28)',
+    borderColor: 'rgba(16, 185, 129, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -861,16 +861,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   palmetasCountBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor: 'rgba(16, 185, 129, 0.22)',
     paddingHorizontal: 9,
     paddingVertical: 3.5,
     borderRadius: 10,
     marginBottom: 3,
   },
   palmetasCountText: {
-    color: '#34D399',
+    color: '#10B981',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -913,9 +913,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
-    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    backgroundColor: 'rgba(245, 158, 11, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.28)',
+    borderColor: 'rgba(245, 158, 11, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -923,35 +923,35 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
-    backgroundColor: 'rgba(239, 68, 68, 0.14)',
+    backgroundColor: 'rgba(239, 68, 68, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.28)',
+    borderColor: 'rgba(239, 68, 68, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   revisionBadge: {
-    backgroundColor: 'rgba(245, 158, 11, 0.16)',
+    backgroundColor: 'rgba(245, 158, 11, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: 'rgba(245, 158, 11, 0.22)',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 8,
   },
   revisionBadgeText: {
-    color: '#FBBF24',
+    color: '#F59E0B',
     fontSize: 10,
     fontWeight: '700',
   },
   bajaBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    backgroundColor: 'rgba(239, 68, 68, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: 'rgba(239, 68, 68, 0.22)',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 8,
   },
   bajaBadgeText: {
-    color: '#F87171',
+    color: '#EF4444',
     fontSize: 10,
     fontWeight: '700',
   },
@@ -972,12 +972,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gridFooterAmber: {
-    color: '#FBBF24',
+    color: '#F59E0B',
     fontSize: 11,
     fontWeight: '600',
   },
   gridFooterRed: {
-    color: '#F87171',
+    color: '#EF4444',
     fontSize: 11,
     fontWeight: '600',
   },

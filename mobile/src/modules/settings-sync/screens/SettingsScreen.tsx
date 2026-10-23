@@ -228,7 +228,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
                   <Ionicons
                     name={pendingCount > 0 ? 'cloud-offline-outline' : 'cloud-done-outline'}
                     size={18}
-                    color={pendingCount > 0 ? '#FBBF24' : '#34D399'}
+                    color={pendingCount > 0 ? '#F59E0B' : '#10B981'}
                   />
                 </View>
                 <Text style={styles.pendingCountText}>
@@ -586,12 +586,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   pendingBadgePending: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderColor: 'rgba(245, 158, 11, 0.4)',
+    backgroundColor: 'rgba(245, 158, 11, 0.10)',
+    borderColor: 'rgba(245, 158, 11, 0.25)',
   },
   pendingBadgeSynced: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderColor: 'rgba(16, 185, 129, 0.35)',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
   },
   pendingBadgeText: {
     fontSize: 9.5,
@@ -599,10 +599,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   pendingBadgeTextPending: {
-    color: '#FBBF24',
+    color: '#F59E0B',
   },
   pendingBadgeTextSynced: {
-    color: '#34D399',
+    color: '#10B981',
   },
   syncButton: {
     flexDirection: 'row',

@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 26 — Integración Monorepo: Web Completo + LiquidGlassTabBar Móvil a 120 FPS).
+- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 27 — Refinamiento Cromático Semántico: Calibración Mate y Sofisticada de Tarjetas e Iconos).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Completadas en Web y Móvil), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Servidor Next.js activo con HTTP 200 y Expo Router con `LiquidGlassTabBar` nativa, compacta y ultra-fluida (120 FPS).
@@ -115,6 +115,17 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-22 (Sesión 27 — Refinamiento Cromático Semántico: Calibración Mate y Sofisticada de Tarjetas e Iconos):**
+  - **Eliminación del Efecto Neón Chillón en Cards e Iconos:**
+    - Se sustituyeron los colores estridentes y fluorescentes (`#34D399`, `#FBBF24` y `#F87171`) por la paleta semántica oficial mate y refinada ([.ai/03-ui-ux-branding.md](file:///c:/Workspace/aleprod-capstone/.ai/03-ui-ux-branding.md)): **Verde Esmeralda (`#10B981`)**, **Ámbar Cálido (`#F59E0B`)** y **Rojo Coral (`#EF4444`)**.
+    - Se ajustaron las opacidades de los contenedores de iconos y micro-badges a un 10% de tinte (`rgba(..., 0.10)`) y 22% de borde (`rgba(..., 0.22)`), erradicando el resplandor artificial que sobreiluminaba en pantallas oscuras.
+  - **Armonización de Componentes Afectados:**
+    - [HomeScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/HomeScreen.tsx): Card principal de operativos, cards de mantención y baja (badges, números de palmetas, iconos), estado de sincronización en nube y tarjetas de actividad reciente.
+    - [SettingsScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/settings-sync/screens/SettingsScreen.tsx): Sub-card de registros pendientes de sincronización (icono de nube y badge de conteo).
+    - [EventsScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/EventsScreen.tsx): Badges de estado de eventos planificados.
+    - [ScannerScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/screens/ScannerScreen.tsx): Botones de cierre con rojo coral sobrio `#EF4444`.
+  - **Verificación:** Tipado validado con `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
 - **2026-10-22 (Sesión 26 — Refactorización de Nomenclatura: Limpieza a LiquidGlassTabBar):**
   - **Eliminación de Nomenclatura Externa:** Se removió la palabra `"Instagram"` de todo el código fuente, renombrando el componente y archivo a [LiquidGlassTabBar.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/components/LiquidGlassTabBar.tsx) (`export const LiquidGlassTabBar` y `export default LiquidGlassTabBar`).

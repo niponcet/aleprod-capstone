@@ -77,7 +77,7 @@ export const ScannerScreen = () => {
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
-          <Ionicons name="close" size={22} color="#F87171" />
+          <Ionicons name="close" size={22} color="#EF4444" />
         </TouchableOpacity>
         <Ionicons name="camera-outline" size={48} color={colors.primaryAmber} style={{ marginBottom: 16 }} />
         <Text style={styles.permissionText}>
@@ -217,7 +217,7 @@ export const ScannerScreen = () => {
         }}
         activeOpacity={0.8}
       >
-        <Ionicons name="close" size={22} color="#F87171" />
+        <Ionicons name="close" size={22} color="#EF4444" />
       </TouchableOpacity>
 
       {/* Selector Superior de Modo con LiquidGlass */}

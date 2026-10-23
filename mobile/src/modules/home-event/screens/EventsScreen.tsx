@@ -197,9 +197,9 @@ export const EventsScreen: React.FC = () => {
       case 'planificado':
       default:
         return {
-          bg: 'rgba(16, 185, 129, 0.14)',
-          border: 'rgba(16, 185, 129, 0.28)',
-          text: '#34D399',
+          bg: 'rgba(16, 185, 129, 0.10)',
+          border: 'rgba(16, 185, 129, 0.22)',
+          text: '#10B981',
           dot: '#10B981',
         };
     }
