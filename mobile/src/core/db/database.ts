@@ -1,7 +1,29 @@
+import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
-// Inicializa la conexión de manera síncrona (SDK 51+)
-export const db = SQLite.openDatabaseSync('aleprod_local.db');
+// Inicializa la conexión de manera segura y resiliente
+// En móvil nativo (iOS/Android), SQLite siempre está disponible y es síncrono.
+// En Web, expo-sqlite depende de wa-sqlite (WebAssembly y SharedArrayBuffer).
+// Si el navegador web no soporta SharedArrayBuffer, evitamos que la aplicación crashee con pantalla blanca.
+let rawDb: any = null;
+
+try {
+  if (Platform.OS !== 'web' || typeof SharedArrayBuffer !== 'undefined') {
+    rawDb = SQLite.openDatabaseSync('aleprod_local.db');
+  }
+} catch (err) {
+  console.warn('[SQLite] Base de datos SQLite no disponible en este entorno:', err);
+}
+
+const fallbackDb: any = {
+  execSync: () => {},
+  runSync: () => ({ lastInsertRowId: 0, changes: 0 }),
+  getFirstSync: () => null,
+  getAllSync: () => [],
+};
+
+export const db: SQLite.SQLiteDatabase = rawDb || fallbackDb;
+
 
 export interface LocalIncidencia {
   id: number;
@@ -38,6 +60,10 @@ export interface LocalPalmetaPendiente {
 }
 
 export const initDB = () => {
+  if (!rawDb) {
+    console.warn('[SQLite] Modo web/fallback activo: SQLite omitido en favor de sincronización directa.');
+    return;
+  }
   try {
     // 1. Tabla de incidencias locales
     db.execSync(`
