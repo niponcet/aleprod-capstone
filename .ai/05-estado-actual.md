@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 28 — Estética Minimalista Apple/Linear: Tipografía Neutra y Micro-Indicadores Semánticos).
+- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 29 — Rediseño de StartEventBottomSheet, Swipe-Down y Pantalla Nativa de Notificaciones).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Completadas en Web y Móvil), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Servidor Next.js activo con HTTP 200 y Expo Router con `LiquidGlassTabBar` nativa, compacta y ultra-fluida (120 FPS).
@@ -115,6 +115,20 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-22 (Sesión 29 — Rediseño de StartEventBottomSheet, Swipe-Down y Pantalla Nativa de Notificaciones):**
+  - **Rediseño Completo de [StartEventBottomSheet.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/components/StartEventBottomSheet.tsx):**
+    - **Erradicación del Ámbar Invasivo:** Iconos de inputs (`calendar-outline`, `location-outline`) cambiados de ámbar a gris pizarra `#94A3B8`. Enlace "Ver frecuentes" a azul corporativo `#60A5FA`.
+    - **Servicios en Lenguaje Azul Corporativo:** Selección de Pista LED y Pirotecnia actualizada a borde azul `#2563EB`, fondo navy translúcido `rgba(37, 99, 235, 0.12)`, caja de iconos activa en `#2563EB` con icono blanco, checkbox circular con check en blanco puro `#FFFFFF`, y títulos en blanco `#FFFFFF`.
+    - **Botón de Acción Principal:** Sustitución del degradado amarillo/dorado chillón por el azul oficial `#2563EB` (`['#2563EB', '#1D4ED8']`) con tipografía e icono en blanco `#FFFFFF` y sombra azul ambiental.
+    - **Icono del Título:** Contenedor circular azul suave `rgba(37, 99, 235, 0.14)` con borde `rgba(59, 130, 246, 0.35)` e icono en `#60A5FA`.
+    - **Superficie M²:** Métrica central limpia sobre `#0F1422` con borde neutro sutil, número blanco y unidad gris perla `#94A3B8`. Presets seleccionados en azul corporativo `#2563EB`.
+    - **Gesto de Arrastre para Cerrar (Swipe-to-Dismiss):** Implementación de `PanResponder` con `Animated.Value` en el handle superior y cabecera; deslizar hacia abajo con el dedo anima el modal de forma fluida y lo descarta al superar el umbral de arrastre o velocidad.
+  - **Creación de Pantalla Dedicada de Notificaciones:**
+    - Se creó [NotificationsScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/notifications/screens/NotificationsScreen.tsx) con estética Dark Mode prémium, gradiente superior, filtros por segmentos ("Todas", "Alertas", "Sistema"), botón "Marcar leídas" y estado de bandeja al día.
+    - Se registró la ruta en [mobile/app/notifications.tsx](file:///c:/Workspace/aleprod-capstone/mobile/app/notifications.tsx) y en el stack de [mobile/app/_layout.tsx](file:///c:/Workspace/aleprod-capstone/mobile/app/_layout.tsx).
+    - Se reorientaron los botones de campana en [HomeScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/HomeScreen.tsx) y [EventsScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/EventsScreen.tsx) desde `/activity-history` hacia la nueva ruta `/notifications`.
+  - **Verificación:** Tipado validado con `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
 - **2026-10-22 (Sesión 28 — Estética Minimalista Apple/Linear: Tipografía Neutra y Micro-Indicadores Semánticos):**
   - **Implementación de la Opción B (Estilo Ejecutivo Apple/Linear):**

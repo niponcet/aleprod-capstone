@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,6 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Animated,
+  PanResponder,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -60,6 +62,47 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
   const [hasPirotecnia, setHasPirotecnia] = useState(false);
 
   const [saving, setSaving] = useState(false);
+
+  // Gesto PanResponder para bajar/deslizar el modal y cerrarlo
+  const panY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      panY.setValue(0);
+    }
+  }, [visible, panY]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          panY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 120 || gestureState.vy > 0.6) {
+          triggerHaptic('light');
+          Animated.timing(panY, {
+            toValue: 700,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(() => {
+            onClose();
+            panY.setValue(0);
+          });
+        } else {
+          Animated.spring(panY, {
+            toValue: 0,
+            tension: 70,
+            friction: 8,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   // Filtrado reactivo de recintos frecuentes
   const filteredVenues = RECURRENT_VENUES.filter(
@@ -200,41 +243,46 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.sheetContainerWrapper}
         >
-          <LiquidGlassView
-            borderRadius={24}
-            intensity={90}
-            style={styles.sheetGlass}
-          >
-            {/* Handle Superior */}
-            <View style={styles.handleBar} />
-
-            {/* Cabecera del Bottom Sheet con Icono de Celebración / Fiesta */}
-            <View style={styles.sheetHeader}>
-              <View style={styles.headerTitleBox}>
-                <View style={styles.headerIconCircle}>
-                  <MaterialCommunityIcons
-                    name="party-popper"
-                    size={20}
-                    color={colors.primaryAmber}
-                  />
+          <Animated.View style={[styles.animatedSheet, { transform: [{ translateY: panY }] }]}>
+            <LiquidGlassView
+              borderRadius={24}
+              intensity={90}
+              style={styles.sheetGlass}
+            >
+              {/* Handle Superior y Header con Gesto de Deslizamiento para Cerrar */}
+              <View {...panResponder.panHandlers}>
+                <View style={styles.handleBarTouchArea}>
+                  <View style={styles.handleBar} />
                 </View>
-                <View>
-                  <Text style={styles.sheetTitle}>Iniciar Evento</Text>
-                  <Text style={styles.sheetSubtitle}>
-                    Alta técnica de montaje en terreno
-                  </Text>
+
+                {/* Cabecera del Bottom Sheet */}
+                <View style={styles.sheetHeader}>
+                  <View style={styles.headerTitleBox}>
+                    <View style={styles.headerIconCircle}>
+                      <MaterialCommunityIcons
+                        name="party-popper"
+                        size={20}
+                        color="#60A5FA"
+                      />
+                    </View>
+                    <View>
+                      <Text style={styles.sheetTitle}>Iniciar Evento</Text>
+                      <Text style={styles.sheetSubtitle}>
+                        Alta técnica de montaje en terreno
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={styles.closeButton}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={styles.closeButtonText}>✕</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-
-              <TouchableOpacity
-                onPress={onClose}
-                style={styles.closeButton}
-                activeOpacity={0.7}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
 
             <ScrollView
               showsVerticalScrollIndicator={false}
@@ -248,7 +296,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                   <Ionicons
                     name="calendar-outline"
                     size={18}
-                    color={colors.primaryAmber}
+                    color="#94A3B8"
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -281,7 +329,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                   <Ionicons
                     name="location-outline"
                     size={18}
-                    color={colors.primaryAmber}
+                    color="#94A3B8"
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -324,7 +372,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                           <Ionicons
                             name="business-outline"
                             size={16}
-                            color={colors.primaryAmber}
+                            color="#60A5FA"
                             style={{ marginRight: 10 }}
                           />
                           <View style={{ flex: 1 }}>
@@ -376,7 +424,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                         <Ionicons
                           name="grid-outline"
                           size={18}
-                          color={hasPista ? colors.textInverse : colors.primaryAmber}
+                          color={hasPista ? '#FFFFFF' : '#94A3B8'}
                         />
                       </View>
                       <View
@@ -386,7 +434,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                         ]}
                       >
                         {hasPista && (
-                          <Ionicons name="checkmark" size={12} color="#000000" />
+                          <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                         )}
                       </View>
                     </View>
@@ -427,7 +475,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                         <Ionicons
                           name="flame-outline"
                           size={18}
-                          color={hasPirotecnia ? colors.textInverse : colors.primaryAmber}
+                          color={hasPirotecnia ? '#FFFFFF' : '#94A3B8'}
                         />
                       </View>
                       <View
@@ -437,7 +485,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                         ]}
                       >
                         {hasPirotecnia && (
-                          <Ionicons name="checkmark" size={12} color="#000000" />
+                          <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                         )}
                       </View>
                     </View>
@@ -544,14 +592,14 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                 style={[styles.saveButtonWrapper, saving && styles.buttonDisabled]}
               >
                 <LinearGradient
-                  colors={saving ? ['#6E4506', '#9B7B2B'] : ['#C87A08', '#F5C242']}
+                  colors={saving ? ['#1E40AF', '#1D4ED8'] : ['#2563EB', '#1D4ED8']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.saveButtonGradient}
                 >
                   {saving ? (
                     <View style={styles.savingRow}>
-                      <ActivityIndicator size="small" color={colors.textInverse} />
+                      <ActivityIndicator size="small" color="#FFFFFF" />
                       <Text style={[styles.saveButtonText, { marginLeft: 10 }]}>
                         Registrando en Supabase...
                       </Text>
@@ -561,7 +609,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                       <MaterialCommunityIcons
                         name="party-popper"
                         size={18}
-                        color={colors.textInverse}
+                        color="#FFFFFF"
                         style={{ marginRight: 8 }}
                       />
                       <Text style={styles.saveButtonText}>Crear e Iniciar Evento</Text>
@@ -584,6 +632,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
               </View>
             </ScrollView>
           </LiquidGlassView>
+          </Animated.View>
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -605,25 +654,34 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     overflow: 'hidden',
   },
+  animatedSheet: {
+    width: '100%',
+  },
   sheetGlass: {
-    paddingTop: 12,
+    paddingTop: 4,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
+  },
+  handleBarTouchArea: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    width: '100%',
+    alignItems: 'center',
   },
   handleBar: {
     width: 44,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignSelf: 'center',
-    marginBottom: 14,
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 22,
+    paddingTop: 4,
     marginBottom: 16,
   },
   headerTitleBox: {
@@ -634,9 +692,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(229, 152, 25, 0.15)',
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
     borderWidth: 1,
-    borderColor: colors.primaryAmber,
+    borderColor: 'rgba(59, 130, 246, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -688,14 +746,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   toggleDropdownText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 12,
     fontWeight: '600',
   },
   calcBadge: {
-    color: colors.primaryLight,
+    color: '#94A3B8',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -765,15 +823,15 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     flex: 1,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#121620',
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 14,
     padding: 12,
   },
   serviceCardActive: {
-    backgroundColor: 'rgba(229, 152, 25, 0.12)',
-    borderColor: colors.primaryAmber,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderColor: '#2563EB',
   },
   serviceHeader: {
     flexDirection: 'row',
@@ -785,26 +843,29 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: 'rgba(229, 152, 25, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   serviceIconBoxActive: {
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
   },
   checkboxCircle: {
     width: 18,
     height: 18,
     borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: colors.borderLight,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: '#0F1422',
   },
   checkboxCircleActive: {
-    backgroundColor: colors.primaryAmber,
-    borderColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
   },
   titleWithBadgeRow: {
     flexDirection: 'row',
@@ -813,14 +874,14 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   serviceTitle: {
-    color: colors.textSecondary,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 2,
     flex: 1,
   },
   serviceTitleActive: {
-    color: colors.primaryAmber,
+    color: '#FFFFFF',
   },
   optionalBadge: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -860,9 +921,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: '#0F1422',
     borderWidth: 1,
-    borderColor: colors.primaryAmber,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 12,
     height: 46,
     paddingHorizontal: 12,
@@ -875,9 +936,9 @@ const styles = StyleSheet.create({
     minWidth: 50,
   },
   metersUnit: {
-    color: colors.primaryAmber,
+    color: '#94A3B8',
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     marginLeft: 4,
   },
   chipsRow: {
@@ -889,28 +950,28 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
   },
   presetChipActive: {
-    backgroundColor: 'rgba(229, 152, 25, 0.18)',
-    borderColor: colors.primaryAmber,
+    backgroundColor: 'rgba(37, 99, 235, 0.16)',
+    borderColor: '#2563EB',
   },
   presetChipText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '600',
   },
   presetChipTextActive: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontWeight: '700',
   },
   saveButtonWrapper: {
     marginTop: 6,
     borderRadius: 14,
-    shadowColor: colors.primaryDark,
+    shadowColor: '#2563EB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
@@ -932,10 +993,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   saveButtonText: {
-    color: colors.textInverse,
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   footerRow: {
     flexDirection: 'row',

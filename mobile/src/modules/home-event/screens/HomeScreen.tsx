@@ -233,7 +233,7 @@ export const HomeScreen: React.FC = () => {
             style={styles.headerIconButton}
             onPress={() => {
               triggerHaptic('selection');
-              router.push('/activity-history');
+              router.push('/notifications');
             }}
             activeOpacity={0.7}
           >

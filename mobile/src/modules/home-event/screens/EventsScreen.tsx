@@ -150,9 +150,9 @@ export const EventsScreen: React.FC = () => {
     setActiveTab('en_curso');
   };
 
-  const handleGoToHistory = () => {
+  const handleGoToNotifications = () => {
     triggerHaptic('selection');
-    router.push('/activity-history');
+    router.push('/notifications');
   };
 
   // Filtrar según la pestaña activa (HU-16)
@@ -232,7 +232,7 @@ export const EventsScreen: React.FC = () => {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerIconButton}
-            onPress={handleGoToHistory}
+            onPress={handleGoToNotifications}
             activeOpacity={0.7}
           >
             <Ionicons name="notifications-outline" size={19} color="#CBD5E1" />
