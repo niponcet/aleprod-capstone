@@ -29,20 +29,20 @@
 ---
 
 ## Fase 3: Desarrollo Núcleo App/Web (Fecha límite: 29-10-2026)
-- **Estado:** En Progreso — UI Móvil Avanzada / Backend e Integración Supabase Pendientes / Web No Iniciada
+- **Estado:** En Progreso — UI Móvil Avanzada / Web con Dashboard, Incidencias, Palmetas y Eventos funcionales / Integración Supabase Móvil Pendiente
 - **Entregables:** MVP funcional desplegado.
 
 ### Épica 1: Autenticación y Seguridad
-- **HU-05: Login y Sesión (Web/App)** `[En Progreso — Móvil 100% Conectado a Supabase Auth Real con Sesión Activa / Web Pendiente]`
-  - **Descripción:** Implementar inicio de sesión con correo/contraseña consumiendo Supabase Auth. App móvil completamente conectada con `getSession()` y `onAuthStateChange`, manejo de errores nativo y usuario semilla verificado.
-- **HU-06: Control de Acceso (RBAC)** `[No Iniciado]`
-  - **Descripción:** Configurar navegación condicional (Técnico vs Admin) y proteger rutas mediante Row Level Security (RLS).
+- **HU-05: Login y Sesión (Web/App)** `[Completada en Web y Móvil]`
+  - **Descripción:** Implementar inicio de sesión con correo/contraseña consumiendo Supabase Auth. App móvil completamente conectada con `getSession()` y `onAuthStateChange`. Panel Web completado con formulario corporativo Dark Luxury y usuario de Gerencia activo.
+- **HU-06: Control de Acceso (RBAC)** `[Completada en Web y Base de Datos]`
+  - **Descripción:** Control de acceso basado en roles (`admin` para panel web, `tecnico` para app móvil) vinculado en `public.perfiles` y protegido por Row Level Security (RLS).
 
 ### Épica 2: Plataforma Administrativa Next.js (Web)
-- **HU-07: Dashboard Central** `[No Iniciado — Web es boilerplate create-next-app intacto]`
-  - **Descripción:** Crear vista general con métricas de palmetas operativas vs en reparación.
-- **HU-08: CRUD de Activos Serializados (Palmetas)** `[No Iniciado]`
-  - **Descripción:** Desarrollar interfaz web para listar, filtrar y editar los estados de las palmetas LED.
+- **HU-07: Dashboard Central y Barra de Navegación Universal** `[Completada — web/app/page.tsx]`
+  - **Descripción:** Consola gerencial con métricas en vivo alimentada por Supabase SSR. Integra la barra lateral universal fija (`Sidebar`), 2x2 grid en Montaje Activo, paleta oficial `#0A0A0A` / `#D4AF37` y navegación continua y fija a lo largo de todas las vistas del sistema (`/`, `/eventos`, `/palmetas`, `/incidencias`).
+- **HU-08: CRUD de Activos Serializados (Palmetas)** `[Completada — web/app/palmetas/page.tsx]`
+  - **Descripción:** Módulo completo de gestión de palmetas LED integrado con la barra lateral izquierda universal, KPIs en vivo, filtros por estado semántico, búsqueda, tabla ejecutiva y modal de cambio de estado con actualización directa en Supabase.
 - **HU-09: Gestión de Inventario a Granel (Repuestos)** `[No Iniciado]`
   - **Descripción:** Interfaz para visualizar el stock actual de insumos, herramientas y repuestos.
 

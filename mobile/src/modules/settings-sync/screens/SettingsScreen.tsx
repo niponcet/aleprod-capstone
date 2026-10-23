@@ -133,6 +133,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
     }
   };
 
+
   const handleLogout = () => {
     Alert.alert(
       'Cerrar Sesión',

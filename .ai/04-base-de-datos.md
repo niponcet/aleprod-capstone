@@ -256,7 +256,86 @@ FOR EACH ROW
 EXECUTE FUNCTION public.fn_descontar_stock_repuesto();
 ```
 
+### Sincronización Automática entre Incidencias y Estado de Palmetas LED
+Garantiza coherencia operativa sin ambigüedades: se simplificaron los estados operativos a solo 2 estados principales (**Operativa** y **En Mantención**, eliminando el estado redundante de reparación). 
+Cuando una palmeta tiene una falla abierta (`resuelto = false`), pasa automáticamente a estado `mantencion` y ubicación `taller`. Al resolver todas sus fallas (`resuelto = true`), regresa automáticamente a estado `operativo` y ubicación `bodega_central`.
+
+> **CRÍTICO - SEGURIDAD Y PERMISOS (SECURITY DEFINER):**  
+> La función del trigger ejecuta con `SECURITY DEFINER` y `SET search_path TO 'public'` para que las actualizaciones sobre `palmetas_led` no sean bloqueadas por las directivas de RLS cuando un técnico o usuario autenticado actualiza una incidencia.
+> Además, cuenta con resolución automática de palmeta por `qr_uuid` / `codigo_qr` si el UUID relacional no estuviera presente.
+
+```sql
+CREATE OR REPLACE FUNCTION public.fn_sync_incidencia_palmeta_estado()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_pendientes_count INTEGER;
+  v_palmeta_target UUID;
+  v_target_qr TEXT;
+BEGIN
+  v_palmeta_target := COALESCE(NEW.palmeta_id, OLD.palmeta_id);
+  v_target_qr := COALESCE(NEW.qr_uuid, OLD.qr_uuid);
+
+  -- Si no viene el UUID de la palmeta directamente, intentar buscarla por qr_uuid o codigo_qr o codigo_visible
+  IF v_palmeta_target IS NULL AND v_target_qr IS NOT NULL THEN
+    SELECT id INTO v_palmeta_target
+    FROM public.palmetas_led
+    WHERE qr_uuid = v_target_qr
+       OR codigo_qr = v_target_qr
+       OR codigo_visible = v_target_qr
+    LIMIT 1;
+  END IF;
+
+  IF v_palmeta_target IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Contar incidencias abiertas para esta palmeta (por ID o por QR vinculado)
+  SELECT COUNT(*) INTO v_pendientes_count
+  FROM public.incidencias
+  WHERE (palmeta_id = v_palmeta_target OR qr_uuid IN (
+      SELECT qr_uuid FROM public.palmetas_led WHERE id = v_palmeta_target
+  ))
+    AND resuelto = false;
+
+  IF v_pendientes_count > 0 THEN
+    UPDATE public.palmetas_led
+    SET 
+      estado = 'mantencion',
+      ubicacion_actual = 'taller',
+      updated_at = NOW()
+    WHERE id = v_palmeta_target;
+  ELSE
+    UPDATE public.palmetas_led
+    SET 
+      estado = 'operativo',
+      ubicacion_actual = 'bodega_central',
+      ultima_revision = NOW(),
+      updated_at = NOW()
+    WHERE id = v_palmeta_target;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+
+CREATE TRIGGER tr_sync_incidencia_palmeta_estado
+AFTER INSERT OR UPDATE OF resuelto, palmeta_id OR DELETE ON public.incidencias
+FOR EACH ROW
+EXECUTE FUNCTION public.fn_sync_incidencia_palmeta_estado();
+```
+
+### Canales de Supabase Realtime (WebSockets)
+Para asegurar que los paneles web reflejen inmediatamente los cambios sin requerir recargar la página:
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE palmetas_led, incidencias, eventos;
+```
+
 ---
+
 
 ## 5. Políticas de Seguridad (Row Level Security - RLS)
 
