@@ -318,7 +318,7 @@ export const AssetDetailScreen: React.FC = () => {
           onPress={() => setModalVisible(true)}
           activeOpacity={0.85}
         >
-          <Ionicons name="warning-outline" size={18} color="#000000" style={{ marginRight: 6 }} />
+          <Ionicons name="warning-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
           <Text style={styles.reportButtonText}>Reportar Falla</Text>
         </TouchableOpacity>
       </View>
@@ -633,16 +633,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 48,
     borderRadius: 14,
-    backgroundColor: colors.primaryAmber,
-    shadowColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
+    shadowColor: '#2563EB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 6,
   },
   reportButtonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '700',
   },
 });

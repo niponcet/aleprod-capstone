@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 29 — Rediseño de StartEventBottomSheet, Swipe-Down y Pantalla Nativa de Notificaciones).
+- **Fecha de Última Actualización:** 23 de Octubre de 2026 (Sesión 30 — Rediseño de ReportIncidentModal, IncidentScannerModal y Disparadores con Swipe-Down y Azul Corporativo).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Completadas en Web y Móvil), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Servidor Next.js activo con HTTP 200 y Expo Router con `LiquidGlassTabBar` nativa, compacta y ultra-fluida (120 FPS).
@@ -115,6 +115,23 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-23 (Sesión 30 — Rediseño de ReportIncidentModal, IncidentScannerModal y Disparadores con Swipe-Down y Azul Corporativo):**
+  - **Rediseño Completo de [ReportIncidentModal.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/components/ReportIncidentModal.tsx):**
+    - **Swipe-to-Dismiss:** Implementado `PanResponder` con `Animated.Value(panY)` en el handle superior y cabecera para arrastrar y descartar el modal hacia abajo fluidamente además del botón `✕`.
+    - **Cabecera Ejecutiva:** Icono de herramienta en contenedor circular azul suave (`#60A5FA` / `rgba(37, 99, 235, 0.14)`) y subtítulo de diagnóstico técnico en terreno.
+    - **Identificación de Palmeta:** Icono de QR y enlace de escaneo en azul suave (`#60A5FA`). Tarjeta de activo en `#121620` con texto en monoespacio blanco.
+    - **Selector de Componentes:** Grid 2x2 actualizado a fondo `#121620`, borde activo `#2563EB`, caja de iconos azul con glifo blanco, checkmark circular azul con check blanco, y labels en blanco `#FFFFFF`.
+    - **Evidencia Fotográfica:** Contenedor dashed en `#0F1422` con círculo de cámara en `rgba(37, 99, 235, 0.12)` e icono `#60A5FA`.
+    - **Botón Guardar Registro:** Actualizado de amarillo/dorado a gradiente azul oficial `['#2563EB', '#1D4ED8']` con texto e icono en blanco `#FFFFFF` y shadow `#2563EB`.
+  - **Actualización de [AssetDetailScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/screens/AssetDetailScreen.tsx):**
+    - Botón "Reportar Falla" actualizado de fondo ámbar con texto negro a azul corporativo `#2563EB` con icono y texto en blanco `#FFFFFF`.
+  - **Actualización de [EventDetailScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/EventDetailScreen.tsx):**
+    - Botón "Reportar Falla en este Evento" actualizado de ámbar a azul suave `#60A5FA` con fondo navy translúcido y borde coordinado.
+    - Indicadores de lista y RefreshControl actualizados a azul corporativo `#60A5FA` y `#2563EB`.
+  - **Actualización de [IncidentScannerModal.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/components/IncidentScannerModal.tsx):**
+    - Esquinas de enfoque de la cámara, botón de linterna activa, botón de permisos y atajo manual actualizados de amarillo ámbar a azul corporativo `#3B82F6` / `#2563EB` / `#60A5FA`.
+  - **Verificación:** Tipado validado con `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
 - **2026-10-22 (Sesión 29 — Rediseño de StartEventBottomSheet, Swipe-Down y Pantalla Nativa de Notificaciones):**
   - **Rediseño Completo de [StartEventBottomSheet.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/components/StartEventBottomSheet.tsx):**

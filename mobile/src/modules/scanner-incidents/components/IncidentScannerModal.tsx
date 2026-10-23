@@ -81,7 +81,7 @@ export const IncidentScannerModal: React.FC<IncidentScannerModalProps> = ({
           />
         ) : (
           <View style={[styles.permissionContainer, { paddingTop: insets.top + 40 }]}>
-            <Ionicons name="camera-outline" size={54} color={colors.primaryAmber} />
+            <Ionicons name="camera-outline" size={54} color="#60A5FA" />
             <Text style={styles.permissionTitle}>Permiso de Cámara Requerido</Text>
             <Text style={styles.permissionDesc}>
               Para asociar la palmeta defectuosa a la incidencia necesitamos escanear su código QR.
@@ -141,15 +141,15 @@ export const IncidentScannerModal: React.FC<IncidentScannerModalProps> = ({
                 <Ionicons
                   name={torchActive ? 'flash' : 'flash-outline'}
                   size={20}
-                  color={torchActive ? '#000000' : colors.primaryAmber}
+                  color={torchActive ? '#FFFFFF' : '#94A3B8'}
                 />
               </TouchableOpacity>
             </View>
 
-            {/* Recuadro de Escaneo Central con Esquinas Doradas */}
+            {/* Recuadro de Escaneo Central con Esquinas Azules */}
             <View style={styles.reticleContainer}>
               <View style={styles.reticleBox}>
-                {/* Esquinas doradas */}
+                {/* Esquinas azules */}
                 <View style={[styles.corner, styles.cornerTL]} />
                 <View style={[styles.corner, styles.cornerTR]} />
                 <View style={[styles.corner, styles.cornerBL]} />
@@ -175,7 +175,7 @@ export const IncidentScannerModal: React.FC<IncidentScannerModalProps> = ({
                 <Ionicons
                   name="keypad-outline"
                   size={18}
-                  color={colors.primaryAmber}
+                  color="#60A5FA"
                   style={{ marginRight: 8 }}
                 />
                 <Text style={styles.manualEntryText}>¿QR roto? Ingresar código manual</Text>
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   permissionButton: {
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 14,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   permissionButtonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skipButtonText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -273,8 +273,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerButtonTorchActive: {
-    backgroundColor: colors.primaryAmber,
-    borderColor: colors.primaryLight,
+    backgroundColor: '#2563EB',
+    borderColor: '#3B82F6',
   },
   headerInfo: {
     flex: 1,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 12,
-    color: colors.primaryAmber,
+    color: '#94A3B8',
     marginTop: 2,
   },
   reticleContainer: {
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 28,
     height: 28,
-    borderColor: colors.primaryAmber,
+    borderColor: '#3B82F6',
   },
   cornerTL: {
     top: 0,
@@ -373,13 +373,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 6,
     paddingHorizontal: 14,
-    backgroundColor: 'rgba(229, 152, 25, 0.15)',
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(229, 152, 25, 0.3)',
+    borderColor: 'rgba(37, 99, 235, 0.35)',
   },
   devSimulateText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 12,
     fontWeight: '600',
   },

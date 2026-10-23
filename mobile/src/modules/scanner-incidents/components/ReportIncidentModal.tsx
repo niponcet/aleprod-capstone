@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,9 +11,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  PanResponder,
+  ActivityIndicator,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { triggerHaptic } from '../../../core/utils/haptics';
@@ -57,6 +61,47 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [observations, setObservations] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
+
+  // Gesto PanResponder para bajar/deslizar el modal y cerrarlo
+  const panY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      panY.setValue(0);
+    }
+  }, [visible, panY]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          panY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 120 || gestureState.vy > 0.6) {
+          triggerHaptic('light');
+          Animated.timing(panY, {
+            toValue: 700,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(() => {
+            onClose();
+            panY.setValue(0);
+          });
+        } else {
+          Animated.spring(panY, {
+            toValue: 0,
+            tension: 70,
+            friction: 8,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   // Sincronizar activeQr cuando qrUuid cambia
   useEffect(() => {
@@ -169,194 +214,257 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.sheetContainerWrapper}
         >
-          <LiquidGlassView
-            borderRadius={24}
-            intensity={90}
-            style={styles.sheetGlass}
-          >
-            {/* Handle Superior */}
-            <View style={styles.handleBar} />
-
-            {/* Cabecera del Bottom Sheet */}
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Reportar Falla</Text>
-              <TouchableOpacity
-                onPress={onClose}
-                style={styles.closeButton}
-                activeOpacity={0.7}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.sheetBody}
+          <Animated.View style={[styles.animatedSheet, { transform: [{ translateY: panY }] }]}>
+            <LiquidGlassView
+              borderRadius={24}
+              intensity={90}
+              style={styles.sheetGlass}
             >
-              {/* Sección: Identificación del Activo (QR Escaneado o Manual) */}
-              <View style={styles.assetHeaderRow}>
-                <Text style={styles.sectionLabel}>PALMETA / CÓDIGO QR</Text>
-                {onRequestScan && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      triggerHaptic('light');
-                      onRequestScan();
-                    }}
-                    style={styles.rescanLink}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="camera-outline" size={13} color={colors.primaryAmber} style={{ marginRight: 4 }} />
-                    <Text style={styles.rescanLinkText}>Escanear</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              {/* Handle Superior y Header con Gesto de Deslizamiento para Cerrar */}
+              <View {...panResponder.panHandlers}>
+                <View style={styles.handleBarTouchArea}>
+                  <View style={styles.handleBar} />
+                </View>
 
-              {!isManualInput && activeQr ? (
-                <View style={styles.assetCard}>
-                  <View style={styles.assetCardLeft}>
-                    <Ionicons name="qr-code" size={16} color={colors.primaryAmber} style={{ marginRight: 8 }} />
-                    <Text style={styles.assetCodeText} numberOfLines={1}>{activeQr}</Text>
+                {/* Cabecera del Bottom Sheet */}
+                <View style={styles.sheetHeader}>
+                  <View style={styles.headerTitleBox}>
+                    <View style={styles.headerIconCircle}>
+                      <Ionicons
+                        name="build-outline"
+                        size={18}
+                        color="#60A5FA"
+                      />
+                    </View>
+                    <View>
+                      <Text style={styles.sheetTitle}>Reportar Falla</Text>
+                      <Text style={styles.sheetSubtitle}>
+                        Diagnóstico técnico de palmeta en terreno
+                      </Text>
+                    </View>
                   </View>
+
                   <TouchableOpacity
-                    onPress={() => {
-                      triggerHaptic('light');
-                      setIsManualInput(true);
-                    }}
-                    style={styles.editAssetBtn}
+                    onPress={onClose}
+                    style={styles.closeButton}
                     activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Ionicons name="pencil-outline" size={14} color={colors.textSecondary} />
+                    <Text style={styles.closeButtonText}>✕</Text>
                   </TouchableOpacity>
                 </View>
-              ) : (
-                <View style={styles.manualInputWrapper}>
-                  <TextInput
-                    style={styles.manualInput}
-                    placeholder="Escribe código (ej: ALEP-P39-0045)..."
-                    placeholderTextColor={colors.textMuted}
-                    value={activeQr}
-                    onChangeText={setActiveQr}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                  />
-                  {activeQr.length > 0 && (
-                    <TouchableOpacity onPress={() => setActiveQr('')} style={{ padding: 6 }}>
-                      <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+              </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.sheetBody}
+                keyboardShouldPersistTaps="handled"
+              >
+                {/* Sección: Identificación del Activo (QR Escaneado o Manual) */}
+                <View style={styles.assetHeaderRow}>
+                  <Text style={styles.sectionLabel}>PALMETA / CÓDIGO QR</Text>
+                  {onRequestScan && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        triggerHaptic('light');
+                        onRequestScan();
+                      }}
+                      style={styles.rescanLink}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="camera-outline" size={13} color="#60A5FA" style={{ marginRight: 4 }} />
+                      <Text style={styles.rescanLinkText}>Escanear</Text>
                     </TouchableOpacity>
                   )}
                 </View>
-              )}
 
-              {/* Sección: Componente Defectuoso (Regla de 3 Taps con Haptics — Grid Original 2x2) */}
-              <Text style={styles.sectionLabel}>COMPONENTE DEFECTUOSO</Text>
-              <View style={styles.componentsGrid}>
-                {COMPONENTS.map((item) => {
-                  const isSelected = selectedComponent === item.label;
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={[
-                        styles.componentButton,
-                        isSelected && styles.componentButtonActive,
-                      ]}
-                      onPress={() => {
-                        triggerHaptic('selection');
-                        setSelectedComponent(item.label);
-                      }}
-                      activeOpacity={0.75}
-                    >
-                      <View style={styles.componentLeft}>
-                        <Ionicons
-                          name={item.icon}
-                          size={18}
-                          color={isSelected ? colors.primaryAmber : colors.textSecondary}
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text
-                          style={[
-                            styles.componentLabel,
-                            isSelected && styles.componentLabelActive,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {item.label}
-                        </Text>
-                      </View>
-
-                      {isSelected && (
-                        <Ionicons
-                          name="checkmark-sharp"
-                          size={16}
-                          color={colors.primaryAmber}
-                        />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Sección: Evidencia Fotográfica (HU-12) */}
-              <Text style={styles.sectionLabel}>EVIDENCIA FOTOGRÁFICA</Text>
-              <TouchableOpacity
-                style={styles.photoContainer}
-                onPress={handlePickPhoto}
-                activeOpacity={0.8}
-              >
-                {photoUri ? (
-                  <View style={styles.photoPreviewWrapper}>
-                    <Image source={{ uri: photoUri }} style={styles.photoThumbnail} />
-                    <View style={styles.changePhotoBadge}>
-                      <Ionicons name="camera-reverse-outline" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
-                      <Text style={styles.changePhotoText}>Cambiar foto</Text>
+                {!isManualInput && activeQr ? (
+                  <View style={styles.assetCard}>
+                    <View style={styles.assetCardLeft}>
+                      <Ionicons name="qr-code" size={16} color="#60A5FA" style={{ marginRight: 8 }} />
+                      <Text style={styles.assetCodeText} numberOfLines={1}>{activeQr}</Text>
                     </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        triggerHaptic('light');
+                        setIsManualInput(true);
+                      }}
+                      style={styles.editAssetBtn}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="pencil-outline" size={14} color="#94A3B8" />
+                    </TouchableOpacity>
                   </View>
                 ) : (
-                  <View style={styles.photoPlaceholder}>
-                    <View style={styles.cameraIconCircle}>
-                      <Ionicons name="camera-outline" size={22} color={colors.primaryAmber} />
-                    </View>
-                    <Text style={styles.photoPlaceholderTitle}>Tomar fotografía</Text>
-                    <Text style={styles.photoPlaceholderSubtitle}>
-                      Apunta directamente a la falla
-                    </Text>
+                  <View style={styles.manualInputWrapper}>
+                    <Ionicons name="barcode-outline" size={16} color="#94A3B8" style={{ marginRight: 8 }} />
+                    <TextInput
+                      style={styles.manualInput}
+                      placeholder="Escribe código (ej: ALEP-P39-0045)..."
+                      placeholderTextColor="#64748B"
+                      value={activeQr}
+                      onChangeText={setActiveQr}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                    />
+                    {activeQr.length > 0 && (
+                      <TouchableOpacity onPress={() => setActiveQr('')} style={{ padding: 6 }}>
+                        <Ionicons name="close-circle" size={16} color="#94A3B8" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 )}
-              </TouchableOpacity>
 
-              {/* Sección: Observaciones Adicionales */}
-              <Text style={styles.sectionLabel}>OBSERVACIONES ADICIONALES</Text>
-              <TextInput
-                style={styles.observationsInput}
-                placeholder="Agrega comentarios o repuestos usados..."
-                placeholderTextColor={colors.textMuted}
-                value={observations}
-                onChangeText={setObservations}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+                {/* Sección: Componente Defectuoso (Regla de 3 Taps con Haptics — Grid 2x2) */}
+                <Text style={styles.sectionLabel}>COMPONENTE DEFECTUOSO</Text>
+                <View style={styles.componentsGrid}>
+                  {COMPONENTS.map((item) => {
+                    const isSelected = selectedComponent === item.label;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[
+                          styles.componentButton,
+                          isSelected && styles.componentButtonActive,
+                        ]}
+                        onPress={() => {
+                          triggerHaptic('selection');
+                          setSelectedComponent(item.label);
+                        }}
+                        activeOpacity={0.75}
+                        disabled={saving}
+                      >
+                        <View style={styles.componentLeft}>
+                          <View
+                            style={[
+                              styles.componentIconBox,
+                              isSelected && styles.componentIconBoxActive,
+                            ]}
+                          >
+                            <Ionicons
+                              name={item.icon}
+                              size={15}
+                              color={isSelected ? '#FFFFFF' : '#94A3B8'}
+                            />
+                          </View>
+                          <Text
+                            style={[
+                              styles.componentLabel,
+                              isSelected && styles.componentLabelActive,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {item.label}
+                          </Text>
+                        </View>
 
-              {/* Botón Guardar Registro (Original) */}
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSave}
-                disabled={saving}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="checkmark-sharp" size={20} color="#000000" style={{ marginRight: 6 }} />
-                <Text style={styles.saveButtonText}>Guardar Registro</Text>
-              </TouchableOpacity>
+                        <View
+                          style={[
+                            styles.checkboxCircle,
+                            isSelected && styles.checkboxCircleActive,
+                          ]}
+                        >
+                          {isSelected && (
+                            <Ionicons name="checkmark" size={11} color="#FFFFFF" />
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
 
-              {/* Pie Informativo */}
-              <View style={styles.footerRow}>
-                <Ionicons name="cloud-offline-outline" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                <Text style={styles.footerText}>
-                  Se guardará en SQLite y sincronizará automáticamente
-                </Text>
-              </View>
-            </ScrollView>
-          </LiquidGlassView>
+                {/* Sección: Evidencia Fotográfica (HU-12) */}
+                <Text style={styles.sectionLabel}>EVIDENCIA FOTOGRÁFICA</Text>
+                <TouchableOpacity
+                  style={styles.photoContainer}
+                  onPress={handlePickPhoto}
+                  activeOpacity={0.8}
+                  disabled={saving}
+                >
+                  {photoUri ? (
+                    <View style={styles.photoPreviewWrapper}>
+                      <Image source={{ uri: photoUri }} style={styles.photoThumbnail} />
+                      <View style={styles.changePhotoBadge}>
+                        <Ionicons name="camera-reverse-outline" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+                        <Text style={styles.changePhotoText}>Cambiar foto</Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.photoPlaceholder}>
+                      <View style={styles.cameraIconCircle}>
+                        <Ionicons name="camera-outline" size={20} color="#60A5FA" />
+                      </View>
+                      <Text style={styles.photoPlaceholderTitle}>Tomar fotografía</Text>
+                      <Text style={styles.photoPlaceholderSubtitle}>
+                        Apunta directamente a la falla
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                {/* Sección: Observaciones Adicionales */}
+                <Text style={styles.sectionLabel}>OBSERVACIONES ADICIONALES</Text>
+                <TextInput
+                  style={styles.observationsInput}
+                  placeholder="Agrega comentarios o repuestos usados..."
+                  placeholderTextColor="#64748B"
+                  value={observations}
+                  onChangeText={setObservations}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  editable={!saving}
+                />
+
+                {/* Botón Principal Guardar Registro */}
+                <TouchableOpacity
+                  style={[styles.saveButtonWrapper, saving && styles.buttonDisabled]}
+                  onPress={handleSave}
+                  disabled={saving}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={saving ? ['#1E40AF', '#1D4ED8'] : ['#2563EB', '#1D4ED8']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.saveButtonGradient}
+                  >
+                    {saving ? (
+                      <View style={styles.savingRow}>
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                        <Text style={[styles.saveButtonText, { marginLeft: 10 }]}>
+                          Guardando en SQLite...
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.savingRow}>
+                        <Ionicons
+                          name="checkmark-sharp"
+                          size={18}
+                          color="#FFFFFF"
+                          style={{ marginRight: 8 }}
+                        />
+                        <Text style={styles.saveButtonText}>Guardar Registro</Text>
+                      </View>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {/* Pie Informativo */}
+                <View style={styles.footerRow}>
+                  <Ionicons
+                    name="cloud-offline-outline"
+                    size={14}
+                    color="#94A3B8"
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.footerText}>
+                    Se guardará en SQLite y sincronizará automáticamente
+                  </Text>
+                </View>
+              </ScrollView>
+            </LiquidGlassView>
+          </Animated.View>
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -378,32 +486,61 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     overflow: 'hidden',
   },
+  animatedSheet: {
+    width: '100%',
+  },
   sheetGlass: {
-    paddingTop: 12,
+    paddingTop: 4,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
+  },
+  handleBarTouchArea: {
+    paddingTop: 8,
+    paddingBottom: 8,
+    width: '100%',
+    alignItems: 'center',
   },
   handleBar: {
     width: 44,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignSelf: 'center',
-    marginBottom: 14,
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 22,
+    paddingTop: 4,
     marginBottom: 16,
   },
+  headerTitleBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
   sheetTitle: {
-    color: colors.textPrimary,
-    fontSize: 22,
+    color: '#FFFFFF',
+    fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.3,
+  },
+  sheetSubtitle: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '500',
   },
   closeButton: {
     width: 32,
@@ -416,13 +553,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   closeButtonText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 14,
     fontWeight: '700',
   },
   sheetBody: {
     paddingHorizontal: 22,
-    paddingBottom: 34,
+    paddingBottom: 32,
   },
   assetHeaderRow: {
     flexDirection: 'row',
@@ -432,12 +569,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   sectionLabel: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.1,
-    marginBottom: 10,
-    marginTop: 6,
+    marginBottom: 8,
+    marginTop: 4,
   },
   rescanLink: {
     flexDirection: 'row',
@@ -446,16 +583,16 @@ const styles = StyleSheet.create({
   },
   rescanLinkText: {
     fontSize: 12,
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontWeight: '600',
   },
   assetCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: 'rgba(229, 152, 25, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -469,7 +606,7 @@ const styles = StyleSheet.create({
   assetCodeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   editAssetBtn: {
@@ -478,18 +615,18 @@ const styles = StyleSheet.create({
   manualInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: '#0F1422',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     paddingHorizontal: 12,
+    height: 48,
     marginBottom: 12,
   },
   manualInput: {
     flex: 1,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 13,
-    paddingVertical: 10,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   componentsGrid: {
@@ -497,72 +634,104 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: 8,
   },
   componentButton: {
     width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: '#121620',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 12,
-    paddingVertical: 13,
-    paddingHorizontal: 12,
-    marginBottom: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 10,
   },
   componentButtonActive: {
-    backgroundColor: 'rgba(229, 152, 25, 0.15)',
-    borderColor: colors.primaryAmber,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderColor: '#2563EB',
   },
   componentLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
+  componentIconBox: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  componentIconBoxActive: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
+  checkboxCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0F1422',
+  },
+  checkboxCircleActive: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
   componentLabel: {
-    color: colors.textSecondary,
+    color: '#CBD5E1',
     fontSize: 12,
     fontWeight: '600',
+    flex: 1,
   },
   componentLabelActive: {
-    color: colors.primaryAmber,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   photoContainer: {
     borderWidth: 1.5,
-    borderColor: '#323745',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
     borderStyle: 'dashed',
     borderRadius: 14,
-    backgroundColor: colors.backgroundDark,
-    marginBottom: 18,
+    backgroundColor: '#0F1422',
+    marginBottom: 16,
     overflow: 'hidden',
-    minHeight: 120,
+    minHeight: 116,
     alignItems: 'center',
     justifyContent: 'center',
   },
   photoPlaceholder: {
     alignItems: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
   },
   cameraIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(229, 152, 25, 0.12)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   photoPlaceholderTitle: {
-    color: colors.textPrimary,
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '700',
     marginBottom: 2,
   },
   photoPlaceholderSubtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#94A3B8',
+    fontSize: 11,
   },
   photoPreviewWrapper: {
     width: '100%',
@@ -593,35 +762,45 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   observationsInput: {
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: '#0F1422',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: colors.textPrimary,
-    fontSize: 14,
-    minHeight: 74,
-    marginBottom: 20,
+    color: '#FFFFFF',
+    fontSize: 13,
+    minHeight: 70,
+    marginBottom: 16,
   },
-  saveButton: {
+  saveButtonWrapper: {
+    marginTop: 4,
+    borderRadius: 14,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+    marginBottom: 12,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonGradient: {
+    height: 50,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primaryAmber,
-    borderRadius: 14,
-    height: 50,
-    shadowColor: colors.primaryAmber,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
-    marginBottom: 14,
   },
   saveButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   footerRow: {
@@ -630,7 +809,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   footerText: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#94A3B8',
+    fontSize: 11,
   },
 });

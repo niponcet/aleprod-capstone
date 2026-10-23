@@ -374,7 +374,7 @@ export const EventDetailScreen: React.FC = () => {
             <Ionicons
               name="warning-outline"
               size={18}
-              color={colors.primaryAmber}
+              color="#60A5FA"
               style={{ marginRight: 8 }}
             />
             <Text style={styles.reportButtonText}>Reportar Falla en este Evento</Text>
@@ -410,7 +410,7 @@ export const EventDetailScreen: React.FC = () => {
           <Ionicons
             name="list-outline"
             size={18}
-            color={colors.primaryAmber}
+            color="#60A5FA"
             style={{ marginRight: 6 }}
           />
           <Text style={styles.sectionTitle}>
@@ -419,7 +419,7 @@ export const EventDetailScreen: React.FC = () => {
         </View>
 
         {loadingIncidents && (
-          <ActivityIndicator size="small" color={colors.primaryAmber} />
+          <ActivityIndicator size="small" color="#60A5FA" />
         )}
       </View>
     </View>
@@ -528,8 +528,8 @@ export const EventDetailScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primaryAmber}
-            colors={[colors.primaryAmber]}
+            tintColor="#60A5FA"
+            colors={['#2563EB']}
           />
         }
       />
@@ -764,14 +764,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
     paddingVertical: 12,
     borderRadius: 12,
   },
   reportButtonText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 13,
     fontWeight: '700',
   },
