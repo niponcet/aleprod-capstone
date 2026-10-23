@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 27 — Refinamiento Cromático Semántico: Calibración Mate y Sofisticada de Tarjetas e Iconos).
+- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 28 — Estética Minimalista Apple/Linear: Tipografía Neutra y Micro-Indicadores Semánticos).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Completadas en Web y Móvil), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Servidor Next.js activo con HTTP 200 y Expo Router con `LiquidGlassTabBar` nativa, compacta y ultra-fluida (120 FPS).
@@ -115,6 +115,17 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-22 (Sesión 28 — Estética Minimalista Apple/Linear: Tipografía Neutra y Micro-Indicadores Semánticos):**
+  - **Implementación de la Opción B (Estilo Ejecutivo Apple/Linear):**
+    - Se eliminó la coloración semántica invasiva en textos completos y números secundarios de las tarjetas.
+    - Los conteos numéricos de palmetas (`{operativoCount} palmetas`, `{mantencionCount} palmetas`, `{bajaCount} palmetas`) y los textos de badges (`"Revisión"`, `"Baja"`, `"AL DÍA"`) ahora se presentan en **blanco puro (`#F1F5F9`) y gris perla neutro (`#CBD5E1` / `#E2E8F0`)**.
+    - El color semántico se delegó exclusivamente a **micro-indicadores de estado (dots de 5x5px)** y pequeños iconos monocromáticos contenidos.
+    - Se neutralizaron las cajas de iconos y badges a fondos oscuros mate de baja opacidad (`rgba(255, 255, 255, 0.04 - 0.05)`) con bordes sutiles (`0.08`), eliminando cualquier sensación de resplandor o saturación artificial en pantallas OLED.
+  - **Archivos Modificados:**
+    - [HomeScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/HomeScreen.tsx): Cards de equipos con dots semánticos (`statusDotGreen`, `statusDotAmber`, `statusDotRed`), conteos en gris perla, y subtítulos de actividad reciente neutros.
+    - [SettingsScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/settings-sync/screens/SettingsScreen.tsx): Badge de registros pendientes con micro-dot semántico y texto neutro.
+  - **Verificación:** Tipado validado con `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
 - **2026-10-22 (Sesión 27 — Refinamiento Cromático Semántico: Calibración Mate y Sofisticada de Tarjetas e Iconos):**
   - **Eliminación del Efecto Neón Chillón en Cards e Iconos:**

@@ -236,18 +236,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
                 </Text>
               </View>
 
-              <View
-                style={[
-                  styles.pendingBadge,
-                  pendingCount === 0 ? styles.pendingBadgeSynced : styles.pendingBadgePending,
-                ]}
-              >
-                <Text
+              <View style={styles.pendingBadge}>
+                <View
                   style={[
-                    styles.pendingBadgeText,
-                    pendingCount === 0 ? styles.pendingBadgeTextSynced : styles.pendingBadgeTextPending,
+                    styles.pendingBadgeDot,
+                    { backgroundColor: pendingCount === 0 ? '#10B981' : '#F59E0B' },
                   ]}
-                >
+                />
+                <Text style={styles.pendingBadgeText}>
                   {pendingCount > 0 ? 'PENDIENTE' : 'AL DÍA'}
                 </Text>
               </View>
@@ -580,29 +576,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 6,
   },
-  pendingBadgePending: {
-    backgroundColor: 'rgba(245, 158, 11, 0.10)',
-    borderColor: 'rgba(245, 158, 11, 0.25)',
-  },
-  pendingBadgeSynced: {
-    backgroundColor: 'rgba(16, 185, 129, 0.10)',
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+  pendingBadgeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 4.5,
   },
   pendingBadgeText: {
     fontSize: 9.5,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.5,
-  },
-  pendingBadgeTextPending: {
-    color: '#F59E0B',
-  },
-  pendingBadgeTextSynced: {
-    color: '#10B981',
+    color: '#E2E8F0',
   },
   syncButton: {
     flexDirection: 'row',

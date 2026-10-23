@@ -342,7 +342,7 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.statusCardHeader}>
               <View style={styles.statusIconAndName}>
                 <View style={styles.checkIconBox}>
-                  <Ionicons name="checkmark" size={20} color="#10B981" />
+                  <Ionicons name="checkmark" size={18} color="#10B981" />
                 </View>
                 <View>
                   <Text style={styles.statusCategoryLabel}>Operativos disponibles</Text>
@@ -352,6 +352,7 @@ export const HomeScreen: React.FC = () => {
 
               <View style={styles.statusRightBadgeGroup}>
                 <View style={styles.palmetasCountBadge}>
+                  <View style={styles.statusDotGreen} />
                   <Text style={styles.palmetasCountText}>
                     {equipmentMetrics.operativoCount}{' '}
                     {equipmentMetrics.operativoCount === 1 ? 'palmeta' : 'palmetas'}
@@ -380,9 +381,10 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.gridCard}>
               <View style={styles.gridCardHeader}>
                 <View style={styles.gridIconBoxAmber}>
-                  <Ionicons name="build" size={15} color="#F59E0B" />
+                  <Ionicons name="build-outline" size={14} color="#F59E0B" />
                 </View>
                 <View style={styles.revisionBadge}>
+                  <View style={styles.statusDotAmber} />
                   <Text style={styles.revisionBadgeText}>Revisión</Text>
                 </View>
               </View>
@@ -391,8 +393,8 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.mantencionM2)}</Text>
 
               <View style={styles.gridCardFooter}>
-                <Ionicons name="warning-outline" size={12} color="#F59E0B" style={{ marginRight: 4 }} />
-                <Text style={styles.gridFooterAmber}>
+                <Ionicons name="warning-outline" size={12} color="#F59E0B" style={{ marginRight: 5 }} />
+                <Text style={styles.gridFooterNeutral}>
                   {equipmentMetrics.mantencionCount}{' '}
                   {equipmentMetrics.mantencionCount === 1 ? 'palmeta' : 'palmetas'}
                 </Text>
@@ -403,9 +405,10 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.gridCard}>
               <View style={styles.gridCardHeader}>
                 <View style={styles.gridIconBoxRed}>
-                  <Ionicons name="alert-circle-outline" size={16} color="#EF4444" />
+                  <Ionicons name="alert-circle-outline" size={15} color="#EF4444" />
                 </View>
                 <View style={styles.bajaBadge}>
+                  <View style={styles.statusDotRed} />
                   <Text style={styles.bajaBadgeText}>Baja</Text>
                 </View>
               </View>
@@ -414,8 +417,8 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.bajaM2)}</Text>
 
               <View style={styles.gridCardFooter}>
-                <Ionicons name="close-circle-outline" size={12} color="#EF4444" style={{ marginRight: 4 }} />
-                <Text style={styles.gridFooterRed}>
+                <Ionicons name="close-circle-outline" size={12} color="#EF4444" style={{ marginRight: 5 }} />
+                <Text style={styles.gridFooterNeutral}>
                   {equipmentMetrics.bajaCount}{' '}
                   {equipmentMetrics.bajaCount === 1 ? 'palmeta' : 'palmetas'}
                 </Text>
@@ -494,7 +497,7 @@ export const HomeScreen: React.FC = () => {
                   }
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.activityIconCircle, { backgroundColor: iconBg }]}>
+                  <View style={styles.activityIconCircle}>
                     <Ionicons name={iconName} size={18} color={iconColor} />
                   </View>
 
@@ -503,18 +506,22 @@ export const HomeScreen: React.FC = () => {
                       <Text style={styles.activityTitle}>Palmeta #{shortCode}</Text>
                       <Text style={styles.activityTime}>{formatTimeAgo(item.fecha)}</Text>
                     </View>
-                    <Text style={[styles.activitySubtitle, { color: iconColor }]} numberOfLines={1}>
-                      {shortCategoryLabel} · {item.tipo_falla}
-                    </Text>
+                    <View style={styles.activitySubtitleRow}>
+                      <View style={[styles.microStatusDot, { backgroundColor: iconColor }]} />
+                      <Text style={styles.activitySubtitleText} numberOfLines={1}>
+                        {shortCategoryLabel} · {item.tipo_falla}
+                      </Text>
+                    </View>
                     <View style={styles.activityEventRow}>
                       <View style={styles.activityEventPill}>
-                        <Ionicons name="location-outline" size={10} color="#60A5FA" style={{ marginRight: 3 }} />
+                        <Ionicons name="location-outline" size={10} color="#94A3B8" style={{ marginRight: 3 }} />
                         <Text style={styles.activityEventText} numberOfLines={1}>
                           {item.evento_nombre || 'Evento en terreno'}
                         </Text>
                       </View>
-                      <View style={[styles.activitySyncPill, item.sincronizado ? styles.activitySyncCloud : styles.activitySyncLocal]}>
-                        <Text style={[styles.activitySyncText, { color: item.sincronizado ? '#10B981' : '#F59E0B' }]}>
+                      <View style={styles.activitySyncPill}>
+                        <View style={[styles.syncDot, { backgroundColor: item.sincronizado ? '#10B981' : '#F59E0B' }]} />
+                        <Text style={styles.activitySyncText}>
                           {item.sincronizado ? 'Cloud' : 'Local'}
                         </Text>
                       </View>
@@ -839,12 +846,33 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+  },
+  statusDotGreen: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 6,
+  },
+  statusDotAmber: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#F59E0B',
+    marginRight: 5,
+  },
+  statusDotRed: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#EF4444',
+    marginRight: 5,
   },
   statusCategoryLabel: {
     color: '#94A3B8',
@@ -861,18 +889,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   palmetasCountBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.22)',
-    paddingHorizontal: 9,
+    borderColor: 'rgba(255, 255, 255, 0.09)',
+    paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 10,
     marginBottom: 3,
   },
   palmetasCountText: {
-    color: '#10B981',
+    color: '#F1F5F9',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   statusPercentageText: {
     color: '#94A3B8',
@@ -913,9 +943,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
-    backgroundColor: 'rgba(245, 158, 11, 0.10)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -923,37 +953,41 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
-    backgroundColor: 'rgba(239, 68, 68, 0.10)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   revisionBadge: {
-    backgroundColor: 'rgba(245, 158, 11, 0.10)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 8,
   },
   revisionBadgeText: {
-    color: '#F59E0B',
+    color: '#E2E8F0',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   bajaBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.10)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 8,
   },
   bajaBadgeText: {
-    color: '#EF4444',
+    color: '#E2E8F0',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   gridCardLabel: {
     color: '#94A3B8',
@@ -971,15 +1005,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  gridFooterAmber: {
-    color: '#F59E0B',
+  gridFooterNeutral: {
+    color: '#CBD5E1',
     fontSize: 11,
-    fontWeight: '600',
-  },
-  gridFooterRed: {
-    color: '#EF4444',
-    fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   historyButtonBadge: {
     flexDirection: 'row',
@@ -1010,6 +1039,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1032,20 +1064,34 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 11,
   },
-  activitySubtitle: {
+  activitySubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 1,
+  },
+  microStatusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 5,
+  },
+  activitySubtitleText: {
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '500',
   },
   activityEventRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 5,
     gap: 6,
   },
   activityEventPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
@@ -1057,19 +1103,25 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activitySyncPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
   },
-  activitySyncCloud: {
-    backgroundColor: 'rgba(16, 185, 129, 0.14)',
-  },
-  activitySyncLocal: {
-    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+  syncDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginRight: 4,
   },
   activitySyncText: {
-    fontSize: 9,
-    fontWeight: '700',
+    color: '#94A3B8',
+    fontSize: 9.5,
+    fontWeight: '600',
   },
   emptyActivityCard: {
     backgroundColor: '#121620',
