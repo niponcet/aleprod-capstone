@@ -13,8 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../../core/theme/colors';
-import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
+import { LinearGradient } from 'expo-linear-gradient';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
 import { supabase } from '../../../core/api/supabase';
@@ -33,45 +32,6 @@ export interface EventItem {
   responsible: string;
 }
 
-const FALLBACK_EVENTS: EventItem[] = [
-  {
-    id: 'ev-1',
-    title: 'Festival Estadio Nacional',
-    venue: 'Estadio Nacional · Ñuñoa',
-    dates: '21 - 24 Octubre 2026',
-    status: 'en_curso',
-    statusLabel: 'MONTAJE EN CURSO',
-    totalMeters: 140,
-    deployedMeters: 70,
-    screenType: 'Pista de Baile LED + Pirotecnia',
-    responsible: 'Técnico Terreno',
-  },
-  {
-    id: 'ev-2',
-    title: 'Concierto Movistar Arena',
-    venue: 'Parque O\'Higgins · Santiago',
-    dates: '25 - 27 Octubre 2026',
-    status: 'en_curso',
-    statusLabel: 'MONTAJE EN CURSO',
-    totalMeters: 80,
-    deployedMeters: 0,
-    screenType: 'Pista de Baile LED',
-    responsible: 'Equipo Terreno 2',
-  },
-  {
-    id: 'ev-3',
-    title: 'Gala Anual Corporativa',
-    venue: 'Espacio Riesco · Huechuraba',
-    dates: '10 - 12 Octubre 2026',
-    status: 'finalizado',
-    statusLabel: 'FINALIZADO',
-    totalMeters: 45,
-    deployedMeters: 45,
-    screenType: 'Solo Pirotecnia',
-    responsible: 'Logística Central',
-  },
-];
-
 type MainTabType = 'en_curso' | 'historial';
 
 export const EventsScreen: React.FC = () => {
@@ -80,7 +40,7 @@ export const EventsScreen: React.FC = () => {
   const { width: screenWidth } = useWindowDimensions();
 
   const [activeTab, setActiveTab] = useState<MainTabType>('en_curso');
-  const [events, setEvents] = useState<EventItem[]>(FALLBACK_EVENTS);
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState<boolean>(false);
@@ -113,7 +73,7 @@ export const EventsScreen: React.FC = () => {
 
   const mapDbEventToItem = (dbEvent: any): EventItem => {
     const isFinalizado = dbEvent.estado === 'finalizado';
-    const isEnCurso = dbEvent.estado === 'en_curso' || (!isFinalizado && dbEvent.estado !== 'planificado');
+    const isEnCurso = dbEvent.estado === 'en_curso';
 
     const status: EventItem['status'] = isFinalizado
       ? 'finalizado'
@@ -156,7 +116,7 @@ export const EventsScreen: React.FC = () => {
         return;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         const remoteMapped = data.map(mapDbEventToItem);
         setEvents(remoteMapped);
       }
@@ -168,7 +128,6 @@ export const EventsScreen: React.FC = () => {
     }
   }, []);
 
-  // Recargar cada vez que la pantalla entra en foco (por ejemplo al volver de EventDetailScreen)
   useFocusEffect(
     useCallback(() => {
       fetchEvents();
@@ -189,6 +148,11 @@ export const EventsScreen: React.FC = () => {
   const handleEventCreated = (_newEvent: any) => {
     fetchEvents();
     setActiveTab('en_curso');
+  };
+
+  const handleGoToHistory = () => {
+    triggerHaptic('selection');
+    router.push('/activity-history');
   };
 
   // Filtrar según la pestaña activa (HU-16)
@@ -218,62 +182,73 @@ export const EventsScreen: React.FC = () => {
     switch (status) {
       case 'en_curso':
         return {
-          bg: 'rgba(234, 179, 8, 0.14)',
-          border: 'rgba(234, 179, 8, 0.35)',
-          text: colors.primaryLight,
+          bg: 'rgba(37, 99, 235, 0.14)',
+          border: 'rgba(59, 130, 246, 0.28)',
+          text: '#60A5FA',
+          dot: '#3B82F6',
         };
       case 'finalizado':
         return {
-          bg: 'rgba(113, 113, 122, 0.16)',
-          border: 'rgba(113, 113, 122, 0.35)',
-          text: colors.textSecondary,
+          bg: 'rgba(100, 116, 139, 0.14)',
+          border: 'rgba(100, 116, 139, 0.25)',
+          text: '#94A3B8',
+          dot: '#64748B',
         };
       case 'planificado':
       default:
         return {
           bg: 'rgba(16, 185, 129, 0.14)',
-          border: 'rgba(16, 185, 129, 0.35)',
-          text: colors.success,
+          border: 'rgba(16, 185, 129, 0.28)',
+          text: '#34D399',
+          dot: '#10B981',
         };
     }
   };
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="light-content" backgroundColor="#080C14" />
 
-      {/* Header Superior Fijo Limpio */}
-      <View style={[styles.fixedHeaderContainer, { top: insets.top + 8 }]}>
-        <LiquidGlassView borderRadius={18} intensity={85} style={styles.headerCard}>
-          <View style={styles.headerInfo}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="calendar" size={18} color={colors.primaryAmber} />
-            </View>
-            <View>
-              <Text style={styles.headerTitle}>Agenda de Eventos</Text>
-              <Text style={styles.headerSubtitle}>Montajes y logística técnica</Text>
-            </View>
-          </View>
+      {/* Glow ambiental superior suave y continuo */}
+      <LinearGradient
+        colors={['rgba(29, 78, 216, 0.35)', 'rgba(15, 23, 42, 0.15)', 'transparent']}
+        locations={[0, 0.55, 1]}
+        style={styles.topAmbientGlow}
+        pointerEvents="none"
+      />
 
-          {/* Badge Contador Total */}
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{events.length}</Text>
+      {/* Header Superior Integrado con Logo Calendario y Campana sin número */}
+      <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerProfile}>
+          <View style={styles.calendarIconCircle}>
+            <Ionicons name="calendar-outline" size={20} color="#FFFFFF" />
           </View>
-        </LiquidGlassView>
+          <View style={styles.headerTexts}>
+            <Text style={styles.headerOrgText}>Aleprod Terreno</Text>
+            <Text style={styles.headerUserText}>Agenda de Eventos</Text>
+          </View>
+        </View>
+
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={handleGoToHistory}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="notifications-outline" size={19} color="#CBD5E1" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: insets.top + 86 },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primaryAmber}
-            colors={[colors.primaryAmber]}
+            tintColor="#3B82F6"
+            colors={['#3B82F6']}
           />
         }
       >
@@ -293,7 +268,7 @@ export const EventsScreen: React.FC = () => {
             <Ionicons
               name="flash"
               size={14}
-              color={activeTab === 'en_curso' ? colors.textInverse : colors.textSecondary}
+              color={activeTab === 'en_curso' ? '#FFFFFF' : '#94A3B8'}
               style={{ marginRight: 6 }}
             />
             <Text
@@ -335,7 +310,7 @@ export const EventsScreen: React.FC = () => {
             <Ionicons
               name="archive-outline"
               size={14}
-              color={activeTab === 'historial' ? colors.textInverse : colors.textSecondary}
+              color={activeTab === 'historial' ? '#FFFFFF' : '#94A3B8'}
               style={{ marginRight: 6 }}
             />
             <Text
@@ -369,11 +344,11 @@ export const EventsScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.mainCtaButtonWrapper}
             onPress={handleOpenStartEvent}
-            activeOpacity={0.78}
+            activeOpacity={0.8}
           >
             <View style={styles.mainCtaCard}>
               <View style={styles.mainCtaIconCircle}>
-                <Ionicons name="add" size={20} color={colors.primaryAmber} />
+                <Ionicons name="add" size={20} color="#3B82F6" />
               </View>
               <View style={styles.mainCtaContent}>
                 <Text style={styles.mainCtaTitle}>Iniciar Nuevo Evento</Text>
@@ -382,7 +357,7 @@ export const EventsScreen: React.FC = () => {
                 </Text>
               </View>
               <View style={styles.mainCtaArrowBox}>
-                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                <Ionicons name="chevron-forward" size={16} color="#64748B" />
               </View>
             </View>
           </TouchableOpacity>
@@ -391,7 +366,7 @@ export const EventsScreen: React.FC = () => {
         {/* Indicador de Carga */}
         {loading && (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="small" color={colors.primaryAmber} />
+            <ActivityIndicator size="small" color="#3B82F6" />
             <Text style={styles.loadingText}>Cargando eventos desde Supabase...</Text>
           </View>
         )}
@@ -399,11 +374,13 @@ export const EventsScreen: React.FC = () => {
         {/* Estado Vacío */}
         {!loading && displayedEvents.length === 0 && (
           <View style={styles.emptyBox}>
-            <Ionicons
-              name={activeTab === 'en_curso' ? 'flash-outline' : 'archive-outline'}
-              size={44}
-              color={colors.textMuted}
-            />
+            <View style={styles.emptyIconCircle}>
+              <Ionicons
+                name={activeTab === 'en_curso' ? 'flash-outline' : 'archive-outline'}
+                size={28}
+                color="#64748B"
+              />
+            </View>
             <Text style={styles.emptyTitle}>
               {activeTab === 'en_curso'
                 ? 'No hay eventos en curso actualmente'
@@ -443,7 +420,7 @@ export const EventsScreen: React.FC = () => {
                   <View
                     style={[
                       styles.statusDot,
-                      { backgroundColor: badge.text },
+                      { backgroundColor: badge.dot },
                     ]}
                   />
                   <Text style={[styles.statusTagText, { color: badge.text }]}>
@@ -455,24 +432,25 @@ export const EventsScreen: React.FC = () => {
                   <Ionicons
                     name="time-outline"
                     size={12}
-                    color={colors.textSecondary}
+                    color="#94A3B8"
                     style={{ marginRight: 4 }}
                   />
                   <Text style={styles.datesText}>{event.dates}</Text>
                 </View>
               </View>
 
-              {/* Título y Locación */}
+              {/* Título y Chevron */}
               <View style={styles.titleRow}>
                 <Text style={styles.eventTitle}>{event.title}</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                <Ionicons name="chevron-forward" size={18} color="#64748B" />
               </View>
 
+              {/* Locación */}
               <View style={styles.venueRow}>
                 <Ionicons
                   name="location-outline"
                   size={14}
-                  color={colors.primaryAmber}
+                  color="#3B82F6"
                   style={{ marginRight: 5 }}
                 />
                 <Text style={styles.venueText}>{event.venue}</Text>
@@ -507,10 +485,10 @@ export const EventsScreen: React.FC = () => {
                         width: `${progressPercent}%`,
                         backgroundColor:
                           event.status === 'en_curso'
-                            ? colors.primaryAmber
+                            ? '#3B82F6'
                             : event.status === 'finalizado'
-                            ? colors.textMuted
-                            : colors.success,
+                            ? '#64748B'
+                            : '#10B981',
                       },
                     ]}
                   />
@@ -534,79 +512,81 @@ export const EventsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#080C14',
   },
-  fixedHeaderContainer: {
+  topAmbientGlow: {
     position: 'absolute',
-    left: 18,
-    right: 18,
-    zIndex: 20,
-    elevation: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
   },
-  headerCard: {
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+    zIndex: 10,
   },
-  headerInfo: {
+  headerProfile: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: colors.primaryAmber,
-    backgroundColor: colors.backgroundDark,
+  calendarIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
-  headerTitle: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
+  headerTexts: {
+    justifyContent: 'center',
   },
-  headerSubtitle: {
-    color: colors.textSecondary,
+  headerOrgText: {
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '500',
-    marginTop: 1,
+    letterSpacing: 0.2,
+    marginBottom: 2,
   },
-  countBadge: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  countText: {
-    color: colors.primaryLight,
+  headerUserText: {
+    color: '#FFFFFF',
+    fontSize: 22,
     fontWeight: '800',
-    fontSize: 13,
+    letterSpacing: -0.3,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
-    paddingHorizontal: 18,
-    paddingBottom: 130,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 120,
   },
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 14,
     padding: 4,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   segmentButton: {
     flex: 1,
@@ -617,55 +597,61 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   segmentButtonActive: {
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
   },
   segmentText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   segmentTextActive: {
-    color: colors.textInverse,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   segmentBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    paddingHorizontal: 7,
+    paddingVertical: 1.5,
     borderRadius: 10,
     marginLeft: 6,
   },
   segmentBadgeActive: {
-    backgroundColor: 'rgba(0, 0, 0, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
   segmentBadgeText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   segmentBadgeTextActive: {
-    color: colors.textInverse,
+    color: '#FFFFFF',
   },
   mainCtaButtonWrapper: {
-    borderRadius: 14,
-    marginBottom: 14,
+    borderRadius: 16,
+    marginBottom: 16,
   },
   mainCtaCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
+    borderColor: 'rgba(59, 130, 246, 0.25)',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderRadius: 16,
   },
   mainCtaIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(229, 152, 25, 0.12)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(229, 152, 25, 0.25)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -674,20 +660,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mainCtaTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
   },
   mainCtaSubtitle: {
-    color: colors.textSecondary,
-    fontSize: 11,
+    color: '#94A3B8',
+    fontSize: 11.5,
     marginTop: 1,
   },
   mainCtaArrowBox: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -695,40 +681,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 24,
+    paddingVertical: 28,
   },
   loadingText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
     marginLeft: 10,
   },
   emptyBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 48,
     paddingHorizontal: 24,
   },
+  emptyIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   emptyTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
-    marginTop: 12,
-    marginBottom: 4,
+    marginBottom: 6,
     textAlign: 'center',
   },
   emptySubtitle: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,
   },
   eventCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 18,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -740,33 +734,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
     borderRadius: 6,
   },
   statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginRight: 4,
   },
   statusTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.4,
   },
   datesPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
   },
   datesText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '500',
   },
@@ -778,7 +772,7 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     flex: 1,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: -0.3,
@@ -790,13 +784,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   venueText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
   },
   techDetailsBox: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#0F131D',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
@@ -807,11 +801,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   techLabel: {
-    color: colors.textMuted,
+    color: '#64748B',
     fontSize: 11,
   },
   techValue: {
-    color: colors.textPrimary,
+    color: '#E2E8F0',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -825,21 +819,21 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   metersTitle: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '500',
   },
   metersValue: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
   },
   metersBold: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   progressBarBg: {
     height: 6,
-    backgroundColor: colors.border,
+    backgroundColor: '#1E293B',
     borderRadius: 3,
     overflow: 'hidden',
   },

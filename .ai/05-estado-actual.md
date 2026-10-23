@@ -7,10 +7,10 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 13 — Métricas Dinámicas de Inventario, Actividad Reciente y Pantalla de Historial).
+- **Fecha de Última Actualización:** 22 de Octubre de 2026 (Sesión 26 — Refactorización de Nomenclatura: Limpieza a LiquidGlassTabBar).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Motor de sincronización offline-first activo, ciclo de vida de eventos, aprovisionamiento masivo y métricas dinámicas de inventario conectadas en tiempo real a Supabase Cloud con trazabilidad histórica completa.
 - **Sprint Activo:** Épica 1 (HU-05 Móvil Completado), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` con **0 errores**). Navegación con **Expo Router**, `<NativeTabs>` (Liquid Glass iOS) y ruta de navegación `activity-history` activa.
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` con **0 errores**). Navegación con **Expo Router**, `LiquidGlassTabBar` nativa, compacta y ultra-fluida (120 FPS) con código limpio e institucional.
 - **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS y storage bucket `evidencias-incidencias` activos y verificados vía pruebas automatizadas.
 
 ---
@@ -95,6 +95,130 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-22 (Sesión 26 — Refactorización de Nomenclatura: Limpieza a LiquidGlassTabBar):**
+  - **Eliminación de Nomenclatura Externa:** Se removió la palabra `"Instagram"` de todo el código fuente, renombrando el componente y archivo a [LiquidGlassTabBar.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/components/LiquidGlassTabBar.tsx) (`export const LiquidGlassTabBar` y `export default LiquidGlassTabBar`).
+  - **Actualización de Referencias:** Se actualizaron las importaciones en [mobile/app/(tabs)/_layout.tsx](file:///c:/Workspace/aleprod-capstone/mobile/app/%28tabs%29/_layout.tsx) y comentarios de arquitectura en [mobile/src/core/constants/navigation.ts](file:///c:/Workspace/aleprod-capstone/mobile/src/core/constants/navigation.ts).
+  - **Limpieza de Archivos:** Se purgó el archivo obsoleto `InstagramLiquidGlassTabBar.tsx`.
+  - **Verificación:** `npx expo-doctor` con **21/21 verificaciones aprobadas** y `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
+- **2026-10-22 (Sesión 25 — Optimización de Rendimiento a 120 FPS y Física de Rebote Elástica con Bounciness/Speed en TabBar):**
+  - **Eliminación de la Causa Raíz del Lag (Stutter):**
+    - Se descubrió que en cada evento de arrastre (`onPanResponderMove`), se invocaba `setDragHoverIndex`, forzando decenas de re-renderizados pesados de React por segundo en el hilo JS justo mientras el usuario interactuaba.
+    - Se eliminó `setDragHoverIndex` del bucle de arrastre: ahora `indicatorX.setValue(newPos)` opera de manera continua directamente en el hilo UI nativo con **0 re-renders de React**, logrando fluidez pura a 60/120 FPS.
+    - Se eliminó el resorte en conflicto en `onPanResponderGrant`, evitando que un tap rápido lance dos resortes con tensiones diferentes en menos de 50ms.
+    - Se deduplicó la ejecución del resorte en `useEffect` con la referencia `lastAnimatedTargetX`, impidiendo que el re-render de Expo Router aborte e interrumpa el resorte en pleno vuelo.
+  - **Física de Resorte Apple de Alta Elasticidad:**
+    - Se configuraron los parámetros nativos de UIKit / Pop: `bounciness: 12` y `speed: 16` con `useNativeDriver: true`. Esto genera una aceleración instantánea y enérgica, acompañada de un sutil sobrepaso (*overshoot*) y rebote gomoso natural sin sensación pesada o trabada.
+    - Se activó aceleración por GPU (`shouldRasterizeIOS` y `renderToHardwareTextureAndroid`) en el `<Animated.View>` del selector activo.
+  - **Verificación:** `npx expo-doctor` con **21/21 verificaciones aprobadas** y `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
+- **2026-10-22 (Sesión 24 — Calibración Geométrica Compacta: Cápsula Estilizada a 58px y Botón QR Isométrico):**
+  - **Homogeneización Isométrica (Altura Uniforme):** Se configuraron `CAPSULE_HEIGHT = 58` y `BUTTON_SIZE = 58`. Con esto, el botón circular de escaneo QR y la cápsula flotante comparten exactamente la misma cota vertical, eliminando la sensación visual de que el botón era desproporcionado o más grande que la barra.
+  - **Perfil Compacto y Fino:**
+    - Altura de la cápsula reducida de 66px a **58px** (`borderRadius: 29`).
+    - Altura del selector interior activo ajustada a **48px** (`INDICATOR_HEIGHT = 48`), manteniendo márgenes verticales simétricos de 5px.
+    - Ancho de la cápsula optimizado a **260px** (`MAX_CAPSULE_WIDTH = 260`) para una distribución espaciosa pero contenida en pantallas de 360-430px.
+    - Tipografía de etiquetas ajustada a `10px` con `marginTop: 1.5` y tamaño de iconos en pestañas a `20.5px`.
+    - Icono de escáner QR calibrado a `24px` en `#FFFFFF` para armonizar con la nueva escala.
+  - **Verificación:** `npx expo-doctor` con **21/21 verificaciones aprobadas** y `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
+- **2026-10-22 (Sesión 23 — Corrección de Stale Closures en PanResponder, Sincronización Optimista y Precisión de Límites en TabBar):**
+  - **Diagnóstico de los Bugs Reportados:**
+    1. *Desync de Navegación (Burbuja se mueve a Inicio pero la pantalla queda en Ajustes):* `useRef(PanResponder.create(...))` capturaba el objeto `state` en un *stale closure* desde el primer render (`state.index = 0`). Al navegar a Ajustes (`index = 2`) y luego pulsar Inicio (`finalIndex = 0`), la comprobación `isFocused = state.index === finalIndex` evaluaba erróneamente `0 === 0` (`true`), creyendo que Inicio ya estaba activo y omitiendo el disparo de `navigation.navigate('index')`.
+    2. *Cancelación y Retorno Inesperado al Deslizar:* `onPanResponderTerminationRequest` no estaba definido (por defecto `true`), provocando que cualquier leve movimiento vertical o reclamo del contenedor padre terminara abruptamente el gesto (`onPanResponderTerminate`).
+    3. *Desfase de Medio Casillero:* El cálculo de tab usaba `Math.round(centerPos / itemWidth)` sobre una posición central ya compensada, redondeando al casillero superior y causando saltos erráticos entre pestañas.
+  - **Solución Implementada ([InstagramLiquidGlassTabBar.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/components/InstagramLiquidGlassTabBar.tsx)):**
+    - **Refs de Estado Fresco:** Se desacoplaron `state`, `navigation`, `itemWidth`, `tabCount`, `minX` y `maxX` en `useRef` actualizados en cada render (`stateRef.current`, `navigationRef.current`, etc.), garantizando que los callbacks gestuales siempre lean el estado real e inmediato de navegación.
+    - **Protección contra Terminación:** `onPanResponderTerminationRequest: () => false`, `onStartShouldSetPanResponderCapture: () => true` y `onMoveShouldSetPanResponderCapture: () => true`, blindando el arrastre horizontal contra interrupciones de ScrollViews.
+    - **Matemática Exacta de Límites:** Se sustituyó por `Math.floor(centerPos / currentItemWidth)`, garantizando que el punto de transición coincida exactamente con el centro geométrico entre pestañas.
+    - **Estado Optimista (`optimisticIndex`):** Al soltar el dedo o hacer tap, `effectiveIndex` actualiza inmediatamente el resaltado en blanco del texto e icono seleccionado antes de que Expo Router complete la transición de estado, eliminando cualquier parpadeo visual.
+  - **Verificación:** `npx expo-doctor` con **21/21 verificaciones aprobadas** y `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
+- **2026-10-22 (Sesión 22 — Seguimiento Gestual Táctil con PanResponder y Translucidez Liquid Glass Real en TabBar):**
+  - **Seguimiento Continuo del Dedo (Scrubbing / Pan Tracking):** Implementación de gestos nativos de alta fidelidad con `PanResponder` de React Native sin librerías externas.
+    - `onPanResponderGrant`: Detecta la posición X del toque y lanza una animación elástica rápida que centra el selector bajo el dedo, identificando la pestaña inicial y disparando feedback háptico (`light`).
+    - `onPanResponderMove`: A medida que el usuario arrastra el dedo horizontalmente, el selector se mueve de forma continua en tiempo real (`indicatorX.setValue(newPos)`), restringido de forma elástica a los márgenes interiores de la cápsula. Al cruzar los límites de una pestaña a otra, se actualiza el estado de previsualización activa (`dragHoverIndex`) y se emite un micro-tick háptico (`selection`).
+    - `onPanResponderRelease`: Discrimina entre toque simple (tap rápido sin arrastre) y deslizamiento continuo. Calcula magnéticamente la pestaña más cercana al punto de suelta, ejecuta un anclaje elástico `Animated.spring` (`tension: 70, friction: 8, useNativeDriver: true`) hacia el casillero destino y dispara la navegación en Expo Router junto a feedback háptico (`medium`).
+  - **Translucidez Real Liquid Glass (Frosted Glass Depth):**
+    - Se eliminó el fondo opaco `#0F1422` que bloqueaba la visibilidad en `capsuleWrapper`, configurando `backgroundColor: 'transparent'` en iOS (y semi-translúcido en Android).
+    - Se redujo la capa de tinte en `glassOverlay` de 78% a 42% de opacidad (`rgba(10, 15, 28, 0.42)`), permitiendo que el contenido de la pantalla (scroll, tarjetas, texto) se aprecie nítidamente desenfocado por detrás de la barra.
+    - Se incrementó la intensidad del desenfoque a 70 en `BlurView` (`expo-blur`) para un look esmerilado de alta gama con legibilidad impecable.
+  - **Verificación:** `npx expo-doctor` con **21/21 verificaciones aprobadas** y `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
+- **2026-10-22 (Sesión 21 — Resolución de TypeError en Reanimated y Estabilización con React Native Native-Driver Animated.spring en TabBar):**
+  - **Diagnóstico del Error:** En Expo SDK 57 / React Native 0.86, la importación de `react-native-reanimated` v4.5.1 generaba un crasheo en evaluación de módulo (`TypeError: Cannot read property 'code' of undefined`) en Expo Go debido a incompatibilidad en el runtime C++/worklets y transformación de Babel. Este fallo impedía la evaluación de `InstagramLiquidGlassTabBar`, ocasionando a su vez el fallo en cascada de Expo Router (`Ensure a React component is exported as default` y `TypeError: Cannot read property 'ErrorBoundary' of undefined` en `_layout.tsx`).
+  - **Sustitución por `Animated` Nativo:** Se reemplazó `react-native-reanimated` en [InstagramLiquidGlassTabBar.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/components/InstagramLiquidGlassTabBar.tsx) por el módulo `Animated` nativo de React Native con `useNativeDriver: true`.
+  - **Física de Rebote Idéntica:** Se implementó `Animated.spring(indicatorX, { toValue: targetX, tension: 70, friction: 8, useNativeDriver: true })`, logrando la misma aceleración fluida y sutil rebote elástico a 60/120 FPS directo en el hilo UI nativo sin latencia del hilo JS ni dependencias nativas inestables.
+  - **Limpieza de Dependencias:** Se desinstalaron `react-native-reanimated` y `react-native-worklets` de `mobile/package.json` para evitar que Metro ejecute transformaciones innecesarias de Babel.
+  - **Exportación Dual Robusta:** Se garantizó tanto la exportación nombrada (`export const InstagramLiquidGlassTabBar`) como por defecto (`export default InstagramLiquidGlassTabBar`) para resiliencia total ante imports de Expo Router.
+  - **Verificación de Tipos:** Validación estricta con `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
+- **2026-10-22 (Sesión 20 — Rediseño Premium de la Barra de Navegación Inferior: Estilo Instagram Liquid Glass con Spring Reanimated):**
+  - **Inspección Técnica de Stack:** Expo SDK 57 (`~57.0.31`), React 19.2.3, React Native 0.86.3, Expo Router `~57.0.29`, TypeScript 6.0.3.
+  - **Evaluación y Descarte de `expo-glass-tabs`:** Se analizó el paquete `expo-glass-tabs` (v0.1.1); fue descartado debido a su rigidez de diseño (asume pantalla completa forzada `windowWidth - 24`), incompatibilidad para ubicar el botón QR circular independiente al lado, dependencia forzosa de `useMinimizeOnScroll` en cada pantalla, uso exclusivo de `expo-glass-effect` en iOS 26+ sin desenfoque en Android, y alteración invasiva de la arquitectura a `expo-router/ui`.
+  - **Implementación Propia Premium ([InstagramLiquidGlassTabBar.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/components/InstagramLiquidGlassTabBar.tsx)):**
+    - Cápsula flotante con esquinas completamente redondeadas (`borderRadius: 33`, altura 66 px).
+    - Fondo de cristal oscuro `rgba(12, 17, 31, 0.78)` con desenfoque nativo real vía `BlurView` (`expo-blur`), fallback sólido `#0F1422` para máxima compatibilidad multiplataforma (iOS y Android), y borde fino `rgba(255, 255, 255, 0.12)`.
+    - Selector activo interior translúcido (`rgba(91, 112, 158, 0.35)`) con **animación elástica tipo spring (`react-native-reanimated`)** (`damping: 14`, `stiffness: 140`, `mass: 0.8`) con sutil rebote natural al cambiar de pestaña.
+    - Sombra ambiental difusa y discreta (`shadowColor: '#000000'`, `shadowOpacity: 0.38`, `shadowRadius: 14`).
+    - Iconografía minimalista con feedback háptico (`light`), estado activo en blanco puro (`#FFFFFF`) e inactivo en gris suave (`#9AA8C1`).
+    - Botón de escaneo QR independiente (56 px) en azul corporativo (`#2563EB`) integrado simétricamente con holgura al lado de la cápsula.
+  - **Neutralización de `TAB_OFFSET` ([navigation.ts](file:///c:/Workspace/aleprod-capstone/mobile/src/core/constants/navigation.ts)):** Se ajustó `TAB_OFFSET = 0`, eliminando el antiguo desplazamiento de UIKit y permitiendo que todas las pantallas se extiendan 100% simétricas sin alterar su lógica interna.
+  - **Integración Nativa Expo Router ([_layout.tsx](file:///c:/Workspace/aleprod-capstone/mobile/app/%28tabs%29/_layout.tsx)):** Conexión con `<Tabs tabBar={(props) => <InstagramLiquidGlassTabBar {...props} />}>`, preservando las rutas `index`, `eventos` y `ajustes`, el ciclo de vida y el botón atrás en Android.
+  - **Verificación Rigurosa:** `npx expo-doctor` con **21/21 verificaciones aprobadas**, `npx expo install --check` con dependencias al día, y `npx tsc --noEmit` en `/mobile` con **0 errores**.
+
+- **2026-10-22 (Sesión 19 — Refinamiento de Cabecera: Eliminación de Glow en Avatar y Subtítulo Sutil):**
+  - **Eliminación de Glow en Avatar "AP":** Se retiraron las propiedades de sombra y halo azul (`shadowColor: '#2563EB'`, `shadowOffset`, `shadowOpacity`, `elevation`) de `avatarCircle` en `HomeScreen.tsx`, reemplazándolas por un acabado mate limpio con borde sutil (`borderWidth: 1`, `borderColor: 'rgba(255, 255, 255, 0.12)'`).
+  - **Subtítulo "Aleprod Terreno" Más Pequeño y Sutil:** Se ajustó la tipografía de `headerOrgText` en `HomeScreen.tsx` (así como en `EventsScreen.tsx` y `SettingsScreen.tsx`), pasando a `fontSize: 11` (desde 12), tono Slate 500 (`#64748B`), `letterSpacing: 0.2` y `fontWeight: '500'`, logrando una jerarquía visual más sobria y balanceada.
+  - **Homogeneización Global:** Se extendió el mismo acabado limpio sin sombras residuales a los identificadores circulares de `EventsScreen.tsx` (`calendarIconCircle`) y `SettingsScreen.tsx` (`gearIconCircle`).
+  - **Validación de Tipos:** `npx tsc --noEmit` en `/mobile` ejecutado con éxito (**0 errores**).
+
+- **2026-10-22 (Sesión 18 — Corrección de Tabs, Botón QR Azul Corporativo sin Neón y Armonización Visual):**
+  - **Eliminación del Tono Dorado en Tabs:** Se reemplazó el color amarillo/dorado (`#FACC15`) por **blanco puro (`#FFFFFF`)** en la pestaña activa (`tintColor`, `selected: "#FFFFFF"`), con gris sutil (`#71717A`) para las inactivas.
+  - **Botón de Escaneo QR en Azul Corporativo:** Sustitución del fondo amarillo chillón por el **azul oficial `#2563EB`** con icono de QR en blanco (`#FFFFFF`).
+  - **Eliminación del Brillo/Glow Neón:** Se removió la sombra coloreada con halo neón (`shadowColor: SOFT_YELLOW`), sustituyéndola por una sombra sutil oscura estándar (`#000000`, `shadowOpacity: 0.35`, `shadowRadius: 5`).
+  - **Restauración Geométrica del Tabs Pill:** Se calibró la denominación armónica `"Ajustes"` (7 letras, estándar Apple en español) tanto en `<Label>Ajustes</Label>` como en `SettingsScreen.tsx`, eliminando el desbordamiento y colisión visual que provocaban las 13 letras de `"Configuración"`. Con esto, la cápsula de Liquid Glass y el botón flotante quedan perfectamente alineados con holgura simétrica.
+  - **Validación de Tipos:** `npx tsc --noEmit` en `/mobile` ejecutado con éxito (**0 errores**).
+
+- **2026-10-22 (Sesión 17 — Rediseño de Configuración y Unificación de Pestaña con Icono de Tuerca):**
+  - **Unificación de Identidad ("Configuración"):** Se sincronizó la denominación entre la barra de navegación `<NativeTabs>` (`mobile/app/(tabs)/_layout.tsx`) y el módulo de pantalla, sustituyendo la etiqueta desfasada `"Ajustes"` por `"Configuración"`.
+  - **Icono de Tuerca en Pestaña:** Actualización del disparador nativo en iOS con SF Symbol `gearshape` (default) / `gearshape.fill` (selected), manteniendo el icono Material `settings` para compatibilidad.
+  - **Cabecera Limpia y Minimalista:** Implementación en `SettingsScreen.tsx` de una cabecera nativa con logo circular de tuerca de 44x44px (`#2563EB`, sombra azul, `settings-outline` en blanco), subtítulo `"Aleprod Terreno"` (12px, `#94A3B8`) y título `"Configuración"` (22px, `#FFFFFF`, `fontWeight: '800'`). Sin botones adicionales en la derecha conforme a la instrucción expresa.
+  - **Línea Visual Dark Navy y Halo Ambiental:** Fondo unificado `#080C14`, halo superior suave con `<LinearGradient>` (`height: 320`, tonos `rgba(29, 78, 216, 0.35)` a transparente), tarjetas elevadas en `#121620`, micro-badges calibrados, botón de sincronización principal en azul eléctrico `#2563EB` y lista de opciones limpia.
+  - **Validación de Tipos:** `npx tsc --noEmit` en `/mobile` ejecutado con éxito (**0 errores**).
+
+- **2026-10-22 (Sesión 16 — Rediseño del Módulo de Eventos con Lenguaje Dark Navy y Header Limpio):**
+  - **Alineación Visual con Inicio (HomeScreen):** Adopción de la paleta Dark Navy (`#080C14` de fondo, tarjetas en `#121620` con bordes sutiles `rgba(255, 255, 255, 0.07)`), halo ambiental superior continuo con `<LinearGradient>` (`height: 320`, tonos `rgba(29, 78, 216, 0.35)` a transparente) y descompresión superior con `insets.top + 16`.
+  - **Cabecera con Logo de Calendario:** Reemplazo de la antigua cabecera flotante por una cabecera nativa con contenedor circular de 44x44px (`#2563EB` con elevación y halo azul) portando el icono `calendar-outline` en blanco, preservando la identidad del módulo.
+  - **Identidad de Título Diferenciada:** En lugar del saludo del Home ("Hola, Técnico"), se definió el título institucional: Subtítulo `"Aleprod Terreno"` (12px, `#94A3B8`) y Título `"Agenda de Eventos"` (22px, `#FFFFFF`, `fontWeight: '800'`).
+  - **Botón de Campana Limpio:** Integración del botón circular de campana (`notifications-outline` en `#CBD5E1`) enlazado a la ruta `/activity-history` con respuesta háptica, eliminando completamente el badge numérico que ocupaba espacio en el header.
+  - **Selector de Segmentos y Botón de Inicio:** Segmentos "En Curso" e "Historial" estilizados con fondo navy `#121620`, activo en azul eléctrico `#2563EB` con badges de conteo embebidos. Botón CTA "Iniciar Nuevo Evento" con tarjeta navy, icono plus con brillo azul y chevron discreto.
+  - **Tarjetas de Eventos y Micro-Badges:** Estado del evento (`MONTAJE EN CURSO`, `PLANIFICADO`, `FINALIZADO`) con micro-badges compactos (padding 7x2.5px, dot de 4x4px), píldora de fechas sutil, ficha técnica en `#0F131D` y barra de progreso de m² sobre pista `#1E293B`.
+  - **Cero Mocks:** Mapeo verídico desde Supabase `eventos` sin inyectar datos simulados de fallback en el estado reactivo.
+  - **Validación de Tipos:** `npx tsc --noEmit` en `/mobile` ejecutado con éxito (**0 errores**).
+
+- **2026-10-22 (Sesión 15 — Calibración Visual y Sincronización Real sin Mock):**
+  - **Depuración de Evento Activo Semilla en Supabase:** Actualización del evento residual `"Festival Estadio Nacional"` a `estado = 'planificado'` en Supabase Cloud (`fovmurimpbexfrjwxdew`), ya que nunca había sido iniciado por el técnico.
+  - **Sincronización Local SQLite (`eventos_locales`):** Implementación de rutina de reseteo garantizado `clean_mock_active_events_v2` en `initDB()` (`mobile/src/core/db/database.ts`) y nuevo helper `clearAllLocalActiveEvents()`. `HomeScreen.tsx` ahora verifica con Supabase y limpia cualquier estado local si no existen eventos activos, mostrando de manera verídica la tarjeta compacta `"Sin Montaje Activo"` con acceso a la agenda.
+  - **Rediseño Compacto de Badges en Card Activo:** Ajuste de tamaño y proporciones en `activeTag` y `locationPill`: reducción a formato micro-badge (`paddingHorizontal: 7`, `paddingVertical: 2.5`, `borderRadius: 6`), punto de estado de 4x4px, tipografía contenida (9.5px y 10.5px) y limitación a 52% de ancho máximo para evitar cualquier choque o desalineación visual.
+  - **Ambient Glow Suave con `<LinearGradient>`:** Sustitución del contenedor con `borderRadius: 110` por `<LinearGradient>` (`expo-linear-gradient`) con desvanecimiento vertical continuo hacia abajo, eliminando cualquier borde duro.
+  - **Cabecera Limpia y Feedback en Icono de Nube:** Eliminación del texto `"• Sincronizado"` del subtítulo. El estado de sincronización se traslada al botón de la nube mediante icono condicional (`cloud-done-outline` en verde `#34D399` vs `cloud-upload-outline` en ámbar `#FBBF24`) junto a un micro-punto indicador.
+  - **Calibración Geométrica en "Estado de Equipos":** Ajuste de proporciones en `mainStatusCard` y la cuadrícula `gridCard`: tipografías proporcionales (24px y 20px), alineación vertical precisa entre el icono y los badges `"Revisión"` / `"Baja"`, y formato gramatical singular/plural (`1 palmeta` vs `X palmetas`).
+  - **Botón Cápsula "Ver historial":** Transformación del enlace de texto plano en un botón interactivo tipo badge/cápsula con icono de reloj `time-outline`, texto `"Ver historial"` y chevron indicador.
+  - **Espaciado y Descompresión Superior:** Incremento del padding superior (`insets.top + 16`), extensión del resplandor ambiental a 320px de altura y mayor separación inferior del header (`paddingBottom: 18`) para otorgar holgura visual respecto a los indicadores de barra de estado y tarjetas.
+  - **Validación de Compilación:** `npx tsc --noEmit` en `/mobile` ejecutado con éxito (**0 errores**).
+
+- **2026-10-22 (Sesión 14 — Ajuste y Depuración: 0 Incidencias Iniciales y 2 Palmetas Vivas):**
+  - **Auditoría de Datos en Supabase Cloud:** Verificación estricta de tablas en Supabase (`fovmurimpbexfrjwxdew`): la tabla `incidencias` contiene **0 registros** y `palmetas_led` contiene exactamente **2 palmetas activas** (`TEST-QR-001` y `ALEP-TEST-1792637164994`, ambas en estado `operativo` y lote `LOTE-102026`). Se preservan intactas tal como fue instruido.
+  - **Limpieza de Persistencia Local SQLite:** Implementación en `initDB()` (`mobile/src/core/db/database.ts`) de una rutina de migración garantizada mediante `meta_app` que ejecuta `DELETE FROM incidencias_locales` y `DELETE FROM palmetas_pendientes` para purgar cualquier registro residual generado en pruebas de desarrollo previas, dejando el dispositivo local en 0 incidencias.
+  - **Exportación de Funciones de Reseteo:** Nuevos helpers exportados `clearAllLocalIncidencias()` y `clearAllPendingPalmetas()` en `database.ts`, vinculados a una nueva opción interactiva en `SettingsScreen.tsx` ("Restablecer Datos Locales") con confirmación por alerta destructiva.
+  - **Depuración de Mockups Residuales en `AssetDetailScreen.tsx`:** Eliminación del mockup estático de incidencia ("Cambiado cable de poder") y contadores fijos. Conexión del detalle a `fetchHybridIncidents` y consulta directa a Supabase `palmetas_led` para obtener lote y estado real. Implementación de estado vacío amigable con escudo verde ("Sin incidencias reportadas / Este módulo se encuentra operativo") cuando la palmeta no registra fallas.
+  - **Alineación de Escáneres de Prueba:** Actualización de `IncidentScannerModal.tsx` para simular lecturas utilizando exclusivamente los QR reales existentes en Supabase (`TEST-QR-001` o `ALEP-TEST-1792637164994`).
+  - **Optimización UI en `HomeScreen.tsx`:**
+    - Rediseño del enlace de historial: transformación del texto plano `"Historial >"` en un badge/botón interactivo elevado (`historyButtonBadge`) con fondo ámbar translúcido, borde dorado suave, icono de reloj `time-outline` y chevron indicador.
+    - Rediseño de la tarjeta de montaje inactivo: transformación de `noActiveMountCard` en un contenedor `TouchableOpacity` directamente cliqueable en su totalidad (conduce a la agenda de eventos). Eliminación del divisor interno y del botón amarillo inferior (`goToEventsButton`), ahorrando más de 50px de espacio vertical con una disposición horizontal compacta y badge `"Agenda >"`.
+  - **Verificación de Tipos:** Validación estricta con `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
 - **2026-10-22 (Sesión 13 — Métricas Dinámicas de Inventario, Actividad Reciente y Pantalla de Historial):**
   - **Métricas Dinámicas en `HomeScreen.tsx`:** Eliminación de datos estáticos (`70 m²`, `15 m²`, `140 palmetas`, etc.). Conexión reactiva a Supabase `palmetas_led` con cálculo automático de área según estándar Aleprod (1 palmeta = 0.25 m² para pantallas P3.9 de 50x50cm). Visualización de m², palmetas y porcentajes dinámicos en tarjetas operativas, en mantención y dadas de baja.

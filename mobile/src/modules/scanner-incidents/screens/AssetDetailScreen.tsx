@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,34 +8,75 @@ import {
   Alert,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { ReportIncidentModal } from '../components/ReportIncidentModal';
-import { getIncidenciasByUuid, insertLocalIncidencia, LocalIncidencia } from '../../../core/db/database';
+import { insertLocalIncidencia } from '../../../core/db/database';
+import { supabase } from '../../../core/api/supabase';
+import { fetchHybridIncidents, UnifiedIncident } from '../../../core/api/incidencias';
 
 export const AssetDetailScreen: React.FC = () => {
   const router = useRouter();
   const params = useLocalSearchParams<{ uuid?: string; title?: string; status?: string }>();
 
-  const rawUuid = params.uuid || 'aleprod-p39-0045-cl';
-  const displayTitle = params.title || (rawUuid.length > 8 ? `Módulo #${rawUuid.slice(-4).toUpperCase()}` : `Módulo #${rawUuid}`);
+  const rawUuid = params.uuid || 'TEST-QR-001';
   const initialStatus = params.status || '• Operativo';
 
   const [currentStatus, setCurrentStatus] = useState<string>(initialStatus);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [localHistory, setLocalHistory] = useState<LocalIncidencia[]>([]);
+  const [incidents, setIncidents] = useState<UnifiedIncident[]>([]);
+  const [assetMeta, setAssetMeta] = useState<{
+    codigo_visible?: string;
+    lote_ingreso?: string;
+    estado?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const loadHistory = () => {
-    const history = getIncidenciasByUuid(rawUuid);
-    setLocalHistory(history);
-  };
+  const displayTitle = assetMeta?.codigo_visible
+    ? `Módulo #${assetMeta.codigo_visible}`
+    : params.title || (rawUuid.length > 8 ? `Módulo #${rawUuid.slice(-4).toUpperCase()}` : `Módulo #${rawUuid}`);
+
+  const loadData = useCallback(async () => {
+    try {
+      // 1. Obtener historial combinado de incidencias para este QR
+      const allIncidents = await fetchHybridIncidents();
+      const filtered = allIncidents.filter((item) => item.qr_uuid === rawUuid);
+      setIncidents(filtered);
+
+      // 2. Consultar metadata real de la palmeta en Supabase
+      const { data, error } = await supabase
+        .from('palmetas_led')
+        .select('codigo_visible, lote_ingreso, estado')
+        .eq('codigo_qr', rawUuid)
+        .maybeSingle();
+
+      if (!error && data) {
+        setAssetMeta(data);
+        if (data.estado) {
+          const st = data.estado.toLowerCase();
+          if (st === 'operativo') {
+            setCurrentStatus('• Operativo');
+          } else if (st === 'mantencion' || st === 'reparacion') {
+            setCurrentStatus('• En Mantención');
+          } else if (st === 'baja') {
+            setCurrentStatus('• Dado de Baja');
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Error cargando detalle del activo:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [rawUuid]);
 
   useEffect(() => {
-    loadHistory();
-  }, [rawUuid]);
+    loadData();
+  }, [loadData]);
 
   const handleDecommission = () => {
     Alert.alert(
@@ -56,7 +97,7 @@ export const AssetDetailScreen: React.FC = () => {
                 'Festival Estadio Nacional'
               );
               setCurrentStatus('• Dado de Baja');
-              loadHistory();
+              loadData();
               Alert.alert('Activo Actualizado', 'El módulo ha sido registrado como "Dado de baja".');
             } catch {
               Alert.alert('Error', 'No se pudo guardar la baja en el almacenamiento local.');
@@ -146,7 +187,7 @@ export const AssetDetailScreen: React.FC = () => {
         <View style={styles.specsCard}>
           <View style={styles.specsHeaderRow}>
             <Text style={styles.specsHeaderTitle}>ESPECIFICACIONES DEL ACTIVO</Text>
-            <Text style={styles.loteText}>Lote: 2024-Q1</Text>
+            <Text style={styles.loteText}>Lote: {assetMeta?.lote_ingreso || 'LOTE-102026'}</Text>
           </View>
 
           <View style={styles.specsGrid}>
@@ -175,7 +216,7 @@ export const AssetDetailScreen: React.FC = () => {
                 <Text style={styles.specsLabel}>Ubicación actual</Text>
                 <View style={styles.specsValueRow}>
                   <Ionicons name="location-outline" size={16} color="#8E95A2" style={{ marginRight: 6 }} />
-                  <Text style={styles.specsValue}>Estadio Nacional ...</Text>
+                  <Text style={styles.specsValue}>Bodega Central / En Terreno</Text>
                 </View>
               </View>
 
@@ -183,7 +224,9 @@ export const AssetDetailScreen: React.FC = () => {
                 <Text style={styles.specsLabel}>Última mantención</Text>
                 <View style={styles.specsValueRow}>
                   <Ionicons name="calendar-outline" size={16} color="#8E95A2" style={{ marginRight: 6 }} />
-                  <Text style={styles.specsValue}>12 Ago 2026</Text>
+                  <Text style={styles.specsValue}>
+                    {incidents.length > 0 ? 'Con incidencias' : 'Sin mantenciones'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -194,54 +237,59 @@ export const AssetDetailScreen: React.FC = () => {
         <View style={styles.historyCard}>
           <View style={styles.specsHeaderRow}>
             <Text style={styles.specsHeaderTitle}>HISTORIAL RÁPIDO</Text>
-            <Text style={styles.historyCountText}>1 registro previo</Text>
+            <Text style={styles.historyCountText}>
+              {incidents.length} {incidents.length === 1 ? 'registro previo' : 'registros previos'}
+            </Text>
           </View>
 
-          {/* Registros Locales de SQLite recientes para esta palmeta */}
-          {localHistory.map((h) => (
-            <View key={`hist-${h.id}`} style={styles.historySubCard}>
-              <View style={styles.historyIconBox}>
-                <Ionicons name="alert-circle-outline" size={18} color="#8E95A2" />
-              </View>
-              <View style={styles.historyContent}>
-                <View style={styles.historyTitleRow}>
-                  <Text style={styles.historyTitle}>{h.tipo_falla || 'Incidencia Reportada'}</Text>
-                  <Text style={styles.historyDate}>Local</Text>
+          {incidents.length > 0 ? (
+            incidents.map((h) => {
+              const isBaja = h.tipo_falla.toLowerCase().includes('baja') || h.tipo_falla.toLowerCase().includes('crítica');
+              const isMant = h.tipo_falla.toLowerCase().includes('manten') || h.tipo_falla.toLowerCase().includes('apagado') || h.tipo_falla.toLowerCase().includes('falla');
+              const iconColor = isBaja ? colors.danger : isMant ? colors.warning : colors.success;
+              const iconName: keyof typeof Ionicons.glyphMap = isBaja
+                ? 'close-circle-outline'
+                : isMant
+                ? 'warning-outline'
+                : 'checkmark-circle-outline';
+
+              return (
+                <View key={`hist-${h.id}`} style={styles.historySubCard}>
+                  <View style={[styles.historyIconBox, { backgroundColor: isBaja ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)' }]}>
+                    <Ionicons name={iconName} size={18} color={iconColor} />
+                  </View>
+                  <View style={styles.historyContent}>
+                    <View style={styles.historyTitleRow}>
+                      <Text style={styles.historyTitle}>{h.tipo_falla}</Text>
+                      <Text style={styles.historyDate}>{h.is_local ? 'Local' : 'Cloud'}</Text>
+                    </View>
+                    <Text style={styles.historySubtitle}>
+                      {h.descripcion || 'Incidencia en terreno'} · {h.evento_nombre || 'Evento en curso'}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.historySubtitle}>
-                  {h.observaciones || 'Registrado por técnico en terreno'} · {h.sincronizado ? 'Sincronizado' : 'Pendiente'}
+              );
+            })
+          ) : (
+            <View style={styles.emptyHistoryBox}>
+              <View style={styles.emptyHistoryIconCircle}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.success} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.emptyHistoryTitle}>Sin incidencias reportadas</Text>
+                <Text style={styles.emptyHistorySubtitle}>
+                  Este módulo se encuentra operativo y no registra fallas técnicas ni intervenciones.
                 </Text>
               </View>
             </View>
-          ))}
-
-          {/* Sub-card de Referencia del Diseño Oficial */}
-          <View style={styles.historySubCard}>
-            <View style={styles.historyIconBox}>
-              <Ionicons name="construct-outline" size={18} color="#8E95A2" />
-            </View>
-            <View style={styles.historyContent}>
-              <View style={styles.historyTitleRow}>
-                <Text style={styles.historyTitle}>Cambiado cable de poder</Text>
-                <Text style={styles.historyDate}>Hace 3 meses</Text>
-              </View>
-              <Text style={styles.historySubtitle}>
-                Taller Central Maipú · Técnico Sebastian Irribarra
-              </Text>
-            </View>
-          </View>
+          )}
 
           <TouchableOpacity
             style={styles.fullHistoryLink}
-            onPress={() =>
-              Alert.alert(
-                'Historial Técnico Completo',
-                `Módulo: ${displayTitle}\n\n• Hace 3 meses: Reemplazo preventivo cable de poder.\n• Hace 6 meses: Calibración balance de blancos SMD 2121.\n• Alta inicial: Mayo 2024.`
-              )
-            }
+            onPress={() => router.push('/activity-history')}
             activeOpacity={0.7}
           >
-            <Text style={styles.fullHistoryLinkText}>Ver historial completo &gt;</Text>
+            <Text style={styles.fullHistoryLinkText}>Ver historial general &gt;</Text>
           </TouchableOpacity>
         </View>
 
@@ -281,7 +329,7 @@ export const AssetDetailScreen: React.FC = () => {
         onClose={() => setModalVisible(false)}
         qrUuid={rawUuid}
         onSuccess={() => {
-          loadHistory();
+          loadData();
           setCurrentStatus('• En Mantención');
         }}
       />
@@ -497,6 +545,36 @@ const styles = StyleSheet.create({
   historySubtitle: {
     color: colors.textSecondary,
     fontSize: 11,
+  },
+  emptyHistoryBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    gap: 12,
+  },
+  emptyHistoryIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyHistoryTitle: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  emptyHistorySubtitle: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 15,
   },
   fullHistoryLink: {
     alignSelf: 'flex-end',

@@ -12,13 +12,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../../core/theme/colors';
-import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   getActiveLocalEvento,
   upsertLocalEvento,
   updateLocalEventoEstado,
   LocalEvento,
+  getTotalPendingSyncCount,
+  clearAllLocalActiveEvents,
 } from '../../../core/db/database';
 import { supabase } from '../../../core/api/supabase';
 import {
@@ -43,6 +44,7 @@ export const HomeScreen: React.FC = () => {
   const [equipmentMetrics, setEquipmentMetrics] = useState<InventoryMetrics>(getEmptyInventoryMetrics());
   const [recentIncidents, setRecentIncidents] = useState<UnifiedIncident[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
 
   // Consulta híbrida: Supabase Cloud para datos frescos + SQLite local para offline
   const fetchActiveEvent = useCallback(async () => {
@@ -77,11 +79,9 @@ export const HomeScreen: React.FC = () => {
           setActiveEvent(remoteEvent);
           upsertLocalEvento(remoteEvent);
         } else {
-          // No hay ningún evento 'en_curso' (fueron finalizados o no se han iniciado)
+          // No hay ningún evento 'en_curso' (están planificados sin iniciar o finalizados)
           setActiveEvent(null);
-          if (localActive) {
-            updateLocalEventoEstado(localActive.id, 'finalizado');
-          }
+          clearAllLocalActiveEvents();
         }
       } else if (!localActive) {
         setActiveEvent(null);
@@ -114,6 +114,11 @@ export const HomeScreen: React.FC = () => {
     useCallback(() => {
       fetchActiveEvent();
       loadDynamicData();
+      try {
+        setPendingSyncCount(getTotalPendingSyncCount());
+      } catch {
+        setPendingSyncCount(0);
+      }
     }, [fetchActiveEvent, loadDynamicData])
   );
 
@@ -122,6 +127,11 @@ export const HomeScreen: React.FC = () => {
     setRefreshing(true);
     fetchActiveEvent();
     loadDynamicData();
+    try {
+      setPendingSyncCount(getTotalPendingSyncCount());
+    } catch {
+      setPendingSyncCount(0);
+    }
   }, [fetchActiveEvent, loadDynamicData]);
 
   const handleGoToHistory = () => {
@@ -176,44 +186,75 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="light-content" backgroundColor="#080C14" />
 
-      {/* Header Superior Fijo — Respetando safe area y Dynamic Island / Notch */}
-      <View style={[styles.fixedHeaderContainer, { top: insets.top + 10 }]}>
-        <LiquidGlassView borderRadius={16} intensity={85} style={styles.headerCard}>
-          <View style={styles.headerProfile}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>AP</Text>
-            </View>
-            <View style={styles.headerTexts}>
-              <Text style={styles.headerOrgText}>Aleprod Terreno</Text>
-              <Text style={styles.headerUserText}>Hola, Técnico</Text>
-            </View>
-          </View>
+      {/* Glow ambiental superior suave y continuo */}
+      <LinearGradient
+        colors={['rgba(29, 78, 216, 0.35)', 'rgba(15, 23, 42, 0.15)', 'transparent']}
+        locations={[0, 0.55, 1]}
+        style={styles.topAmbientGlow}
+        pointerEvents="none"
+      />
 
-          <View style={styles.syncBadge}>
-            <Ionicons name="cloud-done-outline" size={15} color={colors.success} style={{ marginRight: 5 }} />
-            <Text style={styles.syncBadgeText}>Sincronizado</Text>
+      {/* Header Superior Integrado */}
+      <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerProfile}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>AP</Text>
           </View>
-        </LiquidGlassView>
+          <View style={styles.headerTexts}>
+            <Text style={styles.headerOrgText}>Aleprod Terreno</Text>
+            <Text style={styles.headerUserText}>Hola, Técnico</Text>
+          </View>
+        </View>
+
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={() => {
+              triggerHaptic('light');
+              onRefresh();
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={pendingSyncCount > 0 ? 'cloud-upload-outline' : 'cloud-done-outline'}
+              size={20}
+              color={pendingSyncCount > 0 ? '#FBBF24' : '#34D399'}
+            />
+            <View
+              style={[
+                styles.cloudBadgeDot,
+                { backgroundColor: pendingSyncCount > 0 ? '#FBBF24' : '#10B981' },
+              ]}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={() => {
+              triggerHaptic('selection');
+              router.push('/activity-history');
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="notifications-outline" size={19} color="#CBD5E1" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: insets.top + 90 },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primaryAmber}
-            colors={[colors.primaryAmber]}
+            tintColor="#3B82F6"
+            colors={['#3B82F6']}
           />
         }
       >
-        {/* Card: Montaje Activo Dinámico o Estado Vacío (HU-10) */}
+        {/* Card: Montaje Activo Dinámico (HU-10) */}
         {activeEvent ? (
           <TouchableOpacity
             style={styles.activeMountCard}
@@ -225,41 +266,51 @@ export const HomeScreen: React.FC = () => {
                 <View style={styles.activeDot} />
                 <Text style={styles.activeTagText}>MONTAJE ACTIVO</Text>
               </View>
-              <View style={styles.locationPill}>
-                <Ionicons name="location-outline" size={13} color={colors.primaryAmber} style={{ marginRight: 4 }} />
-                <Text style={styles.locationPillText} numberOfLines={1}>
-                  {activeEvent.locacion}
-                </Text>
-              </View>
+              {activeEvent.locacion ? (
+                <View style={styles.locationPill}>
+                  <Ionicons name="location-outline" size={12} color="#94A3B8" style={{ marginRight: 4 }} />
+                  <Text style={styles.locationPillText} numberOfLines={1} ellipsizeMode="tail">
+                    {activeEvent.locacion}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <Text style={styles.eventTitle}>{activeEvent.nombre}</Text>
-            <Text style={styles.eventSubtitle}>{activeEvent.tipo_pantalla || 'Pista de Baile LED'}</Text>
+            {activeEvent.tipo_pantalla ? (
+              <Text style={styles.eventSubtitle}>{activeEvent.tipo_pantalla}</Text>
+            ) : null}
 
             <View style={styles.cardDivider} />
 
             <View style={styles.activeMountBottomRow}>
-              <View>
+              <View style={styles.metersInfoBlock}>
                 <Text style={styles.metersLabel}>Superficie asignada</Text>
                 <Text style={styles.metersValue}>
                   <Text style={styles.metersValueBold}>
                     {activeEvent.metros_cuadrados || 0} m²
                   </Text>
-                  {activeEvent.metros_cuadrados ? ` (≈ ${Math.round(activeEvent.metros_cuadrados * 4)} palmetas)` : ''}
+                  {activeEvent.metros_cuadrados
+                    ? ` (≈ ${Math.round(activeEvent.metros_cuadrados * 4)} palmetas)`
+                    : ''}
                 </Text>
               </View>
 
               <View style={styles.viewDetailLink}>
                 <Text style={styles.viewDetailText}>Ver detalle</Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.primaryAmber} />
+                <Ionicons name="chevron-forward" size={13} color="#60A5FA" />
               </View>
             </View>
           </TouchableOpacity>
         ) : (
-          <View style={styles.noActiveMountCard}>
+          <TouchableOpacity
+            style={styles.noActiveMountCard}
+            onPress={handleGoToEvents}
+            activeOpacity={0.8}
+          >
             <View style={styles.noActiveTopRow}>
               <View style={styles.noActiveIconBox}>
-                <Ionicons name="calendar-outline" size={22} color={colors.textSecondary} />
+                <Ionicons name="calendar-outline" size={20} color="#94A3B8" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.noActiveTitle}>Sin Montaje Activo</Text>
@@ -267,20 +318,12 @@ export const HomeScreen: React.FC = () => {
                   No hay eventos en curso actualmente en terreno.
                 </Text>
               </View>
+              <View style={styles.noActiveBadge}>
+                <Text style={styles.noActiveBadgeText}>Agenda</Text>
+                <Ionicons name="chevron-forward" size={12} color="#60A5FA" />
+              </View>
             </View>
-
-            <View style={styles.cardDivider} />
-
-            <TouchableOpacity
-              style={styles.goToEventsButton}
-              onPress={handleGoToEvents}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="flash-outline" size={16} color={colors.primaryAmber} style={{ marginRight: 6 }} />
-              <Text style={styles.goToEventsButtonText}>Ir a Agenda de Eventos para Iniciar</Text>
-              <Ionicons name="chevron-forward" size={14} color={colors.primaryAmber} style={{ marginLeft: 'auto' }} />
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Sección: Estado de Equipos (Métricas Dinámicas HU-07 / HU-10) */}
@@ -289,7 +332,7 @@ export const HomeScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Estado de equipos</Text>
             <View style={styles.totalBadge}>
               <Text style={styles.totalBadgeText}>
-                Total: {formatM2(equipmentMetrics.totalM2)} ({equipmentMetrics.totalPalmetas} palmetas)
+                {formatM2(equipmentMetrics.totalM2)} total
               </Text>
             </View>
           </View>
@@ -299,7 +342,7 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.statusCardHeader}>
               <View style={styles.statusIconAndName}>
                 <View style={styles.checkIconBox}>
-                  <Ionicons name="checkmark-sharp" size={18} color={colors.success} />
+                  <Ionicons name="checkmark" size={20} color="#10B981" />
                 </View>
                 <View>
                   <Text style={styles.statusCategoryLabel}>Operativos disponibles</Text>
@@ -309,7 +352,10 @@ export const HomeScreen: React.FC = () => {
 
               <View style={styles.statusRightBadgeGroup}>
                 <View style={styles.palmetasCountBadge}>
-                  <Text style={styles.palmetasCountText}>{equipmentMetrics.operativoCount} palmetas</Text>
+                  <Text style={styles.palmetasCountText}>
+                    {equipmentMetrics.operativoCount}{' '}
+                    {equipmentMetrics.operativoCount === 1 ? 'palmeta' : 'palmetas'}
+                  </Text>
                 </View>
                 <Text style={styles.statusPercentageText}>
                   {equipmentMetrics.operativoPercentage.toFixed(1)}% disponible
@@ -318,10 +364,10 @@ export const HomeScreen: React.FC = () => {
             </View>
 
             {/* Barra de progreso horizontal */}
-            <View style={styles.progressBarContainer}>
+            <View style={styles.progressBarTrack}>
               <View
                 style={[
-                  styles.progressBarFill,
+                  styles.progressBarFillGreen,
                   { width: `${Math.min(100, Math.max(0, equipmentMetrics.operativoPercentage))}%` },
                 ]}
               />
@@ -331,10 +377,10 @@ export const HomeScreen: React.FC = () => {
           {/* Grid de 2 Cards: En Mantención y Dados de Baja */}
           <View style={styles.gridRow}>
             {/* Card Izquierda: En Mantención */}
-            <View style={[styles.gridCard, { marginRight: 8 }]}>
+            <View style={styles.gridCard}>
               <View style={styles.gridCardHeader}>
-                <View style={styles.gridIconBox}>
-                  <Ionicons name="build-outline" size={16} color={colors.warning} />
+                <View style={styles.gridIconBoxAmber}>
+                  <Ionicons name="build" size={15} color="#FBBF24" />
                 </View>
                 <View style={styles.revisionBadge}>
                   <Text style={styles.revisionBadgeText}>Revisión</Text>
@@ -345,16 +391,19 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.mantencionM2)}</Text>
 
               <View style={styles.gridCardFooter}>
-                <Ionicons name="warning-outline" size={13} color={colors.warning} style={{ marginRight: 4 }} />
-                <Text style={styles.gridFooterAmber}>{equipmentMetrics.mantencionCount} palmetas</Text>
+                <Ionicons name="warning-outline" size={12} color="#FBBF24" style={{ marginRight: 4 }} />
+                <Text style={styles.gridFooterAmber}>
+                  {equipmentMetrics.mantencionCount}{' '}
+                  {equipmentMetrics.mantencionCount === 1 ? 'palmeta' : 'palmetas'}
+                </Text>
               </View>
             </View>
 
             {/* Card Derecha: Dados de Baja */}
-            <View style={[styles.gridCard, { marginLeft: 8 }]}>
+            <View style={styles.gridCard}>
               <View style={styles.gridCardHeader}>
-                <View style={styles.gridIconBox}>
-                  <Ionicons name="alert-circle-outline" size={16} color={colors.danger} />
+                <View style={styles.gridIconBoxRed}>
+                  <Ionicons name="alert-circle-outline" size={16} color="#F87171" />
                 </View>
                 <View style={styles.bajaBadge}>
                   <Text style={styles.bajaBadgeText}>Baja</Text>
@@ -365,8 +414,11 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.gridCardValue}>{formatM2(equipmentMetrics.bajaM2)}</Text>
 
               <View style={styles.gridCardFooter}>
-                <Ionicons name="close-circle-outline" size={13} color={colors.danger} style={{ marginRight: 4 }} />
-                <Text style={styles.gridFooterRed}>{equipmentMetrics.bajaCount} palmetas</Text>
+                <Ionicons name="close-circle-outline" size={12} color="#F87171" style={{ marginRight: 4 }} />
+                <Text style={styles.gridFooterRed}>
+                  {equipmentMetrics.bajaCount}{' '}
+                  {equipmentMetrics.bajaCount === 1 ? 'palmeta' : 'palmetas'}
+                </Text>
               </View>
             </View>
           </View>
@@ -376,8 +428,14 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Actividad reciente</Text>
-            <TouchableOpacity onPress={handleGoToHistory} activeOpacity={0.7}>
-              <Text style={styles.historyLinkText}>Historial &gt;</Text>
+            <TouchableOpacity
+              onPress={handleGoToHistory}
+              activeOpacity={0.7}
+              style={styles.historyButtonBadge}
+            >
+              <Ionicons name="time-outline" size={13} color="#60A5FA" style={{ marginRight: 4 }} />
+              <Text style={styles.historyButtonText}>Ver historial</Text>
+              <Ionicons name="chevron-forward" size={12} color="#60A5FA" style={{ marginLeft: 2 }} />
             </TouchableOpacity>
           </View>
 
@@ -404,7 +462,7 @@ export const HomeScreen: React.FC = () => {
                   ? 'warning-outline'
                   : 'checkmark-circle-outline';
 
-              const iconColor = isBaja ? colors.danger : isMant ? colors.warning : colors.success;
+              const iconColor = isBaja ? '#F87171' : isMant ? '#FBBF24' : '#34D399';
               const iconBg = isBaja
                 ? 'rgba(239, 68, 68, 0.15)'
                 : isMant
@@ -450,13 +508,13 @@ export const HomeScreen: React.FC = () => {
                     </Text>
                     <View style={styles.activityEventRow}>
                       <View style={styles.activityEventPill}>
-                        <Ionicons name="location-outline" size={10} color={colors.primaryAmber} style={{ marginRight: 3 }} />
+                        <Ionicons name="location-outline" size={10} color="#60A5FA" style={{ marginRight: 3 }} />
                         <Text style={styles.activityEventText} numberOfLines={1}>
                           {item.evento_nombre || 'Evento en terreno'}
                         </Text>
                       </View>
                       <View style={[styles.activitySyncPill, item.sincronizado ? styles.activitySyncCloud : styles.activitySyncLocal]}>
-                        <Text style={[styles.activitySyncText, { color: item.sincronizado ? colors.success : colors.warning }]}>
+                        <Text style={[styles.activitySyncText, { color: item.sincronizado ? '#34D399' : '#FBBF24' }]}>
                           {item.sincronizado ? 'Cloud' : 'Local'}
                         </Text>
                       </View>
@@ -468,7 +526,7 @@ export const HomeScreen: React.FC = () => {
           ) : (
             <View style={styles.emptyActivityCard}>
               <View style={styles.emptyActivityIconBox}>
-                <Ionicons name="shield-checkmark-outline" size={22} color={colors.success} />
+                <Ionicons name="shield-checkmark-outline" size={22} color="#10B981" />
               </View>
               <Text style={styles.emptyActivityTitle}>Sin incidencias recientes</Text>
               <Text style={styles.emptyActivitySubtitle}>
@@ -485,235 +543,255 @@ export const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#080C14',
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 120,
-  },
-  fixedHeaderContainer: {
+  topAmbientGlow: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    zIndex: 20,
-    elevation: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
   },
-  headerCard: {
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+    zIndex: 10,
   },
   headerProfile: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatarCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.backgroundDark,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   avatarText: {
-    color: colors.primary,
+    color: '#FFFFFF',
     fontWeight: '800',
-    fontSize: 15,
-    letterSpacing: 1,
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
   headerTexts: {
     justifyContent: 'center',
   },
   headerOrgText: {
-    color: colors.textSecondary,
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '500',
+    letterSpacing: 0.2,
+    marginBottom: 2,
   },
   headerUserText: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 1,
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
-  syncBadge: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.35)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
+    gap: 10,
   },
-  syncBadgeText: {
-    color: colors.success,
-    fontSize: 12,
-    fontWeight: '600',
+  headerIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cloudBadgeDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    borderWidth: 1.5,
+    borderColor: '#1E293B',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 120,
   },
   activeMountCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 22,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
   },
   activeMountTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
+    gap: 8,
   },
   activeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderColor: 'rgba(59, 130, 246, 0.28)',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
     borderRadius: 6,
+    flexShrink: 0,
   },
   activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.primaryAmber,
-    marginRight: 6,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#3B82F6',
+    marginRight: 4,
   },
   activeTagText: {
-    color: colors.primaryAmber,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
+    color: '#60A5FA',
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.4,
   },
   locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 14,
-    maxWidth: 160,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    flexShrink: 1,
+    maxWidth: '52%',
   },
   locationPillText: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#94A3B8',
+    fontSize: 10.5,
     fontWeight: '500',
   },
   eventTitle: {
-    color: colors.textPrimary,
-    fontSize: 21,
+    color: '#FFFFFF',
+    fontSize: 20,
     fontWeight: '800',
+    letterSpacing: -0.3,
     marginTop: 4,
   },
   eventSubtitle: {
-    color: colors.primaryLight,
+    color: '#60A5FA',
     fontSize: 12,
     fontWeight: '600',
     marginTop: 2,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    marginVertical: 12,
   },
   activeMountBottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  metersInfoBlock: {
+    flex: 1,
+  },
   metersLabel: {
-    color: colors.textSecondary,
-    fontSize: 13,
+    color: '#94A3B8',
+    fontSize: 12,
   },
   metersValue: {
-    color: colors.textSecondary,
-    fontSize: 14,
+    color: '#94A3B8',
+    fontSize: 13,
     marginTop: 2,
   },
   metersValueBold: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontWeight: '700',
+    fontSize: 14,
   },
   viewDetailLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(229, 152, 25, 0.12)',
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(229, 152, 25, 0.25)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
+    marginLeft: 8,
   },
   viewDetailText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 12,
     fontWeight: '600',
     marginRight: 4,
   },
   noActiveMountCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 22,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
   },
   noActiveTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   noActiveIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surfaceElevated,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#1E293B',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   noActiveTitle: {
-    color: colors.textPrimary,
-    fontSize: 17,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
   },
   noActiveSubtitle: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
     marginTop: 2,
   },
-  goToEventsButton: {
+  noActiveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginLeft: 8,
   },
-  goToEventsButtonText: {
-    color: colors.primaryAmber,
-    fontSize: 13,
-    fontWeight: '600',
+  noActiveBadgeText: {
+    color: '#60A5FA',
+    fontSize: 11,
+    fontWeight: '700',
+    marginRight: 2,
   },
   sectionContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -722,59 +800,59 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '700',
   },
   totalBadge: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3.5,
     borderRadius: 12,
   },
   totalBadgeText: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#CBD5E1',
+    fontSize: 11,
     fontWeight: '600',
   },
   mainStatusCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
+    padding: 14,
+    marginBottom: 10,
   },
   statusCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   statusIconAndName: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   checkIconBox: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: 12,
-    backgroundColor: '#161B22',
+    backgroundColor: 'rgba(16, 185, 129, 0.16)',
     borderWidth: 1,
-    borderColor: '#262A34',
+    borderColor: 'rgba(16, 185, 129, 0.28)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   statusCategoryLabel: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
     fontWeight: '500',
   },
   statusMainValue: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '800',
     marginTop: 2,
@@ -783,128 +861,155 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   palmetasCountBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.14)',
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.35)',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
-    marginBottom: 4,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: 10,
+    marginBottom: 3,
   },
   palmetasCountText: {
-    color: colors.success,
-    fontSize: 12,
+    color: '#34D399',
+    fontSize: 11,
     fontWeight: '700',
   },
   statusPercentageText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
+    fontWeight: '500',
   },
-  progressBarContainer: {
+  progressBarTrack: {
     height: 6,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 3,
     overflow: 'hidden',
+    marginTop: 10,
   },
-  progressBarFill: {
+  progressBarFillGreen: {
     height: '100%',
-    backgroundColor: colors.success,
+    backgroundColor: '#10B981',
     borderRadius: 3,
   },
   gridRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
   },
   gridCard: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
   },
   gridCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  gridIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#161B22',
+  gridIconBoxAmber: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: 'rgba(245, 158, 11, 0.14)',
     borderWidth: 1,
-    borderColor: '#262A34',
+    borderColor: 'rgba(245, 158, 11, 0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gridIconBoxRed: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: 'rgba(239, 68, 68, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.28)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   revisionBadge: {
-    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    backgroundColor: 'rgba(245, 158, 11, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
     paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 2.5,
+    borderRadius: 8,
   },
   revisionBadgeText: {
-    color: colors.warning,
+    color: '#FBBF24',
     fontSize: 10,
     fontWeight: '700',
   },
   bajaBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.14)',
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
     paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 2.5,
+    borderRadius: 8,
   },
   bajaBadgeText: {
-    color: colors.danger,
+    color: '#F87171',
     fontSize: 10,
     fontWeight: '700',
   },
   gridCardLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '500',
   },
   gridCardValue: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '800',
     marginTop: 2,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   gridCardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   gridFooterAmber: {
-    color: colors.warning,
-    fontSize: 12,
+    color: '#FBBF24',
+    fontSize: 11,
     fontWeight: '600',
   },
   gridFooterRed: {
-    color: colors.danger,
-    fontSize: 12,
+    color: '#F87171',
+    fontSize: 11,
     fontWeight: '600',
   },
-  historyLinkText: {
-    color: colors.primaryAmber,
-    fontSize: 13,
-    fontWeight: '600',
+  historyButtonBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.35)',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 12,
+  },
+  historyButtonText: {
+    color: '#60A5FA',
+    fontSize: 11,
+    fontWeight: '700',
   },
   activityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 8,
   },
   activityIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -916,38 +1021,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 3,
+    marginBottom: 2,
   },
   activityTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },
   activityTime: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
   },
   activitySubtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500',
   },
   activityEventRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: 4,
     gap: 6,
   },
   activityEventPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
     maxWidth: 160,
   },
   activityEventText: {
-    color: colors.textMuted,
+    color: '#94A3B8',
     fontSize: 10,
     fontWeight: '500',
   },
@@ -957,29 +1062,29 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   activitySyncCloud: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    backgroundColor: 'rgba(16, 185, 129, 0.14)',
   },
   activitySyncLocal: {
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    backgroundColor: 'rgba(245, 158, 11, 0.14)',
   },
   activitySyncText: {
     fontSize: 9,
     fontWeight: '700',
   },
   emptyActivityCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 22,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
   },
   emptyActivityIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.25)',
@@ -988,13 +1093,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptyActivityTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 2,
   },
   emptyActivitySubtitle: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
     textAlign: 'center',
   },

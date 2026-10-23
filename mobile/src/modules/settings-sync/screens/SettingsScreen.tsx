@@ -11,11 +11,16 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../../core/theme/colors';
-import { getTotalPendingSyncCount } from '../../../core/db/database';
+import {
+  getTotalPendingSyncCount,
+  clearAllLocalIncidencias,
+  clearAllPendingPalmetas,
+} from '../../../core/db/database';
 import { syncAllPendingData } from '../../../core/api/sync';
 import { supabase } from '../../../core/api/supabase';
 import { triggerHaptic } from '../../../core/utils/haptics';
@@ -26,6 +31,8 @@ interface SettingsScreenProps {
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -147,12 +154,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { width: screenWidth, marginLeft: TAB_OFFSET }]} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+    <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
+      <StatusBar barStyle="light-content" backgroundColor="#080C14" />
 
-      {/* Título Superior Centrado */}
-      <View style={styles.topHeader}>
-        <Text style={styles.topHeaderTitle}>Configuración</Text>
+      {/* Glow ambiental superior suave y continuo */}
+      <LinearGradient
+        colors={['rgba(29, 78, 216, 0.35)', 'rgba(15, 23, 42, 0.15)', 'transparent']}
+        locations={[0, 0.55, 1]}
+        style={styles.topAmbientGlow}
+        pointerEvents="none"
+      />
+
+      {/* Header Superior con Logo de Tuerca y Título Ajustes (sin acciones adicionales) */}
+      <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerProfile}>
+          <View style={styles.gearIconCircle}>
+            <Ionicons name="settings-outline" size={20} color="#FFFFFF" />
+          </View>
+          <View style={styles.headerTexts}>
+            <Text style={styles.headerOrgText}>Aleprod Terreno</Text>
+            <Text style={styles.headerUserText}>Ajustes</Text>
+          </View>
+        </View>
       </View>
 
       <ScrollView
@@ -195,16 +218,37 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
             {/* Sub-card de Registros Pendientes */}
             <View style={styles.pendingSubCard}>
               <View style={styles.pendingLeftGroup}>
-                <View style={styles.cloudIconCircle}>
-                  <Ionicons name="cloud-offline-outline" size={18} color={colors.warning} />
+                <View
+                  style={[
+                    styles.cloudIconCircle,
+                    pendingCount === 0 && styles.cloudIconCircleSynced,
+                  ]}
+                >
+                  <Ionicons
+                    name={pendingCount > 0 ? 'cloud-offline-outline' : 'cloud-done-outline'}
+                    size={18}
+                    color={pendingCount > 0 ? '#FBBF24' : '#34D399'}
+                  />
                 </View>
                 <Text style={styles.pendingCountText}>
                   {pendingCount} {pendingCount === 1 ? 'registro pendiente' : 'registros pendientes'} de envío
                 </Text>
               </View>
 
-              <View style={styles.pendingBadge}>
-                <Text style={styles.pendingBadgeText}>PENDIENTE</Text>
+              <View
+                style={[
+                  styles.pendingBadge,
+                  pendingCount === 0 ? styles.pendingBadgeSynced : styles.pendingBadgePending,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.pendingBadgeText,
+                    pendingCount === 0 ? styles.pendingBadgeTextSynced : styles.pendingBadgeTextPending,
+                  ]}
+                >
+                  {pendingCount > 0 ? 'PENDIENTE' : 'AL DÍA'}
+                </Text>
               </View>
             </View>
 
@@ -216,9 +260,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
               activeOpacity={0.8}
             >
               {syncing ? (
-                <ActivityIndicator size="small" color={colors.textPrimary} style={{ marginRight: 8 }} />
+                <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
               ) : (
-                <Ionicons name="refresh-outline" size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
+                <Ionicons name="refresh-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
               )}
               <Text style={styles.syncButtonText}>
                 {syncing ? 'Sincronizando con Supabase...' : 'Sincronizar Ahora'}
@@ -234,19 +278,50 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
           <View style={styles.optionsGroup}>
             <TouchableOpacity
               style={styles.optionRow}
-              onPress={() =>
-                Alert.alert(
-                  'Historial de Actividad',
-                  'Mostrando registros consolidados en memoria local SQLite y respaldos en la nube.'
-                )
-              }
+              onPress={() => {
+                triggerHaptic('selection');
+                router.push('/activity-history');
+              }}
               activeOpacity={0.7}
             >
               <View style={styles.optionLeftGroup}>
-                <Ionicons name="time-outline" size={20} color={colors.textSecondary} style={styles.optionIcon} />
-                <Text style={styles.optionLabel}>Historial de Actividad</Text>
+                <Ionicons name="time-outline" size={20} color="#94A3B8" style={styles.optionIcon} />
+                <Text style={styles.optionLabel}>Historial de Incidencias</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+              <Ionicons name="chevron-forward" size={18} color="#64748B" />
+            </TouchableOpacity>
+
+            <View style={styles.optionDivider} />
+
+            <TouchableOpacity
+              style={styles.optionRow}
+              onPress={() => {
+                Alert.alert(
+                  'Restablecer Datos Locales',
+                  '¿Deseas vaciar la base de datos local SQLite (incidencias y palmetas pendientes)? Esta acción restablecerá el dispositivo a 0 registros locales.',
+                  [
+                    { text: 'Cancelar', style: 'cancel' },
+                    {
+                      text: 'Sí, Restablecer',
+                      style: 'destructive',
+                      onPress: () => {
+                        clearAllLocalIncidencias();
+                        clearAllPendingPalmetas();
+                        setPendingCount(0);
+                        triggerHaptic('success');
+                        Alert.alert('Datos Restablecidos', 'La base de datos local ha quedado limpia con 0 incidencias registradas.');
+                      },
+                    },
+                  ]
+                );
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.optionLeftGroup}>
+                <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.optionIcon} />
+                <Text style={[styles.optionLabel, { color: '#EF4444' }]}>Restablecer Datos Locales</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#64748B" />
             </TouchableOpacity>
 
             <View style={styles.optionDivider} />
@@ -262,10 +337,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
               activeOpacity={0.7}
             >
               <View style={styles.optionLeftGroup}>
-                <Ionicons name="book-outline" size={20} color={colors.textSecondary} style={styles.optionIcon} />
+                <Ionicons name="book-outline" size={20} color="#94A3B8" style={styles.optionIcon} />
                 <Text style={styles.optionLabel}>Manual de Usuario</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+              <Ionicons name="chevron-forward" size={18} color="#64748B" />
             </TouchableOpacity>
 
             <View style={styles.optionDivider} />
@@ -281,10 +356,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
               activeOpacity={0.7}
             >
               <View style={styles.optionLeftGroup}>
-                <Ionicons name="headset-outline" size={20} color={colors.textSecondary} style={styles.optionIcon} />
+                <Ionicons name="headset-outline" size={20} color="#94A3B8" style={styles.optionIcon} />
                 <Text style={styles.optionLabel}>Soporte Técnico</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+              <Ionicons name="chevron-forward" size={18} color="#64748B" />
             </TouchableOpacity>
           </View>
         </View>
@@ -295,66 +370,99 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
           onPress={handleLogout}
           activeOpacity={0.8}
         >
-          <Ionicons name="log-out-outline" size={18} color={colors.danger} style={{ marginRight: 8 }} />
+          <Ionicons name="log-out-outline" size={18} color="#EF4444" style={{ marginRight: 8 }} />
           <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
         </TouchableOpacity>
 
         {/* Versión y Build */}
         <Text style={styles.versionText}>Aleprod Móvil · Versión 1.2.4 (Build 2026.09)</Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#080C14',
   },
-  topHeader: {
-    paddingVertical: 16,
+  topAmbientGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
+  },
+  headerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.backgroundDark,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+    zIndex: 10,
   },
-  topHeaderTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
+  headerProfile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gearIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  headerTexts: {
+    justifyContent: 'center',
+  },
+  headerOrgText: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+    marginBottom: 2,
+  },
+  headerUserText: {
+    color: '#FFFFFF',
+    fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingTop: 4,
+    paddingBottom: 120,
   },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 18,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   profileAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#1E232D',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#1E293B',
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: '#3B82F6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
   profileAvatarText: {
-    color: colors.primary,
+    color: '#60A5FA',
     fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   profileDetails: {
     flex: 1,
@@ -362,36 +470,36 @@ const styles = StyleSheet.create({
   profileNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   profileName: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
     marginRight: 8,
   },
   terrenoBadge: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
-    paddingHorizontal: 8,
+    borderColor: 'rgba(59, 130, 246, 0.28)',
+    paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
   },
   terrenoBadgeText: {
-    color: colors.primaryAmber,
-    fontSize: 11,
+    color: '#60A5FA',
+    fontSize: 10,
     fontWeight: '700',
   },
   profileEmail: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeaderTitle: {
-    color: colors.textSecondary,
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -399,10 +507,10 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   storageCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 18,
     padding: 16,
   },
   storageHeaderRow: {
@@ -416,19 +524,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greenStatusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
     marginRight: 8,
   },
   offlineStatusText: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '600',
   },
   dbVersionText: {
-    color: colors.textSecondary,
+    color: '#64748B',
     fontSize: 12,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
@@ -436,9 +544,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#0F131D',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 12,
     marginBottom: 14,
@@ -450,54 +558,74 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   cloudIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
+  cloudIconCircleSynced: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+  },
   pendingCountText: {
-    color: colors.textPrimary,
+    color: '#CBD5E1',
     fontSize: 13,
     fontWeight: '500',
     flex: 1,
   },
   pendingBadge: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
     borderRadius: 6,
   },
+  pendingBadgePending: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+  },
+  pendingBadgeSynced: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: 'rgba(16, 185, 129, 0.35)',
+  },
   pendingBadgeText: {
-    color: colors.warning,
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
+  },
+  pendingBadgeTextPending: {
+    color: '#FBBF24',
+  },
+  pendingBadgeTextSynced: {
+    color: '#34D399',
   },
   syncButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#262A34',
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: 12,
-    height: 46,
+    backgroundColor: '#2563EB',
+    borderRadius: 14,
+    height: 48,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 2,
   },
   syncButtonText: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },
   optionsGroup: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 18,
     overflow: 'hidden',
   },
   optionRow: {
@@ -515,33 +643,33 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   optionLabel: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '500',
   },
   optionDivider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     marginLeft: 48,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
     borderRadius: 14,
     height: 48,
     marginBottom: 20,
   },
   logoutButtonText: {
-    color: colors.danger,
+    color: '#EF4444',
     fontSize: 15,
     fontWeight: '700',
   },
   versionText: {
-    color: colors.textMuted,
+    color: '#64748B',
     fontSize: 12,
     textAlign: 'center',
   },

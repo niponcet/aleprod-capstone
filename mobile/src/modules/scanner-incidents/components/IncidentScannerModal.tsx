@@ -51,7 +51,8 @@ export const IncidentScannerModal: React.FC<IncidentScannerModalProps> = ({
   };
 
   const handleSimulateScan = () => {
-    const sampleUuid = `aleprod-p39-${Math.floor(1000 + Math.random() * 9000)}-cl`;
+    const realQrs = ['TEST-QR-001', 'ALEP-TEST-1792637164994'];
+    const sampleUuid = realQrs[Math.floor(Math.random() * realQrs.length)];
     handleBarcodeScanned({ type: 'qr', data: sampleUuid });
   };
 

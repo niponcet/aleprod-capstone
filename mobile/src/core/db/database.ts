@@ -105,6 +105,39 @@ export const initDB = () => {
       );
     `);
 
+    // 4. Tabla meta para migraciones internas
+    db.execSync(`
+      CREATE TABLE IF NOT EXISTS meta_app (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      );
+    `);
+
+    // Reset garantizado para iniciar limpio (0 incidencias registradas de prueba)
+    const resetDone = db.getFirstSync<{ key: string }>(
+      "SELECT key FROM meta_app WHERE key = 'clean_initial_incidents_v2'"
+    );
+    if (!resetDone) {
+      db.execSync('DELETE FROM incidencias_locales;');
+      db.execSync('DELETE FROM palmetas_pendientes;');
+      db.runSync(
+        "INSERT OR REPLACE INTO meta_app (key, value) VALUES ('clean_initial_incidents_v2', 'done')"
+      );
+      console.log("Limpieza inicial ejecutada: incidencias locales reseteadas a 0.");
+    }
+
+    // Reset de eventos mockeados o no iniciados para reflejar estado real (0 eventos activos arbitrarios)
+    const eventsResetDone = db.getFirstSync<{ key: string }>(
+      "SELECT key FROM meta_app WHERE key = 'clean_mock_active_events_v2'"
+    );
+    if (!eventsResetDone) {
+      db.execSync("UPDATE eventos_locales SET estado = 'planificado' WHERE estado = 'en_curso';");
+      db.runSync(
+        "INSERT OR REPLACE INTO meta_app (key, value) VALUES ('clean_mock_active_events_v2', 'done')"
+      );
+      console.log("Limpieza de eventos ejecutada: eventos activos reseteados a planificados.");
+    }
+
     console.log("Tablas 'incidencias_locales', 'eventos_locales' y 'palmetas_pendientes' sincronizadas.");
   } catch (error) {
     console.error("Error inicializando la base de datos:", error);
@@ -455,4 +488,40 @@ export const isPalmetaPending = (qrUuid: string): boolean => {
  */
 export const getTotalPendingSyncCount = (): number => {
   return getPendingSyncCount() + getPendingPalmetasCount();
+};
+
+/**
+ * Limpia todas las incidencias locales registradas en SQLite
+ */
+export const clearAllLocalIncidencias = (): void => {
+  try {
+    db.execSync('DELETE FROM incidencias_locales;');
+    console.log("Todas las incidencias locales han sido eliminadas.");
+  } catch (error) {
+    console.error("Error al limpiar incidencias locales:", error);
+  }
+};
+
+/**
+ * Limpia todas las palmetas pendientes locales de SQLite
+ */
+export const clearAllPendingPalmetas = (): void => {
+  try {
+    db.execSync('DELETE FROM palmetas_pendientes;');
+    console.log("Todas las palmetas pendientes han sido eliminadas.");
+  } catch (error) {
+    console.error("Error al limpiar palmetas pendientes:", error);
+  }
+};
+
+/**
+ * Resetea eventos activos locales a estado planificado
+ */
+export const clearAllLocalActiveEvents = (): void => {
+  try {
+    db.execSync("UPDATE eventos_locales SET estado = 'planificado' WHERE estado = 'en_curso';");
+    console.log("Eventos locales activos reiniciados a planificados.");
+  } catch (error) {
+    console.error("Error al reiniciar eventos activos locales:", error);
+  }
 };
