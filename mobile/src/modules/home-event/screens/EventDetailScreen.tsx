@@ -497,7 +497,7 @@ export const EventDetailScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="light-content" />
 
       {/* Barra de Navegación Superior Fija */}
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>

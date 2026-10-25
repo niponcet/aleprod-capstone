@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   StyleSheet,
   Text,
@@ -13,21 +14,30 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { supabase } from '../../../core/api/supabase';
 
-interface LoginScreenProps {
-  onDevBypass?: () => void;
-}
-
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
+export const LoginScreen: React.FC = () => {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@aleprod_saved_email')
+      .then((savedEmail) => {
+        if (savedEmail) {
+          setEmail(savedEmail);
+          setRememberMe(true);
+        }
+      })
+      .catch((e) => console.warn('Error al leer correo recordado:', e));
+  }, []);
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -66,6 +76,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
           'Sesión no iniciada',
           'No se pudo establecer una sesión activa con el servidor.'
         );
+      } else {
+        // Persistir o limpiar el correo según la preferencia de Recordarme
+        if (rememberMe) {
+          await AsyncStorage.setItem('@aleprod_saved_email', trimmedEmail);
+        } else {
+          await AsyncStorage.removeItem('@aleprod_saved_email');
+        }
       }
       // Al ser exitoso, supabase.auth.onAuthStateChange en AuthContext
       // actualizará la sesión y la navegación redirigirá a la aplicación.
@@ -81,7 +98,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="light-content" />
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -188,12 +205,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() =>
-                  Alert.alert(
-                    'Recuperación de Contraseña',
-                    'Contacta al administrador del sistema en admin@aleprod.cl para reestablecer tus credenciales.'
-                  )
-                }
+                onPress={() => router.push('/forgot-password')}
                 activeOpacity={0.7}
                 disabled={loading}
               >
@@ -226,20 +238,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onDevBypass }) => {
                 )}
               </LinearGradient>
             </TouchableOpacity>
-
-            {/* Fallback de modo desarrollo si está explícitamente configurado */}
-            {Boolean(__DEV__ && onDevBypass) && (
-              <TouchableOpacity
-                style={styles.devBypassButton}
-                onPress={onDevBypass}
-                activeOpacity={0.7}
-                disabled={loading}
-              >
-                <Text style={styles.devBypassText}>
-                  ⚡ Acceso Rápido Terreno (Modo Dev)
-                </Text>
-              </TouchableOpacity>
-            )}
 
             {/* Pie de Página */}
             <Text style={styles.footerText}>
@@ -420,16 +418,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.5,
-  },
-  devBypassButton: {
-    marginTop: 14,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  devBypassText: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: '600',
   },
   footerText: {
     marginTop: 22,

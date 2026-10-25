@@ -352,7 +352,7 @@ export const ActivityHistoryScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { width: screenWidth }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="light-content" />
 
       {/* Header Fijo Superior */}
       <View style={[styles.headerContainer, { paddingTop: insets.top + 8 }]}>

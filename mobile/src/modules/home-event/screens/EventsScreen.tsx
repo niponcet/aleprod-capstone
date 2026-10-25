@@ -18,6 +18,7 @@ import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
 import { supabase } from '../../../core/api/supabase';
 import { StartEventBottomSheet } from '../components/StartEventBottomSheet';
+import { useAuth } from '../../../core/context/AuthContext';
 
 export interface EventItem {
   id: string;
@@ -38,6 +39,7 @@ export const EventsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
+  const { canStartEvent, role } = useAuth();
 
   const [activeTab, setActiveTab] = useState<MainTabType>('en_curso');
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -207,7 +209,7 @@ export const EventsScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#080C14" />
+      <StatusBar barStyle="light-content" />
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient
@@ -339,28 +341,48 @@ export const EventsScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Botón Iniciar Evento: Solo visible en la pestaña "En Curso" */}
+        {/* Botón Iniciar Evento (Admin/Coordinador) vs Card Informativa (Técnico) — RBAC */}
         {activeTab === 'en_curso' && (
-          <TouchableOpacity
-            style={styles.mainCtaButtonWrapper}
-            onPress={handleOpenStartEvent}
-            activeOpacity={0.8}
-          >
-            <View style={styles.mainCtaCard}>
-              <View style={styles.mainCtaIconCircle}>
-                <Ionicons name="add" size={20} color="#3B82F6" />
+          canStartEvent ? (
+            <TouchableOpacity
+              style={styles.mainCtaButtonWrapper}
+              onPress={handleOpenStartEvent}
+              activeOpacity={0.8}
+            >
+              <View style={styles.mainCtaCard}>
+                <View style={styles.mainCtaIconCircle}>
+                  <Ionicons name="add" size={20} color="#3B82F6" />
+                </View>
+                <View style={styles.mainCtaContent}>
+                  <Text style={styles.mainCtaTitle}>Iniciar Nuevo Evento</Text>
+                  <Text style={styles.mainCtaSubtitle}>
+                    Alta técnica de montaje en terreno
+                  </Text>
+                </View>
+                <View style={styles.mainCtaArrowBox}>
+                  <Ionicons name="chevron-forward" size={16} color="#64748B" />
+                </View>
               </View>
-              <View style={styles.mainCtaContent}>
-                <Text style={styles.mainCtaTitle}>Iniciar Nuevo Evento</Text>
-                <Text style={styles.mainCtaSubtitle}>
-                  Alta técnica de montaje en terreno
-                </Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.technicianNoticeCard}>
+              <View style={styles.technicianNoticeHeader}>
+                <View style={styles.technicianGoldIconCircle}>
+                  <Ionicons name="notifications-outline" size={18} color="#D4AF37" />
+                </View>
+                <View style={styles.technicianNoticeHeaderTexts}>
+                  <Text style={styles.technicianNoticeTitle}>Modo Operativo en Terreno</Text>
+                  <View style={styles.roleBadgeGold}>
+                    <View style={styles.roleDotGold} />
+                    <Text style={styles.roleBadgeTextGold}>TÉCNICO</Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.mainCtaArrowBox}>
-                <Ionicons name="chevron-forward" size={16} color="#64748B" />
-              </View>
+              <Text style={styles.technicianNoticeBody}>
+                Cuando se inicie un evento te aparecerá aquí y se te notificará.
+              </Text>
             </View>
-          </TouchableOpacity>
+          )
         )}
 
         {/* Indicador de Carga */}
@@ -388,7 +410,9 @@ export const EventsScreen: React.FC = () => {
             </Text>
             <Text style={styles.emptySubtitle}>
               {activeTab === 'en_curso'
-                ? 'Presiona "Iniciar Nuevo Evento" para registrar un montaje activo en terreno.'
+                ? canStartEvent
+                  ? 'Presiona "Iniciar Nuevo Evento" para registrar un montaje activo en terreno.'
+                  : 'A la espera de que Coordinación o Jefatura dé inicio a un nuevo montaje.'
                 : 'Los eventos finalizados se almacenarán aquí con su trazabilidad en modo solo lectura.'}
             </Text>
           </View>
@@ -676,6 +700,78 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Bloque Informativo Dark/Gold para rol Técnico (RBAC)
+  technicianNoticeCard: {
+    backgroundColor: '#121620',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.28)',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  technicianNoticeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  technicianGoldIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  technicianNoticeHeaderTexts: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  technicianNoticeTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  roleBadgeGold: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  roleDotGold: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#D4AF37',
+    marginRight: 5,
+  },
+  roleBadgeTextGold: {
+    color: '#F5C242',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  technicianNoticeBody: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: -0.1,
   },
   loadingBox: {
     flexDirection: 'row',

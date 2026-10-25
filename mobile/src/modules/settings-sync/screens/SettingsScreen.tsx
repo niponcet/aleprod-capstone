@@ -156,7 +156,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#080C14" />
+      <StatusBar barStyle="light-content" />
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient

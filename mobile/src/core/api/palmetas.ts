@@ -20,6 +20,21 @@ export interface ProvisionResult {
 }
 
 /**
+ * Calcula el código legible humano oficial:
+ * 'PL-' + últimos 6 caracteres alfanuméricos en mayúsculas del qr_uuid (eliminando guiones)
+ */
+export const deriveCodigoVisible = (qrUuid: string): string => {
+  const clean = (qrUuid || '').replace(/[^a-zA-Z0-9]/g, '');
+  if (clean.length >= 6) {
+    return `PL-${clean.slice(-6).toUpperCase()}`;
+  }
+  if (clean.length > 0) {
+    return `PL-${clean.padStart(6, '0').toUpperCase()}`;
+  }
+  return 'PL-000000';
+};
+
+/**
  * Genera el código de lote con el formato LOTE-MMYYYY (ej. LOTE-102026)
  */
 export const generateLoteIngreso = (date: Date = new Date()): string => {
@@ -62,6 +77,8 @@ export const provisionPalmeta = async (
     };
   }
 
+  const codigoVisible = deriveCodigoVisible(cleanCode);
+
   // 2. Intentar inserción directa en Supabase
   try {
     const { data, error } = await supabase
@@ -69,12 +86,13 @@ export const provisionPalmeta = async (
       .insert({
         codigo_qr: cleanCode,
         qr_uuid: cleanCode,
+        codigo_visible: codigoVisible,
         estado: 'operativo',
         lote_ingreso: lote,
         lote_fabricacion: lote,
         ubicacion_actual: 'bodega_central',
       })
-      .select('id, codigo_qr, qr_uuid, estado, lote_ingreso')
+      .select('id, codigo_qr, qr_uuid, codigo_visible, estado, lote_ingreso')
       .single();
 
     if (!error) {

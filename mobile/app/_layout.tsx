@@ -14,7 +14,7 @@ function RootNavigationLayout() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === 'login';
+    const inAuthGroup = segments[0] === 'login' || segments[0] === 'forgot-password';
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/login');
@@ -39,6 +39,7 @@ function RootNavigationLayout() {
       }}
     >
       <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="scanner"
@@ -73,7 +74,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#0B0D10" />
+      <StatusBar barStyle="light-content" />
       <AuthProvider>
         <RootNavigationLayout />
       </AuthProvider>

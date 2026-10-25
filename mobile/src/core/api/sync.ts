@@ -1,6 +1,8 @@
 import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from './supabase';
+import { deriveCodigoVisible } from './palmetas';
 import {
   getPendingIncidencias,
   markIncidenciaAsSynced,
@@ -50,19 +52,28 @@ export const uploadEvidenceImage = async (localUri: string): Promise<string | nu
     let mimeType = 'image/jpeg';
     if (extension === 'png') mimeType = 'image/png';
     else if (extension === 'webp') mimeType = 'image/webp';
+    else if (extension === 'heic') mimeType = 'image/heic';
+    else if (extension === 'heif') mimeType = 'image/heif';
 
-    // 2. Leer archivo local en formato Base64 con expo-file-system
-    const base64Data = await FileSystem.readAsStringAsync(localUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    // 2. Obtener ArrayBuffer de la imagen (Web vs Native)
+    let arrayBuffer: ArrayBuffer;
+    if (Platform.OS === 'web' && (localUri.startsWith('blob:') || localUri.startsWith('data:'))) {
+      const res = await fetch(localUri);
+      const blob = await res.blob();
+      arrayBuffer = await blob.arrayBuffer();
+      if (blob.type) mimeType = blob.type;
+    } else {
+      const base64Data = await FileSystem.readAsStringAsync(localUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
-    if (!base64Data) {
-      console.warn('El archivo local de foto está vacío:', localUri);
-      return null;
+      if (!base64Data) {
+        console.warn('El archivo local de foto está vacío:', localUri);
+        return null;
+      }
+
+      arrayBuffer = decode(base64Data);
     }
-
-    // 3. Decodificar Base64 a ArrayBuffer para Supabase Storage
-    const arrayBuffer = decode(base64Data);
 
     // 4. Generar ruta única de archivo
     const timestamp = Date.now();
@@ -156,11 +167,11 @@ export const resolvePalmetaUuid = async (qrUuid: string): Promise<string | null>
       }
     }
 
-    // 2. Si qrUuid es el serial físico o código QR escaneado
+    // 2. Si qrUuid es el código QR, serial visible o alias de la palmeta
     const { data, error } = await supabase
       .from('palmetas_led')
       .select('id')
-      .eq('numero_serie', qrUuid)
+      .or(`codigo_qr.eq.${qrUuid},qr_uuid.eq.${qrUuid},codigo_visible.eq.${qrUuid}`)
       .limit(1);
 
     if (!error && data && data.length > 0) {
@@ -281,11 +292,14 @@ export const syncPendingPalmetas = async (): Promise<PalmetaSyncResult> => {
 
   for (const item of pendingRows) {
     try {
+      const codigoVisible = deriveCodigoVisible(item.qr_uuid);
+
       const { error } = await supabase
         .from('palmetas_led')
         .insert({
           codigo_qr: item.qr_uuid,
           qr_uuid: item.qr_uuid,
+          codigo_visible: codigoVisible,
           estado: item.estado || 'operativo',
           lote_ingreso: item.lote_ingreso,
           lote_fabricacion: item.lote_ingreso,

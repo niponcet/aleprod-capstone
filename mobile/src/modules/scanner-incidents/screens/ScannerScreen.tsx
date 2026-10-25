@@ -71,7 +71,7 @@ export const ScannerScreen = () => {
   if (!permission.granted) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 }]}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <StatusBar barStyle="light-content" />
         <TouchableOpacity
           style={[styles.closeButtonRight, { top: Math.max(insets.top + 6, 44) }]}
           onPress={() => router.back()}
@@ -191,7 +191,7 @@ export const ScannerScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="light-content" />
 
       {/* Cámara de fondo */}
       <CameraView

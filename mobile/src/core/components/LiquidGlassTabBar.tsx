@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { triggerHaptic } from '../utils/haptics';
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 
 // Constantes de diseño y geometría compacta y estilizada
 const CAPSULE_HEIGHT = 58;
@@ -77,9 +77,14 @@ const TAB_CONFIGS: Record<string, TabConfig> = {
   },
 };
 
-export const LiquidGlassTabBar: React.FC<BottomTabBarProps> = ({
+export type LiquidGlassTabBarProps = BottomTabBarProps & {
+  navigation?: any;
+};
+
+export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
   state,
   navigation,
+  navigateToTab,
 }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -110,6 +115,9 @@ export const LiquidGlassTabBar: React.FC<BottomTabBarProps> = ({
 
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
+
+  const navigateToTabRef = useRef(navigateToTab);
+  navigateToTabRef.current = navigateToTab;
 
   const itemWidthRef = useRef(itemWidth);
   itemWidthRef.current = itemWidth;
@@ -256,15 +264,21 @@ export const LiquidGlassTabBar: React.FC<BottomTabBarProps> = ({
         const targetRoute = currentState.routes[finalIndex];
 
         if (targetRoute) {
-          const event = currentNav.emit({
-            type: 'tabPress',
-            target: targetRoute.key,
-            canPreventDefault: true,
-          });
+          const event = currentNav?.emit
+            ? currentNav.emit({
+                type: 'tabPress',
+                target: targetRoute.key,
+                canPreventDefault: true,
+              })
+            : { defaultPrevented: false };
 
           if (!isFocused && !event.defaultPrevented) {
             triggerHaptic('medium');
-            currentNav.navigate(targetRoute.name);
+            if (navigateToTabRef.current) {
+              navigateToTabRef.current(targetRoute.key);
+            } else if (currentNav?.navigate) {
+              currentNav.navigate(targetRoute.name);
+            }
           }
         }
       },
@@ -338,7 +352,7 @@ export const LiquidGlassTabBar: React.FC<BottomTabBarProps> = ({
 
           {/* Botones de Pestañas (pointerEvents="none" para preservar las coordenadas exactas de la cápsula) */}
           <View pointerEvents="none" style={styles.tabsRow}>
-            {state.routes.map((route, index) => {
+            {state.routes.map((route: any, index: number) => {
               const effectiveFocused = effectiveIndex === index;
               const config = TAB_CONFIGS[route.name] || {
                 name: route.name,

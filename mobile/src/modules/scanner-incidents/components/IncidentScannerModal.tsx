@@ -66,7 +66,7 @@ export const IncidentScannerModal: React.FC<IncidentScannerModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <StatusBar barStyle="light-content" />
 
         {/* Cámara de pantalla completa */}
         {permission?.granted ? (

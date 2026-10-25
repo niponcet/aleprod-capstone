@@ -113,7 +113,7 @@ export const AssetDetailScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.backgroundDark} />
+      <StatusBar barStyle="light-content" />
 
       {/* Header Superior */}
       <View style={styles.header}>

@@ -89,7 +89,7 @@ export const NotificationsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#080C14" />
+      <StatusBar barStyle="light-content" />
 
       {/* Halo ambiental superior suave */}
       <LinearGradient
