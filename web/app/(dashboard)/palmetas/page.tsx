@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Sidebar } from "@/app/components/sidebar";
 
 /* ─── Types ─── */
 interface Palmeta {
@@ -173,22 +172,7 @@ export default function PalmetasPage() {
   };
 
   return (
-    <div
-      data-theme="dark"
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-        color: "var(--tx)",
-        display: "flex",
-        alignItems: "stretch",
-      }}
-      className="font-['Inter',sans-serif] selection:bg-[#D4AF37]/20 selection:text-[#D4AF37]"
-    >
-      {/* ── Fixed Universal Left Sidebar ── */}
-      <Sidebar />
-
-      {/* ── Main Viewport ── */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+    <>
         {/* ── Ambient Glow ── */}
         <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
           <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[150px]" />
@@ -197,17 +181,7 @@ export default function PalmetasPage() {
 
         {/* ── Top Bar ── */}
         <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "14px 32px",
-            borderBottom: "1px solid var(--bd)",
-            background: "var(--sf)",
-            position: "sticky",
-            top: 0,
-            zIndex: 30,
-          }}
+          className="px-4 py-3 sm:px-8 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--bd)] bg-[var(--sf)] sticky top-0 z-30"
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link
@@ -242,46 +216,32 @@ export default function PalmetasPage() {
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Link
+              href="/palmetas/etiquetado"
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37]/15 to-[#D4AF37]/5 text-[var(--pr)] text-xs font-bold hover:border-[#D4AF37] hover:brightness-110 active:scale-95 transition-all shadow-sm no-underline"
+              title="Centro de Etiquetado y Serialización QR"
+            >
+              <span className="material-symbols-outlined text-base">
+                qr_code_2
+              </span>
+              <span>Centro de Etiquetado QR</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => fetchPalmetas()}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                height: "38px",
-                padding: "0 14px",
-                borderRadius: "10px",
-                border: "1px solid var(--bd)",
-                background: "var(--sf2)",
-                color: "var(--tx)",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[#3F3F46] active:scale-95 transition-all shadow-sm cursor-pointer"
               title="Recargar datos del inventario"
             >
               <span className="material-symbols-outlined text-base">refresh</span>
-              Actualizar
+              <span className="hidden sm:inline">Actualizar</span>
             </button>
           </div>
         </header>
 
         {/* ── Main Content ── */}
-        <main
-          style={{
-            padding: "28px 32px 40px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-            maxWidth: "1240px",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-          className="flex-1"
-        >
+        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-[1240px] w-full box-border flex-1">
         {/* Success Toast */}
         {successMsg && (
           <div className="fixed top-24 right-8 z-50 px-5 py-3 rounded-xl bg-[#10B981] text-white text-xs font-['Outfit'] font-semibold tracking-wide shadow-xl shadow-[#10B981]/20 flex items-center gap-2 animate-fade-in-up">
@@ -290,29 +250,18 @@ export default function PalmetasPage() {
           </div>
         )}
 
-        {/* Title Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
-              Activos Serializados con QR
-            </div>
-            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
-              Parque de Palmetas LED
-            </h1>
-            <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1">
-              Registro, trazabilidad y gestión de estado de las baldosas LED del inventario centralizado.
-            </p>
+        {/* Title Banner (Limpio y directo, sin botones duplicados) */}
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+            Activos Serializados con QR
           </div>
-
-          <button
-            type="button"
-            onClick={() => fetchPalmetas()}
-            className="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-          >
-            <span className="material-symbols-outlined text-lg">refresh</span>
-            Actualizar Datos
-          </button>
+          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+            Parque de Palmetas LED
+          </h1>
+          <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1 max-w-2xl">
+            Registro, trazabilidad y gestión de estado de las baldosas LED del inventario centralizado.
+          </p>
         </div>
 
         {/* ── KPIs ── */}
@@ -439,8 +388,8 @@ export default function PalmetasPage() {
 
         {/* ── Table ── */}
         <div className="w-full rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="w-full overflow-x-auto pb-2">
+            <table className="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold">
                   <th className="py-3.5 px-4 sm:px-6">Código / UUID</th>
@@ -776,7 +725,6 @@ export default function PalmetasPage() {
           </span>
         </div>
       </footer>
-    </div>
-  </div>
-);
+    </>
+  );
 }

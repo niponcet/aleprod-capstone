@@ -122,6 +122,10 @@ El monorepo está dividido funcionalmente en dos aplicaciones complementarias y 
     }
     ```
 
+### Protección de Rutas y Sesión (Convención `proxy.ts` en Next.js 16+)
+* En Next.js 16+, la convención de archivo `middleware.ts` fue reemplazada por **`proxy.ts`** (`export async function proxy(request: NextRequest)`).
+* `web/proxy.ts` gestiona la actualización continua de cookies de autenticación vía `@supabase/ssr` y protege todas las rutas no públicas redirigiendo a `/login` si no existe una sesión válida.
+
 ### Variables de Entorno Web
 * **Prefijo Mandatorio:** Todas las variables de cliente de Next.js deben comenzar con **`NEXT_PUBLIC_`**.
 * Ejemplo de archivo `.env.local`:

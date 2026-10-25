@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Sidebar } from "@/app/components/sidebar";
 
 /* ─── Interfaces ─── */
 interface Evento {
@@ -155,22 +154,7 @@ export default function EventosPage() {
   });
 
   return (
-    <div
-      data-theme="dark"
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-        color: "var(--tx)",
-        display: "flex",
-        alignItems: "stretch",
-      }}
-      className="font-['Inter',sans-serif] selection:bg-[#D4AF37]/20 selection:text-[#D4AF37]"
-    >
-      {/* ── Fixed Universal Left Sidebar ── */}
-      <Sidebar />
-
-      {/* ── Main Viewport ── */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+    <>
         {/* ── Resplandor Ambiental Sutil ── */}
         <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
           <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[150px]" />
@@ -178,17 +162,7 @@ export default function EventosPage() {
 
         {/* ── Top Bar ── */}
         <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "14px 32px",
-            borderBottom: "1px solid var(--bd)",
-            background: "var(--sf)",
-            position: "sticky",
-            top: 0,
-            zIndex: 30,
-          }}
+          className="px-4 py-3 sm:px-8 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--bd)] bg-[var(--sf)] sticky top-0 z-30"
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link
@@ -223,52 +197,27 @@ export default function EventosPage() {
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <button
               type="button"
               onClick={() => fetchEventos()}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                height: "38px",
-                padding: "0 14px",
-                borderRadius: "10px",
-                border: "1px solid var(--bd)",
-                background: "var(--sf2)",
-                color: "var(--tx)",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
+              disabled={loading}
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[#3F3F46] active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               title="Recargar eventos"
             >
-              <span className="material-symbols-outlined text-base">refresh</span>
-              Actualizar
+              <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
+                refresh
+              </span>
+              <span className="hidden sm:inline">Actualizar</span>
             </button>
 
             <button
               type="button"
               onClick={() => setModalAbierto(true)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                height: "38px",
-                padding: "0 14px",
-                borderRadius: "10px",
-                border: "none",
-                background: "var(--go)",
-                color: "var(--gt)",
-                fontSize: "12px",
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[var(--go)] text-[var(--gt)] text-xs font-bold active:scale-95 transition-all shadow-sm hover:brightness-105 cursor-pointer"
             >
               <span className="material-symbols-outlined text-base">add</span>
-              Nuevo Evento
+              <span>Nuevo Evento</span>
             </button>
           </div>
         </header>
@@ -282,55 +231,19 @@ export default function EventosPage() {
         )}
 
         {/* ── Contenido Principal ── */}
-        <main
-          style={{
-            padding: "28px 32px 40px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-            maxWidth: "1240px",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-          className="flex-1"
-        >
-        {/* Banner de Título */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-              Planificación y Montaje Operativo
-            </div>
-            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
-              Producciones y Eventos
-            </h1>
-            <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1">
-              Administración de fechas, recintos, metraje de pantalla y estado de activación para técnicos en terreno.
-            </p>
+        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-[1240px] w-full box-border flex-1">
+        {/* Banner de Título (Limpio y directo, sin botones duplicados) */}
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+            Planificación y Montaje Operativo
           </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => fetchEventos()}
-              disabled={loading}
-              className="px-3.5 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider text-[#A1A1AA] hover:text-[#FFFFFF] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
-                sync
-              </span>
-              <span className="hidden sm:inline">Refrescar</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setModalAbierto(true)}
-              className="px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all flex items-center gap-2 shadow-lg shadow-[#D4AF37]/15 cursor-pointer active:scale-95"
-            >
-              <span className="material-symbols-outlined text-lg">add_circle</span>
-              <span>Nueva Producción</span>
-            </button>
-          </div>
+          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+            Producciones y Eventos
+          </h1>
+          <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1 max-w-2xl">
+            Administración de fechas, recintos, metraje de pantalla y estado de activación para técnicos en terreno.
+          </p>
         </div>
 
         {/* ── KPIs Ejecutivos ── */}
@@ -471,8 +384,8 @@ export default function EventosPage() {
 
         {/* ── Tabla de Eventos ── */}
         <div className="w-full rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="w-full overflow-x-auto pb-2">
+            <table className="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold">
                   <th className="py-3.5 px-4 sm:px-6">Producción / Locación</th>
@@ -798,7 +711,6 @@ export default function EventosPage() {
           </span>
         </div>
       </footer>
-    </div>
-  </div>
-);
+    </>
+  );
 }

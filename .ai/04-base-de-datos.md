@@ -136,7 +136,7 @@ A continuación se detalla la plantilla estructurada de las tablas del esquema p
 CREATE TABLE public.perfiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   nombre_completo TEXT NOT NULL,
-  rol TEXT NOT NULL CHECK (rol IN ('tecnico', 'admin')),
+  rol TEXT NOT NULL CHECK (rol IN ('tecnico', 'coordinador', 'admin')),
   telefono TEXT,
   activo BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
@@ -178,7 +178,49 @@ CREATE TABLE public.palmetas_led (
 ```
 
 #### Trigger de Homologación de Campos (`tr_sync_palmeta_fields`):
-Sincroniza automáticamente `qr_uuid` <-> `codigo_qr`, `lote_fabricacion` <-> `lote_ingreso` y genera `codigo_visible` si no fue provisto.
+Sincroniza automáticamente `qr_uuid` <-> `codigo_qr`, `lote_fabricacion` <-> `lote_ingreso`, y calcula de forma determinista `codigo_visible` si no fue provisto extrayendo los últimos 6 caracteres alfanuméricos en mayúsculas de `COALESCE(qr_uuid, codigo_qr)` con el prefijo `'PL-'` (`PL-XXXXXX`).
+```sql
+CREATE OR REPLACE FUNCTION public.fn_sync_palmeta_fields()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  v_raw_code TEXT;
+  v_clean_code TEXT;
+BEGIN
+  IF NEW.qr_uuid IS NULL AND NEW.codigo_qr IS NOT NULL THEN
+    NEW.qr_uuid := NEW.codigo_qr;
+  END IF;
+  
+  IF NEW.codigo_qr IS NULL AND NEW.qr_uuid IS NOT NULL THEN
+    NEW.codigo_qr := NEW.qr_uuid;
+  END IF;
+
+  IF NEW.lote_fabricacion IS NULL AND NEW.lote_ingreso IS NOT NULL THEN
+    NEW.lote_fabricacion := NEW.lote_ingreso;
+  END IF;
+
+  IF NEW.lote_ingreso IS NULL AND NEW.lote_fabricacion IS NOT NULL THEN
+    NEW.lote_ingreso := NEW.lote_fabricacion;
+  END IF;
+
+  IF NEW.codigo_visible IS NULL OR trim(NEW.codigo_visible) = '' THEN
+    v_raw_code := COALESCE(NEW.qr_uuid, NEW.codigo_qr, '');
+    v_clean_code := regexp_replace(v_raw_code, '[^a-zA-Z0-9]', '', 'g');
+    
+    IF length(v_clean_code) >= 6 THEN
+      NEW.codigo_visible := 'PL-' || upper(right(v_clean_code, 6));
+    ELSIF length(v_clean_code) > 0 THEN
+      NEW.codigo_visible := 'PL-' || upper(lpad(v_clean_code, 6, '0'));
+    ELSE
+      NEW.codigo_visible := 'PL-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6));
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+```
 
 
 ### Tabla: `incidencias` (Reportes Técnicos desde Móvil)

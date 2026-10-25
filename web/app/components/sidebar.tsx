@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -15,12 +15,16 @@ interface SidebarProps {
   };
   userNombre?: string;
   userRol?: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export function Sidebar({
   initialCounts,
   userNombre = "Gerencia",
   userRol = "Administrador total",
+  isOpen = false,
+  onClose,
 }: SidebarProps) {
   const pathname = usePathname();
   const supabase = createClient();
@@ -94,6 +98,26 @@ export function Sidebar({
       supabase.removeChannel(channel);
     };
   }, [fetchLiveCounts, supabase]);
+
+  // Cerrar drawer únicamente cuando la ruta realmente cambia
+  const lastPathnameRef = useRef(pathname);
+  useEffect(() => {
+    if (lastPathnameRef.current !== pathname) {
+      lastPathnameRef.current = pathname;
+      onClose?.();
+    }
+  }, [pathname, onClose]);
+
+  // Bloqueo de scroll en body cuando el drawer móvil está abierto
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   const navItems = [
     {
@@ -213,74 +237,89 @@ export function Sidebar({
   ];
 
   return (
-    <aside
-      style={{
-        width: "264px",
-        minWidth: "264px",
-        maxWidth: "264px",
-        boxSizing: "border-box",
-        background: "var(--sf)",
-        borderRight: "1px solid var(--bd)",
-        padding: "20px 14px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "22px",
-        height: "100vh",
-        position: "sticky",
-        top: 0,
-        left: 0,
-        overflowY: "auto",
-        zIndex: 40,
-        flexShrink: 0,
-      }}
-    >
-      {/* Brand Header */}
-      <Link
-        href="/"
+    <>
+      {/* Mobile Backdrop with smooth opacity transition */}
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        className={`fixed inset-0 bg-black/75 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          padding: "4px 8px",
-          textDecoration: "none",
-          color: "inherit",
+          transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)",
+        }}
+      />
+
+      <aside
+        className={`print:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[var(--sf)] border-r border-[var(--bd)] h-full overflow-y-auto flex flex-col gap-[22px] p-[20px_14px] shadow-2xl transition-transform duration-300 md:duration-0 md:static md:translate-x-0 md:w-[264px] md:min-w-[264px] md:max-w-[264px] md:h-screen md:sticky md:top-0 md:z-40 md:shadow-none ${
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+        style={{
+          boxSizing: "border-box",
+          transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)",
         }}
       >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "12px",
-            background: "var(--go)",
-            color: "var(--gt)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 800,
-            fontSize: "15px",
-            letterSpacing: ".02em",
-            boxShadow: "0 2px 8px rgba(212,175,55,.25)",
-            flexShrink: 0,
-          }}
-        >
-          AP
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
-          <span
+        {/* Brand Header */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            onClick={() => onClose?.()}
             style={{
-              fontSize: "15px",
-              fontWeight: 700,
-              lineHeight: 1.1,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "4px 8px",
+              textDecoration: "none",
+              color: "inherit",
+              minWidth: 0,
             }}
           >
-            Alejandra Producciones
-          </span>
-          <span style={{ fontSize: "12px", color: "var(--mu)" }}>Panel de gerencia</span>
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "12px",
+                background: "var(--go)",
+                color: "var(--gt)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 800,
+                fontSize: "15px",
+                letterSpacing: ".02em",
+                boxShadow: "0 2px 8px rgba(212,175,55,.25)",
+                flexShrink: 0,
+              }}
+            >
+              AP
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: "15px",
+                  fontWeight: 700,
+                  lineHeight: 1.1,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                Alejandra Producciones
+              </span>
+              <span style={{ fontSize: "12px", color: "var(--mu)" }}>Panel de gerencia</span>
+            </div>
+          </Link>
+
+          {/* Close button on mobile drawer */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="md:hidden w-8 h-8 rounded-lg bg-[var(--sf2)] text-[var(--mu)] hover:text-white flex items-center justify-center border border-[var(--bd)] cursor-pointer"
+            aria-label="Cerrar menú"
+          >
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
         </div>
-      </Link>
 
       {/* Navigation */}
       <nav aria-label="Navegación principal" style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
@@ -299,11 +338,13 @@ export function Sidebar({
           </span>
 
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={() => onClose?.()}
                 className="dash-nav"
                 aria-current={isActive ? "page" : undefined}
                 style={{
@@ -565,5 +606,6 @@ export function Sidebar({
         </div>
       </div>
     </aside>
-  );
+  </>
+);
 }

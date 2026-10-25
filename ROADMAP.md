@@ -33,16 +33,16 @@
 - **Entregables:** MVP funcional desplegado.
 
 ### Épica 1: Autenticación y Seguridad
-- **HU-05: Login y Sesión (Web/App)** `[Completada en Web y Móvil]`
-  - **Descripción:** Implementar inicio de sesión con correo/contraseña consumiendo Supabase Auth. App móvil completamente conectada con `getSession()` y `onAuthStateChange`. Panel Web completado con formulario corporativo Dark Luxury y usuario de Gerencia activo.
+- **HU-05: Login, Sesión y Recuperación de Contraseña (Web/App)** `[Completada en Web y Móvil]`
+  - **Descripción:** Implementar inicio de sesión y flujo completo de recuperación de contraseña con Supabase Auth. App móvil completamente conectada con `getSession()`, `onAuthStateChange` y `ForgotPasswordScreen.tsx`. Panel Web completado con diseño pixel-perfect 40/60 (maqueta estática `Login.dc.html`), simulación matemática de matriz LED (150 celdas), switch de temas (oscuro/claro con tokens CSS), solicitud de restablecimiento (`/recuperar`), actualización de clave (`/actualizar-contrasena`) y proxy de seguridad Next.js 16.
 - **HU-06: Control de Acceso (RBAC)** `[Completada en Web y Base de Datos]`
   - **Descripción:** Control de acceso basado en roles (`admin` para panel web, `tecnico` para app móvil) vinculado en `public.perfiles` y protegido por Row Level Security (RLS).
 
 ### Épica 2: Plataforma Administrativa Next.js (Web)
 - **HU-07: Dashboard Central y Barra de Navegación Universal** `[Completada — web/app/page.tsx]`
-  - **Descripción:** Consola gerencial con métricas en vivo alimentada por Supabase SSR. Integra la barra lateral universal fija (`Sidebar`), 2x2 grid en Montaje Activo, paleta oficial `#0A0A0A` / `#D4AF37` y navegación continua y fija a lo largo de todas las vistas del sistema (`/`, `/eventos`, `/palmetas`, `/incidencias`).
-- **HU-08: CRUD de Activos Serializados (Palmetas)** `[Completada — web/app/palmetas/page.tsx]`
-  - **Descripción:** Módulo completo de gestión de palmetas LED integrado con la barra lateral izquierda universal, KPIs en vivo, filtros por estado semántico, búsqueda, tabla ejecutiva y modal de cambio de estado con actualización directa en Supabase.
+  - **Descripción:** Consola gerencial con métricas en vivo alimentada por Supabase SSR. Integra la barra lateral universal (`Sidebar`) adaptable como drawer en móviles con físicas Emil Kowalski (`cubic-bezier(0.23, 1, 0.32, 1)`, bloqueo de scroll y touch-outside) y fija en escritorio, cabecera móvil con hamburguesa a la izquierda y logo a la derecha, eliminación de botones duplicados en módulos (`/eventos`, `/palmetas`, `/incidencias`), KPIs adaptables (1 col móvil, 2 tablet, 4 escritorio), tablas con scroll horizontal para smartphones, paleta oficial `#0A0A0A` / `#D4AF37` y navegación continua a lo largo de todas las vistas del sistema.
+- **HU-08: CRUD de Activos Serializados y Centro de Etiquetado QR** `[Completada — web/app/(dashboard)/palmetas]`
+  - **Descripción:** Módulo completo de gestión de palmetas LED y Centro de Etiquetado y Serialización QR (`/palmetas/etiquetado`). Generación masiva de stickers imprimibles con UUID v4 y derivación determinista de código corto (`PL-XXXXXX`) sin tocar la BD (listos para alta en terreno con Modo Ráfaga HU-13), reimpresión por deterioro conectada a Supabase, modal interactivo de escaneo en monitor (demo en vivo) y planilla de impresión física calibrada para papel autoadhesivo Carta/A4. Refactorización de Route Groups `(auth)` y `(dashboard)` con persistencia única del Sidebar.
 - **HU-09: Gestión de Inventario a Granel (Repuestos)** `[No Iniciado]`
   - **Descripción:** Interfaz para visualizar el stock actual de insumos, herramientas y repuestos.
 

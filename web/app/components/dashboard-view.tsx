@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Sidebar } from "./sidebar";
 
 export interface DashboardViewProps {
   user: {
@@ -224,46 +223,10 @@ export function DashboardView({
   const nombreUsuario = perfil?.nombre_completo || user.email?.split("@")[0] || "Gerencia";
 
   return (
-    <div
-      data-theme={theme}
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-        color: "var(--tx)",
-        display: "flex",
-        alignItems: "stretch",
-        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-      }}
-    >
-      {/* ============ SIDEBAR PERMANENTE ============ */}
-      <Sidebar
-        initialCounts={{
-          eventos: totalEventos,
-          palmetas: totalPalmetas,
-          palmetasMantencion: enMantencion,
-          incidencias: incidenciasPendientes,
-          repuestos: repuestosTotal,
-        }}
-        userNombre={nombreUsuario}
-        userRol={perfil?.rol === "admin" ? "Administrador total" : "Técnico"}
-      />
-
-      {/* ============ MAIN VIEWPORT ============ */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+    <>
         {/* Top bar */}
         <header
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: "12px",
-            padding: "14px 32px",
-            borderBottom: "1px solid var(--bd)",
-            background: "var(--sf)",
-            position: "sticky",
-            top: 0,
-            zIndex: 30,
-          }}
+          className="px-4 py-3 sm:px-8 flex flex-wrap items-center gap-3 border-b border-[var(--bd)] bg-[var(--sf)] sticky top-0 z-30"
         >
           {/* Search Input */}
           <div style={{ position: "relative", flex: "1 1 280px", maxWidth: "520px" }}>
@@ -401,17 +364,7 @@ export function DashboardView({
         </header>
 
         {/* Main Content Area */}
-        <main
-          style={{
-            padding: "28px 32px 40px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-            maxWidth: "1240px",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-        >
+        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-[1240px] w-full box-border">
           {/* Greeting */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <h1 style={{ margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-.02em" }}>
@@ -431,16 +384,7 @@ export function DashboardView({
           {/* Hero: Montaje Activo */}
           <section
             aria-label="Montaje activo"
-            style={{
-              background: "var(--sf)",
-              border: "1px solid var(--bd)",
-              borderRadius: "20px",
-              padding: "24px",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "24px",
-              alignItems: "stretch",
-            }}
+            className="bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] p-4 sm:p-6 flex flex-col lg:flex-row gap-6 items-stretch"
           >
             {/* Left side info */}
             <div
@@ -535,14 +479,7 @@ export function DashboardView({
             </div>
 
             {/* Right side operational metrics: EXACT 2x2 GRID */}
-            <div
-              style={{
-                flex: "1.4 1 420px",
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: "12px",
-              }}
-            >
+            <div className="w-full lg:flex-[1.4] grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* 1. Superficie asignada (Fila 1, Col 1) */}
               <div
                 style={{
@@ -663,11 +600,7 @@ export function DashboardView({
           {/* KPIs Row */}
           <section
             aria-label="Indicadores"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
-              gap: "16px",
-            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
           >
             {/* Eventos registrados */}
             <Link
@@ -873,18 +806,11 @@ export function DashboardView({
           </section>
 
           {/* Events + Side Column */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", alignItems: "flex-start" }}>
+          <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
             {/* Left: Eventos y producciones */}
             <section
               aria-label="Eventos"
-              style={{
-                flex: "999 1 520px",
-                minWidth: 0,
-                background: "var(--sf)",
-                border: "1px solid var(--bd)",
-                borderRadius: "20px",
-                overflow: "hidden",
-              }}
+              className="w-full lg:flex-[2] min-w-0 bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] overflow-hidden"
             >
               <div
                 style={{
@@ -1061,7 +987,7 @@ export function DashboardView({
             </section>
 
             {/* Right: Side Column */}
-            <div style={{ flex: "1 1 340px", minWidth: 0, display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div className="w-full lg:flex-1 lg:max-w-[380px] min-w-0 flex flex-col gap-6">
               {/* Requiere atención */}
               <section
                 aria-label="Requiere atención"
@@ -1266,7 +1192,6 @@ export function DashboardView({
             </div>
           </div>
         </main>
-      </div>
 
       {/* ============ MODAL NUEVO EVENTO ============ */}
       {modalNuevoEvento && (
@@ -1481,6 +1406,6 @@ export function DashboardView({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -7,11 +7,11 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 23 de Octubre de 2026 (Sesión 30 — Rediseño de ReportIncidentModal, IncidentScannerModal y Disparadores con Swipe-Down y Azul Corporativo).
-- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
-- **Sprint Activo:** Épica 1 (HU-05 y HU-06 Completadas en Web y Móvil), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Servidor Next.js activo con HTTP 200 y Expo Router con `LiquidGlassTabBar` nativa, compacta y ultra-fluida (120 FPS).
-- **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS, triggers y storage bucket `evidencias-incidencias` activos y verificados.
+- **Fecha de Última Actualización:** 24 de Octubre de 2026 (Sesión 40 — Rediseño Pixel-Perfect de Login 40/60, Menú Móvil con Físicas Emil Kowalski y Eliminación de UI Redundante en Web).
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
+- **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `20/20` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente en 3.0s).
+- **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS, triggers alineados de código visible y storage bucket `evidencias-incidencias` activos y verificados.
 
 ---
 
@@ -115,6 +115,160 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-24 (Sesión 40 — Rediseño Pixel-Perfect de Login 40/60, Menú Móvil con Físicas Emil Kowalski y Eliminación de UI Redundante en Web):**
+  - **Rediseño Pixel-Perfect del Login ([web/app/(auth)/login/page.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(auth)/login/page.tsx)):**
+    - Réplica 1:1 de `web/design/Inicio de sesión · 40 60-html/Login.dc.html` adaptada a React 19, TypeScript y Tailwind CSS v4.
+    - **Pantalla Completa Estricta y Cero Scroll (`h-screen h-[100dvh] overflow-hidden`):** Se eliminó el scroll vertical en todas las pantallas. En móviles, la columna de marca/LED se oculta por completo (`hidden lg:flex`), mostrando de forma exclusiva el formulario centrado sin desplazamiento vertical. En escritorios, ambas columnas quedan contenidas al 100% del viewport.
+    - **Eliminación del Toggle Sol/Luna:** Se retiró el botón de cambio de tema diurno/nocturno, adoptando de forma definitiva y limpia el modo oscuro de alto contraste corporativo.
+    - Columna de Marca (40% en escritorio): Fondo `#08090D`, matriz LED animada de 150 celdas calculada matemáticamente, badges "SISTEMA OPERATIVO" y "AP-CORE-SYS V4.8", y 3 tarjetas de capacidades ("Control en tiempo real", "Trazabilidad de cada falla", "Inventario siempre al día").
+    - Columna de Formulario (100% en móvil / 60% en escritorio): Badge AP corporativo, badge "ÁREA RESTRINGIDA", inputs compactos calibrados (`h-12`), toggle de visibilidad SVG, checkbox "Recordar este equipo seguro (30 días)", enlace de recuperación `/recuperar`, y botón principal dorado con micro-interacciones suaves (`duration-200`, `active:scale-97`).
+    - Integración completa con Supabase Auth SSR (`signInWithPassword`), manejo de estados de carga con spinners accesibles, mensajes de error y redirección limpia al dashboard.
+  - **Reparación del Header y Drawer Móvil ([web/app/(dashboard)/layout.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(dashboard)/layout.tsx) y [web/app/components/sidebar.tsx](file:///c:/Workspace/aleprod-capstone/web/app/components/sidebar.tsx)):**
+    - Inversión de elementos en el Mobile Header: Botón Hamburguesa a la **izquierda** y Logo / Nombre corporativo "ALEPROD" a la **derecha**.
+    - Corrección del bug de cierre instantáneo: Se estabilizaron los callbacks `onClose` con `useCallback` y se introdujo `lastPathnameRef` en `Sidebar` para que el efecto de cambio de ruta solo se dispare al cambiar de URL y no en cada re-render del layout.
+    - Físicas Emil Kowalski en el cajón deslizante: Backdrop con transición suave de opacidad (`bg-black/75 backdrop-blur-sm`), drawer con curva elástica `cubic-bezier(0.23, 1, 0.32, 1)`, bloqueo de scroll del `body` mientras el drawer está desplegado, y cierre fluido al tocar fuera o presionar `✕`.
+  - **Eliminación de UI Redundante y Botoneras Duplicadas:**
+    - `web/app/(dashboard)/eventos/page.tsx`: Eliminados los botones redundantes "Refrescar" y "Nueva Producción" del banner interior, unificando la botonera de control en la cabecera sticky superior con botón "Actualizar" y "Nuevo Evento".
+    - `web/app/(dashboard)/palmetas/page.tsx`: Eliminado el botón duplicado "Actualizar Datos" del banner interior, manteniendo la cabecera limpia con "Centro de Etiquetado QR" y "Actualizar".
+    - `web/app/(dashboard)/incidencias/page.tsx`: Eliminados los botones redundantes del contenido interior, consolidando "Actualizar" y "Nueva Incidencia" en la cabecera principal.
+    - Estandarización de espaciados: `p-4 sm:p-6 lg:p-8` garantizando máximo aprovechamiento horizontal en celulares sin márgenes asfixiantes y respiración generosa en escritorio.
+  - **Verificación Técnica:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build`: **Compilación exitosa (Turbopack, Next.js 16.3.8) con las 13 rutas operativas**.
+
+- **2026-10-24 (Sesión 39 — Diseño Responsive Completo para Móviles y Tablets en Web con Tailwind CSS):**
+  - **Layout Principal y Mobile Header ([web/app/(dashboard)/layout.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(dashboard)/layout.tsx)):**
+    - Contenedor principal adaptado a `flex-col md:flex-row`.
+    - Cabecera móvil (`md:hidden`) sticky con logo "ALEPROD", badge "AP" dorado y botón de menú hamburguesa (`menu` en Material Symbols).
+    - Estado reactivo `isMobileMenuOpen` para controlar la apertura del drawer lateral.
+  - **Sidebar como Drawer Lateral ([web/app/components/sidebar.tsx](file:///c:/Workspace/aleprod-capstone/web/app/components/sidebar.tsx)):**
+    - Drawer animado con `fixed inset-y-0 left-0 w-72 max-w-[85vw]` y transición fluida `-translate-x-full md:translate-x-0`.
+    - Backdrop con desenfoque (`bg-black/80 backdrop-blur-sm md:hidden`) para cerrar al tocar fuera.
+    - Botón de cierre (`close`) en el drawer para móviles.
+    - Cierre automático al navegar entre rutas (`useEffect` con `pathname`) o hacer clic en cualquier enlace.
+    - Conservación 100% intacta del sidebar fijo sticky de 264px en pantallas de escritorio (`>= md`).
+  - **Grillas Adaptables en Dashboard ([web/app/components/dashboard-view.tsx](file:///c:/Workspace/aleprod-capstone/web/app/components/dashboard-view.tsx)):**
+    - Tarjetas KPI adaptadas a `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4`.
+    - Sección de Montaje Activo y métricas operativas con `grid grid-cols-1 sm:grid-cols-2 gap-3`.
+    - Contenedor de Eventos y columna lateral "Requiere atención" reestructurados a `flex-col lg:flex-row gap-6` para fluir verticalmente en pantallas pequeñas.
+    - Padding responsivo `p-4 sm:p-6 lg:p-8` eliminando márgenes rígidos en móviles.
+  - **Tablas con Desplazamiento Horizontal (`eventos`, `palmetas`, `incidencias`):**
+    - Tablas envueltas en `<div className="w-full overflow-x-auto pb-2">` con anchos mínimos calibrados (`min-w-[700px]`).
+  - **Centro de Etiquetado QR ([web/app/(dashboard)/palmetas/etiquetado/page.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(dashboard)/palmetas/etiquetado/page.tsx)):**
+    - Grilla de stickers en pantalla ajustada a `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4`.
+    - Tabla de reimpresión envuelta en contenedor scrollable horizontal.
+  - **Depuración de Lockfiles en Monorepo:**
+    - Se eliminó el archivo residual y vacío `package-lock.json` de la raíz del monorepo (`C:\Workspace\aleprod-capstone\package-lock.json`), erradicando por completo el warning de Turbopack (`Next.js inferred your workspace root, but it may not be correct`).
+  - **Verificación:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build`: **Compilación 100% limpia sin advertencias (Turbopack, Next.js 16.3.8) con 13/13 rutas operativas**.
+
+- **2026-10-24 (Sesión 38 — Flujo Completo de Recuperación de Contraseña en Web):**
+  - **Enlace en Login ([web/app/(auth)/login/page.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(auth)/login/page.tsx)):**
+    - Se integró el enlace `¿Olvidaste tu contraseña?` apuntando a `/recuperar`.
+  - **Vista de Solicitud ([web/app/(auth)/recuperar/page.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(auth)/recuperar/page.tsx)):**
+    - Diseño idéntico Dark Luxury OLED en dos columnas.
+    - Envío de enlace con `supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/auth/callback?next=/actualizar-contrasena` })`.
+  - **Vista de Nueva Contraseña ([web/app/(auth)/actualizar-contrasena/page.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(auth)/actualizar-contrasena/page.tsx)):**
+    - Inputs para nueva contraseña y confirmación con validación de matching y longitud mínima (6 caracteres).
+    - Ejecución de `supabase.auth.updateUser({ password })` y redirección automática al Dashboard (`/`).
+  - **Alineación de Seguridad en `proxy.ts`:**
+    - Se habilitaron las rutas públicas `/recuperar` y `/actualizar-contrasena` en la lista blanca de autenticación sin bloquear las peticiones entrantes.
+  - **Verificación:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build`: **13/13 rutas compiladas limpiamente en Turbopack**.
+
+- **2026-10-24 (Sesión 37 — Migración Oficial de `middleware.ts` a `proxy.ts` en Next.js 16):**
+  - **Ejecución del Codemod Oficial:**
+    - Se ejecutó `npx @next/codemod@canary middleware-to-proxy . --force` migrando `middleware.ts` a [web/proxy.ts](file:///c:/Workspace/aleprod-capstone/web/proxy.ts) (`export async function proxy(request: NextRequest)`).
+  - **Auditoría de Supabase Auth SSR:**
+    - Verificación del flujo de cookies (`getAll` y `setAll`) con `@supabase/ssr`, validación de sesión (`supabase.auth.getUser()`) y redirecciones a `/login` para rutas protegidas y a `/` para usuarios autenticados.
+  - **Eliminación Total de Warnings:**
+    - El warning `The "middleware" file convention is deprecated. Please use "proxy" instead` desapareció por completo.
+  - **Verificación:**
+    - `npx tsc --noEmit`: **0 errores**.
+    - `npm run build`: **Compilación exitosa en 4.3s (Turbopack)** reconociendo `ƒ Proxy (Middleware)`.
+
+- **2026-10-24 (Sesión 36 — Refactorización con Route Groups y Construcción del Centro de Etiquetado QR):**
+  - **Refactorización de Arquitectura con Route Groups:**
+    - Se creó el Route Group `(auth)` moviendo `/login` de forma transparente.
+    - Se creó el Route Group `(dashboard)` con layout persistente ([web/app/(dashboard)/layout.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(dashboard)/layout.tsx)), montando `<Sidebar />` una única vez a nivel de layout y eliminando montajes/desmontajes duplicados en cada cambio de vista.
+    - Se limpiaron los wrappers redundantes en `dashboard-view.tsx`, `eventos/page.tsx`, `palmetas/page.tsx` e `incidencias/page.tsx`.
+    - Se actualizó [web/app/components/sidebar.tsx](file:///c:/Workspace/aleprod-capstone/web/app/components/sidebar.tsx) con soporte nativo de subrutas activas (`pathname.startsWith(item.href)`) y `print:hidden` para impresión limpia.
+  - **Construcción del Centro de Etiquetado y Serialización QR ([web/app/(dashboard)/palmetas/etiquetado/page.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(dashboard)/palmetas/etiquetado/page.tsx)):**
+    - Instalación de `qrcode.react` (`QRCodeSVG` vectorizado).
+    - **Pestaña 1 (Emisión de Stickers Vírgenes):** Generación masiva en cliente con `crypto.randomUUID()` y derivación determinista `PL-XXXXXX` sin inserción en BD (preservando el inventario de registros huérfanos). Selector de lote y cantidades rápidas (12, 24, 48, 96 o personalizable).
+    - **Pestaña 2 (Reimpresión por Deterioro):** Búsqueda reactiva de activos registrados en `palmetas_led` con selección unitaria o masiva para reemplazo físico de etiquetas.
+    - **Modal de Vista Escaneo (Demo en Vivo):** Modal interactivo con QR gigante en alto contraste (fondo blanco, código negro) y UUID copiable para probar escaneo inmediato desde la pantalla con la app móvil.
+    - **Modo Impresión Física / PDF (`@media print`):** Formato automático para hojas autoadhesivas Carta/A4 (grilla de 3 columnas x 8 filas, sin sidebars ni controles de navegación).
+  - **Verificación:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build`: **11/11 rutas compiladas exitosamente con Turbopack** (`/palmetas/etiquetado` operativa).
+
+- **2026-10-24 (Sesión 35 — Instalación de Dependencias Web y Validación de Build Next.js 16):**
+  - **Instalación de Dependencias (`/web`):**
+    - Se ejecutó `npm install` instalando los 374 paquetes necesarios en `web/node_modules`.
+    - Se generó el archivo de configuración de entorno [web/.env.local](file:///c:/Workspace/aleprod-capstone/web/.env.local) con `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+  - **Corrección de Tipado TypeScript:**
+    - Se corrigió [web/app/layout.tsx](file:///c:/Workspace/aleprod-capstone/web/app/layout.tsx) tipando `children: React.ReactNode` en `RootLayout`.
+  - **Verificación:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build` en `/web`: **Compilación exitosa (Turbopack, Next.js 16.3.8)** de todas las rutas (`/`, `/eventos`, `/palmetas`, `/incidencias`, `/login`, `/auth/*`).
+
+- **2026-10-24 (Sesión 34 — Alineación Determinista de `codigo_visible` en Supabase y App Móvil para Enrolamiento QR):**
+  - **Corrección de Trigger en Supabase (`fn_sync_palmeta_fields`):**
+    - Se refactorizó la función en PostgreSQL para calcular `codigo_visible` derivándolo de forma determinista de los últimos 6 caracteres alfanuméricos en mayúsculas de `COALESCE(NEW.qr_uuid, NEW.codigo_qr)` con el prefijo `'PL-'` (`regexp_replace(..., '[^a-zA-Z0-9]', '', 'g')`), eliminando la generación de UUIDs aleatorios desacoplados del sticker físico.
+    - Se actualizaron las filas existentes en `public.palmetas_led` para asegurar que `codigo_visible` coincida 1:1 con el final de su `qr_uuid`.
+  - **Alineación en la App Móvil (`palmetas.ts` y `sync.ts`):**
+    - Se implementó la función utilitaria `deriveCodigoVisible(qrUuid)` en `mobile/src/core/api/palmetas.ts`.
+    - Tanto el aprovisionamiento directo en Modo Ráfaga (`provisionPalmeta`) como la sincronización por lotes de palmetas SQLite (`syncPendingPalmetas` en `sync.ts`) ahora calculan y envían explícitamente `codigo_visible` en el payload de `insert()` hacia `palmetas_led`.
+  - **Verificación:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - Consulta SQL de verificación en Supabase: 100% de palmetas registradas con `alineado: true`.
+
+- **2026-10-24 (Sesión 33 — Auditoría QA de Storage HU-12, Sync HU-14 y Corrección Crítica en resolvePalmetaUuid):**
+  - **Auditoría de Políticas Storage (RLS):**
+    - Verificación del bucket `evidencias-incidencias` (`public: true`) en `storage.buckets`.
+    - Verificación de políticas RLS en `storage.objects`: `Lectura de evidencias publicas` (SELECT public) y `Subida de evidencias para usuarios autenticados` (INSERT authenticated).
+  - **Corrección Crítica en [sync.ts](file:///c:/Workspace/aleprod-capstone/mobile/src/core/api/sync.ts):**
+    - Se detectó que `resolvePalmetaUuid()` consultaba la columna inexistente `numero_serie` (`palmetas_led.numero_serie`). Se corrigió a búsqueda indexada multi-columna con `.or('codigo_qr.eq,qr_uuid.eq,codigo_visible.eq')`, garantizando la resolución exitosa del UUID de palmeta.
+    - Soporte ampliado para formatos de imagen en `uploadEvidenceImage`: compatibilidad explícita con `heic`/`heif` (captura iOS) y `blob:` (Web/PWA).
+  - **Validación Automatizada Empírica:**
+    - Se creó y ejecutó con éxito [mobile/test-upload.mjs](file:///c:/Workspace/aleprod-capstone/mobile/test-upload.mjs): autenticación con `tecnico@aleprod.cl`, subida a Storage `evidencias-incidencias`, validación CDN HTTP 200 con MIME type `image/jpeg` y registro en `public.incidencias` de Supabase Cloud.
+
+- **2026-10-24 (Sesión 32 — Migración Exitosa a Expo SDK 58 y React Native 0.88):**
+  - **Actualización de Stack y Dependencias:**
+    - Se ejecutó `npx expo install expo@^58.0.0` y alineación automática con `npx expo install --fix`.
+    - Dependencias consolidadas: `expo@~58.0.19`, `react@19.3.0`, `react-dom@19.3.0`, `react-native@0.88.0`, `expo-router@~58.0.26`, `expo-camera@~58.0.12`, `expo-sqlite@~58.0.14`, `expo-blur@~58.0.5`, `expo-image-picker@~58.0.10`, etc.
+  - **Resolución de Breaking Changes en React Native 0.88 y Expo Router v58:**
+    - **`StatusBar`:** En React Native 0.88 se eliminó la propiedad deprecada `backgroundColor` en los tipos de `<StatusBar>`. Se actualizaron 11 pantallas a `<StatusBar barStyle="light-content" />`.
+    - **`LiquidGlassTabBar`:** En Expo Router v58 y React Navigation 7, la importación de tipos se migró a `import type { BottomTabBarProps } from 'expo-router/js-tabs'`, tipando `LiquidGlassTabBarProps` con `navigateToTab` nativo y fallback resiliente a `navigation.navigate()`.
+    - **Limpieza de CLI:** Se desinstaló `eas-cli` local conforme a la recomendación de Expo para invocarlo vía `npx eas`.
+  - **Verificación Exhaustiva:**
+    - `npx expo-doctor`: **20/20 verificaciones aprobadas (0 advertencias)**.
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - Compatibilidad 100% restaurada con la versión más reciente de Expo Go en iPhone/iOS.
+
+- **2026-10-24 (Sesión 31 — Refinamiento RBAC: Rol Coordinador, Bloqueo de Inicio de Eventos en Móvil, Persistencia AsyncStorage y Recuperación de Contraseña):**
+  - **Actualización de Base de Datos y RBAC en Supabase Cloud:**
+    - Se ejecutó `ALTER TABLE public.perfiles DROP CONSTRAINT IF EXISTS perfiles_rol_check; ALTER TABLE public.perfiles ADD CONSTRAINT perfiles_rol_check CHECK (rol IN ('tecnico', 'coordinador', 'admin'));`. La base de datos ahora acepta oficialmente el rol `coordinador`.
+  - **Refactorización de [AuthContext.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/core/context/AuthContext.tsx):**
+    - Se definieron los tipos `UserRole = 'admin' | 'coordinador' | 'tecnico'` y `UserProfile`.
+    - Se implementó persistencia offline del perfil y rol mediante `AsyncStorage` (`@aleprod_user_profile`), permitiendo arranque instantáneo (0ms) en terreno sin red.
+    - Se exponen los helpers RBAC: `canStartEvent` (`isAdmin || isCoordinador`), `role`, `isAdmin`, `isCoordinador`, `isTecnico`, `profile` y `refreshProfile()`.
+  - **Bloqueo Condicional en [EventsScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/home-event/screens/EventsScreen.tsx):**
+    - **Admins y Coordinadores:** Visualizan el botón de acción principal "Iniciar Nuevo Evento" en la pestaña "En Curso".
+    - **Técnicos:** El botón se oculta por completo y se despliega una tarjeta Dark/Gold corporativa de alta gama (`technicianNoticeCard`) con icono de campana dorada `#D4AF37`, badge "TÉCNICO" y el mensaje: *"Cuando se inicie un evento te aparecerá aquí y se te notificará."*
+    - Se adaptó el estado vacío para mostrar instrucciones coherentes al rol del usuario.
+  - **Auditoría y Conexión de Persistencia ("Recordarme"):**
+    - Auditoría técnica confirmando `AsyncStorage` en `mobile/src/core/api/supabase.ts` con `autoRefreshToken: true` y `persistSession: true`.
+    - Conexión del checkbox "Recordarme" en [LoginScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/auth/screens/LoginScreen.tsx) para almacenar y precargar automáticamente el correo del técnico (`@aleprod_saved_email`).
+  - **Módulo de Recuperación de Contraseña:**
+    - Creación de [ForgotPasswordScreen.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/auth/screens/ForgotPasswordScreen.tsx) conectada a `supabase.auth.resetPasswordForEmail()` con redirección multiplataforma (`aleprod://reset-password` en móvil y origin en web).
+    - Registro de ruta en [mobile/app/forgot-password.tsx](file:///c:/Workspace/aleprod-capstone/mobile/app/forgot-password.tsx) y en el Stack de [mobile/app/_layout.tsx](file:///c:/Workspace/aleprod-capstone/mobile/app/_layout.tsx) habilitando acceso público fuera del guard de sesión.
+    - Botón "¿Olvidaste tu contraseña?" de `LoginScreen.tsx` conectado a la nueva ruta mediante `router.push('/forgot-password')`.
+  - **Verificación Técnica:** `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
 - **2026-10-23 (Sesión 30 — Rediseño de ReportIncidentModal, IncidentScannerModal y Disparadores con Swipe-Down y Azul Corporativo):**
   - **Rediseño Completo de [ReportIncidentModal.tsx](file:///c:/Workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/components/ReportIncidentModal.tsx):**

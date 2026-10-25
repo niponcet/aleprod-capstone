@@ -18,7 +18,11 @@ export const metadata: Metadata = {
     "Sistema de gestión operativa e inventario de palmetas LED para eventos de alto estándar.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="es"

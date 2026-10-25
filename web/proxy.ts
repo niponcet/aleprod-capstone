@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -44,19 +44,25 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const isPublicAuthRoute =
+    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname.startsWith("/recuperar") ||
+    request.nextUrl.pathname.startsWith("/actualizar-contrasena") ||
+    request.nextUrl.pathname.startsWith("/auth");
+
   // If not authenticated and trying to access protected route, redirect to login
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
+  if (!user && !isPublicAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // If authenticated and on login page, redirect to dashboard
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
+  // If authenticated and on login or recuperar page, redirect to dashboard
+  if (
+    user &&
+    (request.nextUrl.pathname.startsWith("/login") ||
+      request.nextUrl.pathname.startsWith("/recuperar"))
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
