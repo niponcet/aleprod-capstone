@@ -84,7 +84,7 @@ export const LoginScreen: React.FC = () => {
           await AsyncStorage.removeItem('@aleprod_saved_email');
         }
         // Redirección cliente estricta con Expo Router (cero escape a Safari)
-        router.replace('/(tabs)');
+        router.replace('/');
       }
       // Al ser exitoso, supabase.auth.onAuthStateChange en AuthContext
       // actualizará la sesión y la navegación redirigirá a la aplicación.

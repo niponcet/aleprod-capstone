@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 46 — Blindaje Anti-Safari Escape y Safe Area Edge-to-Edge OLED en iOS PWA).
+- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 47 — Plantilla Maestra PWA en public/index.html, Sanitización de Rutas a Raíz y Purgado de +html.tsx).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -116,6 +116,18 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-28 (Sesión 47 — Plantilla Maestra PWA en public/index.html, Sanitización de Rutas a Raíz y Purgado de +html.tsx):**
+  - **Inyección de Plantilla PWA en `mobile/public/index.html`:**
+    - Como Expo CLI en modo SPA ignora `app/+html.tsx`, se implementó `mobile/public/index.html` para anular el fallback por defecto de Expo.
+    - Se incorporaron las directivas obligatorias de WebKit: `<meta name="viewport" content="... viewport-fit=cover" />`, `<meta name="apple-mobile-web-app-capable" content="yes" />`, `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`, `<link rel="manifest" href="/manifest.json" />` y estilos en `html, body, #root { background-color: #0A0A0A !important; }`. Esto erradica físicamente la franja blanca superior del notch.
+  - **Sanitización de Enrutamiento a la Raíz (`/`) contra Safari Escape:**
+    - Se sustituyó `router.replace('/(tabs)')` por `router.replace('/')` en `mobile/src/modules/auth/screens/LoginScreen.tsx` y `mobile/app/_layout.tsx`.
+    - Al evitar la exposición de paréntesis de grupos de rutas (`/(tabs)`) en la barra de URL del navegador, WebKit mantiene la ejecución dentro del sandbox de la PWA sin rebotar al navegador Safari normal.
+  - **Eliminación de Código Muerto:**
+    - Se eliminó el archivo inerte `mobile/app/+html.tsx`.
+  - **Verificación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - Validación de existencia de `mobile/public/index.html` y confirmación de remoción de `+html.tsx`.
 - **2026-10-28 (Sesión 46 — Blindaje Anti-Safari Escape y Safe Area Edge-to-Edge OLED en iOS PWA):**
   - **Erradicación del 'Safari Escape' en iOS Standalone:**
     - Se configuró explícitamente `"scope": "/"` dentro de `mobile/app.json` bajo la clave `"web"`. Al delimitar el scope a toda la raíz, WebKit ya no clasifica la navegación a rutas internas como "fuera de alcance" (out of scope).
