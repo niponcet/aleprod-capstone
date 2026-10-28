@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   RefreshControl,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -207,9 +208,14 @@ export const EventsScreen: React.FC = () => {
     }
   };
 
+  const headerTopPadding =
+    Platform.OS === 'web'
+      ? ('calc(env(safe-area-inset-top, 0px) + 16px)' as any)
+      : Math.max(insets.top, 20) + 16;
+
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient
@@ -220,7 +226,7 @@ export const EventsScreen: React.FC = () => {
       />
 
       {/* Header Superior Integrado con Logo Calendario y Campana sin número */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.headerContainer, { paddingTop: headerTopPadding }]}>
         <View style={styles.headerProfile}>
           <View style={styles.calendarIconCircle}>
             <Ionicons name="calendar-outline" size={20} color="#FFFFFF" />

@@ -178,7 +178,7 @@ export default function RecuperarPasswordPage() {
                       required
                       autoComplete="email"
                       placeholder="nombre@aleprod.cl"
-                      className="w-full h-12 pl-11 pr-4 bg-[#141418] text-[#e5e1e4] rounded-lg text-sm placeholder:text-[#d1c5b0]/35 focus:outline-none focus:ring-1 focus:ring-[#eec054]/70 focus:bg-[#1E1E24] transition-all shadow-inner border border-[#3A3324]/70"
+                      className="w-full h-12 pl-11 pr-4 bg-[#141418] text-[#e5e1e4] rounded-lg text-[16px] md:text-sm placeholder:text-[#d1c5b0]/35 focus:outline-none focus:ring-1 focus:ring-[#eec054]/70 focus:bg-[#1E1E24] transition-all shadow-inner border border-[#3A3324]/70"
                     />
                   </div>
                 </div>

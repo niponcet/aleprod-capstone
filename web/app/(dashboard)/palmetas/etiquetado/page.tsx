@@ -334,7 +334,7 @@ export default function CentroEtiquetadoPage() {
       </header>
 
       {/* ── Main Viewport ── */}
-      <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-[1240px] w-full box-border flex-1">
+      <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
         {/* Banner de Presentación */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
           <div>
@@ -416,7 +416,7 @@ export default function CentroEtiquetadoPage() {
                     value={loteReferencia}
                     onChange={(e) => setLoteReferencia(e.target.value.toUpperCase())}
                     placeholder="LOTE-102026"
-                    className="h-10 px-3.5 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs font-mono font-bold text-[#D4AF37] focus:outline-none focus:border-[#D4AF37] w-40"
+                    className="h-10 px-3.5 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-xs font-mono font-bold text-[#D4AF37] focus:outline-none focus:border-[#D4AF37] w-40"
                   />
                 </div>
 
@@ -453,7 +453,7 @@ export default function CentroEtiquetadoPage() {
                         setCantidadStickers(val);
                         generarLoteVirgen(val, loteReferencia);
                       }}
-                      className="h-10 w-20 px-2.5 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs font-['Outfit'] text-center text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37]"
+                      className="h-10 w-20 px-2.5 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-xs font-['Outfit'] text-center text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37]"
                       title="Cantidad personalizada (1 a 120)"
                     />
                   </div>
@@ -498,7 +498,7 @@ export default function CentroEtiquetadoPage() {
                   value={busquedaBD}
                   onChange={(e) => setBusquedaBD(e.target.value)}
                   placeholder="Buscar activo por PL-001, UUID o Lote..."
-                  className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -628,7 +628,7 @@ export default function CentroEtiquetadoPage() {
           </div>
 
           {/* Grilla de Stickers en Pantalla (Diseño Oscuro) y en Impresión (Fondo Blanco) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 print-sheet-container">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 print-sheet-container">
             {stickersActivos.map((item, idx) => (
               <div
                 key={`${item.qr_uuid}-${idx}`}

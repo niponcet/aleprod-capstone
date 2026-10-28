@@ -416,7 +416,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="nombre@aleprod.cl"
-                    className="login-field w-full h-12 pl-11 pr-4 rounded-xl text-sm border font-inherit box-border"
+                    className="login-field w-full h-12 pl-11 pr-4 rounded-xl text-[16px] md:text-sm border font-inherit box-border"
                     style={{
                       background: "var(--sf2)",
                       borderColor: "var(--bd)",
@@ -468,7 +468,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Tu contraseña"
-                    className="login-field w-full h-12 pl-11 pr-12 rounded-xl text-sm border font-inherit box-border"
+                    className="login-field w-full h-12 pl-11 pr-12 rounded-xl text-[16px] md:text-sm border font-inherit box-border"
                     style={{
                       background: "var(--sf2)",
                       borderColor: "var(--bd)",

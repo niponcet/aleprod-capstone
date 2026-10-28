@@ -237,7 +237,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                   onChange={(e) =>
                     handleCambiarEstado(ev.id, e.target.value as Evento["estado"])
                   }
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold border transition-all cursor-pointer focus:outline-none ${
+                  className={`px-2.5 py-1.5 rounded-lg text-[16px] md:text-xs font-['Outfit'] uppercase tracking-wider font-semibold border transition-all cursor-pointer focus:outline-none ${
                     ev.estado === "en_curso"
                       ? "bg-[#10B981]/15 text-[#10B981] border-[#10B981]/40 hover:bg-[#10B981]/25"
                       : ev.estado === "planificado"
@@ -307,7 +307,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Ej: Lollapalooza 2026 · Escenario Perry's"
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
                 />
               </div>
 
@@ -322,7 +322,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                   value={locacion}
                   onChange={(e) => setLocacion(e.target.value)}
                   placeholder="Ej: Parque Bicentenario de Cerrillos, Santiago"
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
                 />
               </div>
 
@@ -337,7 +337,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                     required
                     value={fechaInicio}
                     onChange={(e) => setFechaInicio(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -348,7 +348,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                     type="datetime-local"
                     value={fechaTermino}
                     onChange={(e) => setFechaTermino(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   />
                 </div>
               </div>
@@ -365,7 +365,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                     step="1"
                     value={metrosCuadrados}
                     onChange={(e) => setMetrosCuadrados(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -377,7 +377,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                     onChange={(e) =>
                       setEstadoInicial(e.target.value as "planificado" | "en_curso")
                     }
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   >
                     <option value="planificado">● Planificado (Próximo)</option>
                     <option value="en_curso">● En Curso (Activar Ahora)</option>
@@ -393,7 +393,7 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                 <select
                   value={tipoPantalla}
                   onChange={(e) => setTipoPantalla(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                 >
                   <option value="Pantalla Escenario P3.9 Outdoor">
                     Pantalla Escenario P3.9 Outdoor (Alta Luminosidad)

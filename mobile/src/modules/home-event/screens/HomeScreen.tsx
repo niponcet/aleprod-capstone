@@ -8,6 +8,7 @@ import {
   StatusBar,
   RefreshControl,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -184,9 +185,14 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
+  const headerTopPadding =
+    Platform.OS === 'web'
+      ? ('calc(env(safe-area-inset-top, 0px) + 16px)' as any)
+      : Math.max(insets.top, 20) + 16;
+
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient
@@ -197,7 +203,7 @@ export const HomeScreen: React.FC = () => {
       />
 
       {/* Header Superior Integrado */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.headerContainer, { paddingTop: headerTopPadding }]}>
         <View style={styles.headerProfile}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>AP</Text>

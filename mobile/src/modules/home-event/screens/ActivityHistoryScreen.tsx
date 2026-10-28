@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 16,
     padding: 0,
   },
   dropdownSection: {

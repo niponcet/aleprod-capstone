@@ -79,6 +79,7 @@ const TAB_CONFIGS: Record<string, TabConfig> = {
 
 export type LiquidGlassTabBarProps = BottomTabBarProps & {
   navigation?: any;
+  navigateToTab?: (key: string) => void;
 };
 
 export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
@@ -299,8 +300,11 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
     })
   ).current;
 
-  // Separación vertical de seguridad (respeta la barra de inicio de iOS y navbar de Android)
-  const bottomOffset = Math.max(insets.bottom, 12) + 6;
+  // Separación vertical de seguridad Edge-to-Edge (respeta la barra de inicio / Home Indicator de iOS y navbar de Android/PWA)
+  const bottomOffset =
+    Platform.OS === 'web'
+      ? ('calc(env(safe-area-inset-bottom, 0px) + 20px)' as any)
+      : Math.max(insets.bottom, 16) + 10;
 
   // Índice visual efectivo (resuelve taps inmediatos y sincronización instantánea)
   const effectiveIndex =

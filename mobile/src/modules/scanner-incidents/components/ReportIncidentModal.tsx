@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
   manualInput: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 16,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   componentsGrid: {
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 16,
     minHeight: 70,
     marginBottom: 16,
   },

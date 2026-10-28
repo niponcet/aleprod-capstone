@@ -154,9 +154,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
     );
   };
 
+  const headerTopPadding =
+    Platform.OS === 'web'
+      ? ('calc(env(safe-area-inset-top, 0px) + 16px)' as any)
+      : Math.max(insets.top, 20) + 16;
+
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient
@@ -167,7 +172,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
       />
 
       {/* Header Superior con Logo de Tuerca y Título Ajustes (sin acciones adicionales) */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.headerContainer, { paddingTop: headerTopPadding }]}>
         <View style={styles.headerProfile}>
           <View style={styles.gearIconCircle}>
             <Ionicons name="settings-outline" size={20} color="#FFFFFF" />

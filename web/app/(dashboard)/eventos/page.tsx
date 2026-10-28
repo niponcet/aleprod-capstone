@@ -231,7 +231,7 @@ export default function EventosPage() {
         )}
 
         {/* ── Contenido Principal ── */}
-        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-[1240px] w-full box-border flex-1">
+        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
         {/* Banner de Título (Limpio y directo, sin botones duplicados) */}
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
@@ -377,7 +377,7 @@ export default function EventosPage() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar evento por nombre, locación o pantalla..."
-              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
             />
           </div>
         </div>
@@ -500,7 +500,7 @@ export default function EventosPage() {
                           onChange={(e) =>
                             handleCambiarEstado(ev.id, e.target.value as Evento["estado"])
                           }
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold bg-[#1E1E1E] border border-[#27272A] hover:border-[#D4AF37] text-[#FFFFFF] cursor-pointer transition-all focus:outline-none"
+                          className="px-2.5 py-1.5 rounded-lg text-[16px] md:text-xs font-['Outfit'] uppercase tracking-wider font-semibold bg-[#1E1E1E] border border-[#27272A] hover:border-[#D4AF37] text-[#FFFFFF] cursor-pointer transition-all focus:outline-none"
                         >
                           <option value="en_curso">● En Curso</option>
                           <option value="planificado">● Planificado</option>
@@ -562,7 +562,7 @@ export default function EventosPage() {
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Ej: Lollapalooza 2026 · Escenario Perry's"
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
                 />
               </div>
 
@@ -576,7 +576,7 @@ export default function EventosPage() {
                   value={locacion}
                   onChange={(e) => setLocacion(e.target.value)}
                   placeholder="Ej: Parque Bicentenario de Cerrillos, Santiago"
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
                 />
               </div>
 
@@ -590,7 +590,7 @@ export default function EventosPage() {
                     required
                     value={fechaInicio}
                     onChange={(e) => setFechaInicio(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -601,7 +601,7 @@ export default function EventosPage() {
                     type="datetime-local"
                     value={fechaTermino}
                     onChange={(e) => setFechaTermino(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   />
                 </div>
               </div>
@@ -617,7 +617,7 @@ export default function EventosPage() {
                     step="1"
                     value={metrosCuadrados}
                     onChange={(e) => setMetrosCuadrados(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -629,7 +629,7 @@ export default function EventosPage() {
                     onChange={(e) =>
                       setEstadoInicial(e.target.value as "planificado" | "en_curso")
                     }
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                   >
                     <option value="planificado">● Planificado (Próximo)</option>
                     <option value="en_curso">● En Curso (Activar Ahora)</option>
@@ -644,7 +644,7 @@ export default function EventosPage() {
                 <select
                   value={tipoPantalla}
                   onChange={(e) => setTipoPantalla(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
                 >
                   <option value="Pantalla Escenario P3.9 Outdoor">
                     Pantalla Escenario P3.9 Outdoor (Alta Luminosidad)
@@ -697,7 +697,7 @@ export default function EventosPage() {
       >
         <div
           style={{
-            maxWidth: "1240px",
+            width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",

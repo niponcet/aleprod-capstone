@@ -241,7 +241,7 @@ export default function PalmetasPage() {
         </header>
 
         {/* ── Main Content ── */}
-        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-[1240px] w-full box-border flex-1">
+        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
         {/* Success Toast */}
         {successMsg && (
           <div className="fixed top-24 right-8 z-50 px-5 py-3 rounded-xl bg-[#10B981] text-white text-xs font-['Outfit'] font-semibold tracking-wide shadow-xl shadow-[#10B981]/20 flex items-center gap-2 animate-fade-in-up">
@@ -381,7 +381,7 @@ export default function PalmetasPage() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por código (PL-001), UUID o lote..."
-              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-xs text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
+              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
             />
           </div>
         </div>
@@ -654,7 +654,7 @@ export default function PalmetasPage() {
                     id="ubicacion-select"
                     value={nuevaUbicacion}
                     onChange={(e) => setNuevaUbicacion(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-xs text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer"
+                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer"
                   >
                     <option value="bodega_central">Bodega Central</option>
                     <option value="en_evento">En Evento</option>
@@ -711,7 +711,7 @@ export default function PalmetasPage() {
       >
         <div
           style={{
-            maxWidth: "1240px",
+            width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",

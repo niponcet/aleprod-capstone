@@ -176,7 +176,7 @@ export default function ActualizarPasswordPage() {
                       required
                       autoComplete="new-password"
                       placeholder="Mínimo 6 caracteres"
-                      className="w-full h-12 pl-11 pr-11 bg-[#141418] text-[#e5e1e4] rounded-lg text-sm placeholder:text-[#d1c5b0]/35 focus:outline-none focus:ring-1 focus:ring-[#eec054]/70 focus:bg-[#1E1E24] transition-all shadow-inner border border-[#3A3324]/70"
+                      className="w-full h-12 pl-11 pr-11 bg-[#141418] text-[#e5e1e4] rounded-lg text-[16px] md:text-sm placeholder:text-[#d1c5b0]/35 focus:outline-none focus:ring-1 focus:ring-[#eec054]/70 focus:bg-[#1E1E24] transition-all shadow-inner border border-[#3A3324]/70"
                     />
                     <button
                       type="button"
@@ -213,7 +213,7 @@ export default function ActualizarPasswordPage() {
                       required
                       autoComplete="new-password"
                       placeholder="Repite la nueva contraseña"
-                      className="w-full h-12 pl-11 pr-11 bg-[#141418] text-[#e5e1e4] rounded-lg text-sm placeholder:text-[#d1c5b0]/35 focus:outline-none focus:ring-1 focus:ring-[#eec054]/70 focus:bg-[#1E1E24] transition-all shadow-inner border border-[#3A3324]/70"
+                      className="w-full h-12 pl-11 pr-11 bg-[#141418] text-[#e5e1e4] rounded-lg text-[16px] md:text-sm placeholder:text-[#d1c5b0]/35 focus:outline-none focus:ring-1 focus:ring-[#eec054]/70 focus:bg-[#1E1E24] transition-all shadow-inner border border-[#3A3324]/70"
                     />
                   </div>
                 </div>

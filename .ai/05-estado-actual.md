@@ -7,10 +7,10 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 24 de Octubre de 2026 (Sesión 40 — Rediseño Pixel-Perfect de Login 40/60, Menú Móvil con Físicas Emil Kowalski y Eliminación de UI Redundante en Web).
+- **Fecha de Última Actualización:** 27 de Octubre de 2026 (Sesión 43 — Shell PWA Nativo Edge-to-Edge para iOS Standalone, Safe Areas Dinámicas y Despeje de Home Indicator en TabBar).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `20/20` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente en 3.0s).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
 - **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS, triggers alineados de código visible y storage bucket `evidencias-incidencias` activos y verificados.
 
 ---
@@ -115,6 +115,74 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-27 (Sesión 43 — Shell PWA Nativo Edge-to-Edge para iOS Standalone, Safe Areas Dinámicas y Despeje de Home Indicator en TabBar):**
+  - **Diagnóstico de Defectos Visuales en iOS PWA Standalone:**
+    1. Al abrir la app en iPhone como PWA en pantalla completa, la falta de `apple-mobile-web-app-status-bar-style: black-translucent` combinada con fondo blanco por defecto en WebKit provocaba una franja clara y forzaba íconos del sistema negros (hora, señal, batería) en vez de blancos.
+    2. La barra inferior `LiquidGlassTabBar` y el botón flotante QR chocaban con el Home Indicator de iOS al no considerar las variables de entorno de área segura en navegadores móviles (`env(safe-area-inset-bottom)`).
+  - **Control Total del Shell PWA en `mobile/app/+html.tsx`:**
+    - Inclusión de directivas de viewport e identidad nativa de WebKit:
+      - `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />`
+      - `<meta name="theme-color" content="#0A0A0A" />`
+      - `<meta name="apple-mobile-web-app-capable" content="yes" />`
+      - `<meta name="mobile-web-app-capable" content="yes" />`
+      - `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`
+    - Inyección de bloque `<style>` global forzando:
+      - `html, body, #root { background-color: #0A0A0A !important; min-height: 100dvh; margin: 0; padding: 0; overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }`
+      - `input, textarea, select { font-size: 16px !important; }` (eliminación de raíz de cualquier riesgo residual de auto-zoom).
+  - **Configuración de Manifiesto Nativo en `mobile/app.json`:**
+    - Ajustado `"userInterfaceStyle": "dark"` para forzar modo oscuro en iOS y Android.
+    - Configurado en `"web"`: `"backgroundColor": "#0A0A0A"`, `"themeColor": "#0A0A0A"`, `"display": "standalone"`, `"barStyle": "black-translucent"`, y meta tags equivalentes.
+  - **Calibración de Safe Areas Superiores e Inferiores:**
+    - **LiquidGlassTabBar.tsx:** Cálculo de `bottomOffset` adaptado para web/PWA a `'calc(env(safe-area-inset-bottom, 0px) + 20px)'`, logrando una elevación de 54px en iPhones con notch/Dynamic Island (despejando holgadamente los 34px del Home Indicator) y 26-44px en nativo.
+    - **HomeScreen.tsx, EventsScreen.tsx y SettingsScreen.tsx:** Header `paddingTop` calibrado a `Platform.OS === 'web' ? 'calc(env(safe-area-inset-top, 0px) + 16px)' : Math.max(insets.top, 20) + 16`, evitando cualquier colisión con la Dynamic Island o barra de estado en modo Edge-to-Edge.
+    - **Barras de Estado:** Estandarizado `<StatusBar barStyle="light-content" backgroundColor="transparent" translucent />` y fondos raíces `#080C14` / `#0A0A0A` que se extienden hasta el borde físico superior (`top: 0`).
+  - **Verificación Técnica de Salud del Monorepo:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build` en `/web`: **Compilación exitosa (Turbopack, Next.js 16.3.8) con 13/13 rutas operativas**.
+
+- **2026-10-27 (Sesión 42 — Erradicación del Auto-Zoom de iOS Safari en Inputs/Textareas/Selects para Web y PWA Móvil):**
+  - **Diagnóstico del Auto-Zoom en Safari iOS:**
+    - Safari en iOS activa un zoom automático intrusivo e irreversible de viewport cuando un control de formulario (`<input>`, `<textarea>`, `<select>`) recibe foco y su tamaño de fuente computado es inferior a 16px (como ocurría con clases `text-sm`, `text-xs` o `fontSize: 13-15`).
+  - **Auditoría y Solución en el Panel Web (`/web`):**
+    - **Configuración de Viewport en Layout:** En [web/app/layout.tsx](file:///c:/workspace/aleprod-capstone/web/app/layout.tsx), se exportó el objeto de configuración tipado `viewport: Viewport` con `width: 'device-width'`, `initialScale: 1`, `maximumScale: 1`, `userScalable: false`.
+    - **Base CSS en globals.css:** En [web/app/globals.css](file:///c:/workspace/aleprod-capstone/web/app/globals.css), la clase `.input-field` se calibró a `font-size: 16px` por defecto en móviles, con media query `@media (min-width: 768px) { font-size: 14px; }` para el entorno de escritorio.
+    - **Reemplazo Responsivo `text-[16px] md:text-sm` en Componentes y Páginas:**
+      - [web/app/(auth)/login/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(auth)/login/page.tsx): Inputs de email y contraseña actualizados a `text-[16px] md:text-sm`.
+      - [web/app/(auth)/recuperar/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(auth)/recuperar/page.tsx): Input de correo para restablecimiento actualizado a `text-[16px] md:text-sm`.
+      - [web/app/(auth)/actualizar-contrasena/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(auth)/actualizar-contrasena/page.tsx): Inputs de nueva contraseña y confirmación actualizados a `text-[16px] md:text-sm`.
+      - [web/app/components/dashboard-view.tsx](file:///c:/workspace/aleprod-capstone/web/app/components/dashboard-view.tsx): Input de búsqueda en dashboard y todos los campos del modal de nueva producción (Nombre, Locación, Superficie m², Fecha, Tipo de Instalación) actualizados eliminando el fontSize hardcodeado y aplicando `text-[16px] md:text-sm`.
+      - [web/app/(dashboard)/palmetas/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(dashboard)/palmetas/page.tsx): Input de búsqueda de activos y `<select>` de reubicación en modal técnico migrados de `text-xs` a `text-[16px] md:text-sm`.
+      - [web/app/(dashboard)/eventos/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx): Input de búsqueda, selectores de estado en tabla (`text-[16px] md:text-xs`) y todos los campos del modal de creación actualizados a `text-[16px] md:text-sm`.
+      - [web/app/(dashboard)/incidencias/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(dashboard)/incidencias/page.tsx): Buscador, textarea de resolución técnica, selectores del modal de incidencia y textarea de observaciones migrados de `text-xs` a `text-[16px] md:text-sm`.
+      - [web/app/(dashboard)/palmetas/etiquetado/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(dashboard)/palmetas/etiquetado/page.tsx): Inputs de lote, cantidad personalizada y búsqueda de activo migrados a `text-[16px] md:text-xs` / `md:text-sm`.
+      - [web/app/components/eventos-section.tsx](file:///c:/workspace/aleprod-capstone/web/app/components/eventos-section.tsx): Inputs y selectores actualizados a `text-[16px] md:text-sm`.
+  - **Auditoría y Solución en la App Móvil / PWA (`/mobile`):**
+    - **Configuración Web de Expo y HTML Template:** En [mobile/app.json](file:///c:/workspace/aleprod-capstone/mobile/app.json), se inyectó `"meta": { "viewport": "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" }` bajo la clave `expo.web`. Asimismo, se creó [mobile/app/+html.tsx](file:///c:/workspace/aleprod-capstone/mobile/app/+html.tsx) con la plantilla HTML universal de Expo Router aplicando el meta tag `viewport` anti-zoom.
+    - **Estandarización de `fontSize: 16` en React Native `<TextInput>`:**
+      - [mobile/src/modules/auth/screens/LoginScreen.tsx](file:///c:/workspace/aleprod-capstone/mobile/src/modules/auth/screens/LoginScreen.tsx): Inputs de credenciales calibrados a `fontSize: 16` (desde 15).
+      - [mobile/src/modules/auth/screens/ForgotPasswordScreen.tsx](file:///c:/workspace/aleprod-capstone/mobile/src/modules/auth/screens/ForgotPasswordScreen.tsx): Input de email calibrado a `fontSize: 16` (desde 14).
+      - [mobile/src/modules/home-event/components/StartEventBottomSheet.tsx](file:///c:/workspace/aleprod-capstone/mobile/src/modules/home-event/components/StartEventBottomSheet.tsx): Inputs de nombre del evento y recinto calibrados a `fontSize: 16` (desde 14). El input de metros cuadrados preserva `fontSize: 20` (>= 16).
+      - [mobile/src/modules/home-event/screens/ActivityHistoryScreen.tsx](file:///c:/workspace/aleprod-capstone/mobile/src/modules/home-event/screens/ActivityHistoryScreen.tsx): Barra de búsqueda en vivo calibrada a `fontSize: 16` (desde 13).
+      - [mobile/src/modules/scanner-incidents/components/ReportIncidentModal.tsx](file:///c:/workspace/aleprod-capstone/mobile/src/modules/scanner-incidents/components/ReportIncidentModal.tsx): Input manual de código QR de contingencia y textarea de observaciones calibrados a `fontSize: 16` (desde 13).
+    - **Tipado TypeScript en LiquidGlassTabBar:** Añadido `navigateToTab?: (key: string) => void` a `LiquidGlassTabBarProps` en [mobile/src/core/components/LiquidGlassTabBar.tsx](file:///c:/workspace/aleprod-capstone/mobile/src/core/components/LiquidGlassTabBar.tsx).
+  - **Verificación Técnica de Salud del Monorepo:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build` en `/web`: **13/13 rutas generadas exitosamente con Turbopack**.
+
+- **2026-10-27 (Sesión 41 — Estandarización de Espaciado Full-Width y Erradicación del Límite max-w-[1240px] Asimétrico en Web):**
+  - **Diagnóstico del Contenido Apegado a la Izquierda:**
+    - Se identificó que mientras los `<header>` de la barra superior ocupaban el 100% del viewport horizontal (`w-full`), los contenedores `<main>` de todos los módulos (`DashboardView`, `palmetas`, `eventos`, `incidencias` y `palmetas/etiquetado`) poseían la clase rígida `max-w-[1240px]` sin expansión horizontal ni justificación simétrica. En pantallas de 1080p, 2K o superiores, esto generaba un espacio negro vacío de más de 400px en el lateral derecho, haciendo que las acciones superiores (e.g., botón "+ Nuevo evento") quedasen desalineadas y aisladas en el extremo derecho respecto al cuerpo de contenido.
+  - **Corrección y Aprovechamiento Total del Espacio Horizontal (`w-full flex-1`):**
+    - Se removió `max-w-[1240px]` en todos los módulos (`dashboard-view.tsx`, `palmetas/page.tsx`, `eventos/page.tsx`, `incidencias/page.tsx`, `palmetas/etiquetado/page.tsx`), unificando el contenedor principal a `p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1`.
+    - En [dashboard-view.tsx](file:///c:/workspace/aleprod-capstone/web/app/components/dashboard-view.tsx), se recalibraron las proporciones de la sección inferior: la tabla de eventos adopta `lg:flex-1 min-w-0` y la columna lateral de resúmenes adopta `lg:w-[360px] xl:w-[400px] shrink-0 min-w-0`, asegurando un balance visual armónico donde las filas de producciones respiran con amplitud sin comprimir los indicadores de "Requiere atención" y "Estado del parque".
+    - En [palmetas/etiquetado/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(dashboard)/palmetas/etiquetado/page.tsx), se incorporó la escala `2xl:grid-cols-5` a la grilla de stickers para aprovechar de forma fluida monitores ultra-anchos.
+    - Se corrigieron los footers de todas las páginas secundarias (`maxWidth: "1240px"` -> `width: "100%"`), alineando su contenido de borde a borde con los encabezados y tablas.
+  - **Verificación Técnica:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npm run build`: **Compilación exitosa (Turbopack, Next.js 16.3.8) con 13/13 rutas operativas**.
 
 - **2026-10-24 (Sesión 40 — Rediseño Pixel-Perfect de Login 40/60, Menú Móvil con Físicas Emil Kowalski y Eliminación de UI Redundante en Web):**
   - **Rediseño Pixel-Perfect del Login ([web/app/(auth)/login/page.tsx](file:///c:/Workspace/aleprod-capstone/web/app/(auth)/login/page.tsx)):**

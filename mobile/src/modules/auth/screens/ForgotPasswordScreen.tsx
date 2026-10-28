@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
   },
   buttonWrapper: {
     borderRadius: 12,

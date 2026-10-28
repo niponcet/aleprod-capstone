@@ -251,6 +251,7 @@ export function DashboardView({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar evento, palmeta, técnico o repuesto…"
+              className="text-[16px] md:text-sm"
               style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -261,7 +262,6 @@ export function DashboardView({
                 background: "var(--sf2)",
                 color: "var(--tx)",
                 font: "inherit",
-                fontSize: "14px",
                 outline: "none",
               }}
             />
@@ -364,7 +364,7 @@ export function DashboardView({
         </header>
 
         {/* Main Content Area */}
-        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 max-w-[1240px] w-full box-border">
+        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
           {/* Greeting */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <h1 style={{ margin: 0, fontSize: "30px", fontWeight: 800, letterSpacing: "-.02em" }}>
@@ -810,7 +810,7 @@ export function DashboardView({
             {/* Left: Eventos y producciones */}
             <section
               aria-label="Eventos"
-              className="w-full lg:flex-[2] min-w-0 bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] overflow-hidden"
+              className="w-full lg:flex-1 min-w-0 bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] overflow-hidden"
             >
               <div
                 style={{
@@ -987,7 +987,7 @@ export function DashboardView({
             </section>
 
             {/* Right: Side Column */}
-            <div className="w-full lg:flex-1 lg:max-w-[380px] min-w-0 flex flex-col gap-6">
+            <div className="w-full lg:w-[360px] xl:w-[400px] shrink-0 min-w-0 flex flex-col gap-6">
               {/* Requiere atención */}
               <section
                 aria-label="Requiere atención"
@@ -1266,6 +1266,7 @@ export function DashboardView({
                   placeholder="Ej: Festival Lollapalooza 2026"
                   value={nuevoNombre}
                   onChange={(e) => setNuevoNombre(e.target.value)}
+                  className="text-[16px] md:text-sm"
                   style={{
                     height: "40px",
                     padding: "0 12px",
@@ -1273,7 +1274,6 @@ export function DashboardView({
                     border: "1px solid var(--bd)",
                     background: "var(--sf2)",
                     color: "var(--tx)",
-                    fontSize: "13.5px",
                     outline: "none",
                   }}
                 />
@@ -1287,6 +1287,7 @@ export function DashboardView({
                   placeholder="Ej: Parque O'Higgins, Santiago"
                   value={nuevaLocacion}
                   onChange={(e) => setNuevaLocacion(e.target.value)}
+                  className="text-[16px] md:text-sm"
                   style={{
                     height: "40px",
                     padding: "0 12px",
@@ -1294,7 +1295,6 @@ export function DashboardView({
                     border: "1px solid var(--bd)",
                     background: "var(--sf2)",
                     color: "var(--tx)",
-                    fontSize: "13.5px",
                     outline: "none",
                   }}
                 />
@@ -1309,6 +1309,7 @@ export function DashboardView({
                     placeholder="50"
                     value={nuevosM2}
                     onChange={(e) => setNuevosM2(e.target.value)}
+                    className="text-[16px] md:text-sm"
                     style={{
                       height: "40px",
                       padding: "0 12px",
@@ -1316,7 +1317,6 @@ export function DashboardView({
                       border: "1px solid var(--bd)",
                       background: "var(--sf2)",
                       color: "var(--tx)",
-                      fontSize: "13.5px",
                       outline: "none",
                     }}
                   />
@@ -1328,6 +1328,7 @@ export function DashboardView({
                     type="date"
                     value={nuevaFecha}
                     onChange={(e) => setNuevaFecha(e.target.value)}
+                    className="text-[16px] md:text-sm"
                     style={{
                       height: "40px",
                       padding: "0 12px",
@@ -1335,7 +1336,6 @@ export function DashboardView({
                       border: "1px solid var(--bd)",
                       background: "var(--sf2)",
                       color: "var(--tx)",
-                      fontSize: "13.5px",
                       outline: "none",
                     }}
                   />
@@ -1347,6 +1347,7 @@ export function DashboardView({
                 <select
                   value={nuevoTipo}
                   onChange={(e) => setNuevoTipo(e.target.value)}
+                  className="text-[16px] md:text-sm"
                   style={{
                     height: "40px",
                     padding: "0 12px",
@@ -1354,7 +1355,6 @@ export function DashboardView({
                     border: "1px solid var(--bd)",
                     background: "var(--sf2)",
                     color: "var(--tx)",
-                    fontSize: "13.5px",
                     outline: "none",
                   }}
                 >

@@ -35,7 +35,7 @@ function RootNavigationLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#0B0D10' },
+        contentStyle: { backgroundColor: '#0A0A0A' },
       }}
     >
       <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -74,7 +74,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <AuthProvider>
         <RootNavigationLayout />
       </AuthProvider>
@@ -85,7 +85,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0B0D10',
+    backgroundColor: '#0A0A0A',
     justifyContent: 'center',
     alignItems: 'center',
   },
