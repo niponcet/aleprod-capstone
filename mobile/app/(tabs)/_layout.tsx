@@ -8,6 +8,7 @@ export default function TabLayout() {
       tabBar={(props) => <LiquidGlassTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: '#080C14' },
       }}
     >
       <Tabs.Screen

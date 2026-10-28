@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 47 — Plantilla Maestra PWA en public/index.html, Sanitización de Rutas a Raíz y Purgado de +html.tsx).
+- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 48 — Insets Dinámicos Edge-to-Edge, Aislamiento de Capas GPU contra Texto Borroso y Erradicación de Letterboxing).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -116,6 +116,19 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-28 (Sesión 48 — Insets Dinámicos Edge-to-Edge, Aislamiento de Capas GPU contra Texto Borroso y Erradicación de Letterboxing):**
+  - **Erradicación del Letterboxing Inferior (Unificación a #080C14):**
+    - Se identificó que el contraste entre el fondo real de las pantallas (`#080C14`) y los contenedores/temas fijados a `#0A0A0A` provocaba una barra sólida visible bajo el Home Indicator de iOS.
+    - Se unificó el fondo a `#080C14` en `mobile/public/index.html` (`html, body, #root`), `mobile/app/_layout.tsx` (`safeAreaProvider`, `customDarkTheme`, `rootContainer`) y `mobile/app/(tabs)/_layout.tsx` (`sceneStyle: { backgroundColor: '#080C14' }`).
+  - **Aislamiento de Capas GPU contra Texto Borroso en Header:**
+    - Se diagnosticó que el `LinearGradient` de fondo (`topAmbientGlow`) intersectaba el mismo compositor de sub-píxeles que el texto "Hola, Técnico".
+    - Se forzó el aislamiento de capa por hardware en WebKit agregando `zIndex: -1` y `transform: [{ translateZ: 0 }]` a `styles.topAmbientGlow` en `HomeScreen.tsx`, `EventsScreen.tsx` y `SettingsScreen.tsx`.
+    - En `mobile/public/index.html`, se agregaron `-webkit-font-smoothing: antialiased;` y `-moz-osx-font-smoothing: grayscale;` para un renderizado tipográfico nítido en iOS.
+  - **Arquitectura Estándar de Insets Dinámicos (`useSafeAreaInsets`):**
+    - En `HomeScreen.tsx`, `EventsScreen.tsx` y `SettingsScreen.tsx`, se inyectó el espacio del Home Indicator y la barra flotante de pestañas directamente al contenido del `ScrollView`: `paddingBottom: insets.bottom + 120`.
+    - En el Header superior, se calibró `paddingTop: Math.max(insets.top, 20)`, permitiendo que el contenedor se extienda de borde a borde físico sin colisiones.
+  - **Verificación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
 - **2026-10-28 (Sesión 47 — Plantilla Maestra PWA en public/index.html, Sanitización de Rutas a Raíz y Purgado de +html.tsx):**
   - **Inyección de Plantilla PWA en `mobile/public/index.html`:**
     - Como Expo CLI en modo SPA ignora `app/+html.tsx`, se implementó `mobile/public/index.html` para anular el fallback por defecto de Expo.

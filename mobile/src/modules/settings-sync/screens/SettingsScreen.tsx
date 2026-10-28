@@ -167,10 +167,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
     );
   };
 
-  const headerTopPadding =
-    Platform.OS === 'web'
-      ? ('calc(env(safe-area-inset-top, 0px) + 16px)' as any)
-      : Math.max(insets.top, 20) + 16;
+  const headerTopPadding = Math.max(insets.top, 20);
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
@@ -198,7 +195,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 120 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Card de Perfil */}
@@ -407,6 +407,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 320,
+    zIndex: -1,
+    transform: [{ translateZ: 0 } as any],
   },
   headerContainer: {
     flexDirection: 'row',
