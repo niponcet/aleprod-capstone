@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 45 — Forzado de startUrl en Web Manifest y Rewrites a Raíz para PWA en Vercel).
+- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 46 — Blindaje Anti-Safari Escape y Safe Area Edge-to-Edge OLED en iOS PWA).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -116,6 +116,18 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-28 (Sesión 46 — Blindaje Anti-Safari Escape y Safe Area Edge-to-Edge OLED en iOS PWA):**
+  - **Erradicación del 'Safari Escape' en iOS Standalone:**
+    - Se configuró explícitamente `"scope": "/"` dentro de `mobile/app.json` bajo la clave `"web"`. Al delimitar el scope a toda la raíz, WebKit ya no clasifica la navegación a rutas internas como "fuera de alcance" (out of scope).
+    - En `LoginScreen.tsx`, se garantizó que tras el login exitoso la redirección se ejecute de forma inmediata y exclusiva mediante el enrutador cliente de Expo (`router.replace('/(tabs)')`), descartando cualquier recarga dura o salto de ventana.
+  - **Fondo de Safe Area Edge-to-Edge Real (#0A0A0A):**
+    - En `mobile/app/_layout.tsx`, se fijó el estilo `style={{ flex: 1, backgroundColor: '#0A0A0A' }}` en el `SafeAreaProvider` y en el contenedor raíz que envuelve al `<Stack>`.
+    - Se integró el `ThemeProvider` de Expo Router inyectando un `customDarkTheme` (`DarkTheme` con `colors.background: '#0A0A0A'` y `colors.card: '#0A0A0A'`), erradicando el destello/fondo gris claro (`#f2f2f2`) por defecto de React Navigation en el área del notch.
+    - En `LoginScreen.tsx`, se encapsuló el árbol visual en un contenedor `View` externo de fondo estricto `#0A0A0A` antes de aplicar los insets de `SafeAreaView`.
+    - Se estandarizó `<StatusBar style="light" />` de `expo-status-bar` en el Root Layout y pantalla de login para garantizar íconos de sistema blancos (reloj, batería y señal).
+  - **Verificación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - Validación sintáctica de `app.json`: limpia y evaluada.
 - **2026-10-28 (Sesión 45 — Forzado de startUrl en Web Manifest y Rewrites a Raíz para PWA en Vercel):**
   - **Inyección de `startUrl: "/"` en `mobile/app.json`:**
     - Garantiza que el `manifest.json` generado por Expo obligue a iOS Safari y Android a inicializar la PWA siempre desde la raíz (`/`), impidiendo que el sistema operativo ancle directamente a la subruta `/login` y evitando errores 404 al abrir el acceso directo de pantalla de inicio.

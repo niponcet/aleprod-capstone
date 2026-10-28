@@ -11,8 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StatusBar,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -83,6 +83,8 @@ export const LoginScreen: React.FC = () => {
         } else {
           await AsyncStorage.removeItem('@aleprod_saved_email');
         }
+        // Redirección cliente estricta con Expo Router (cero escape a Safari)
+        router.replace('/(tabs)');
       }
       // Al ser exitoso, supabase.auth.onAuthStateChange en AuthContext
       // actualizará la sesión y la navegación redirigirá a la aplicación.
@@ -97,8 +99,9 @@ export const LoginScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.rootContainer}>
+      <StatusBar style="light" />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -246,11 +249,16 @@ export const LoginScreen: React.FC = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#0A0A0A',
