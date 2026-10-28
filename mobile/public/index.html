@@ -10,13 +10,27 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#080C14" />
+    <meta name="theme-color" content="#0A0A0A" />
     <link rel="manifest" href="/manifest.json" />
 
     <style id="expo-reset">
+      :root {
+        --sat: env(safe-area-inset-top, 0px);
+        --sab: env(safe-area-inset-bottom, 0px);
+      }
+      /* Parche WebKit iOS para el glitch de 0px al navegar */
+      @supports (-webkit-touch-callout: none) {
+        :root {
+          --sat: max(env(safe-area-inset-top), 47px);
+        }
+      }
+      /* Utilidades inyectables */
+      .edge-to-edge-pb { padding-bottom: calc(var(--sab) + 120px) !important; }
+      .edge-to-edge-pt { padding-top: calc(var(--sat) + 10px) !important; }
+
       html, body {
         height: 100%;
-        background-color: #080C14 !important;
+        background-color: #0A0A0A !important;
         margin: 0;
         padding: 0;
         overscroll-behavior-y: none;
@@ -28,7 +42,7 @@
         display: flex;
         height: 100%;
         flex: 1;
-        background-color: #080C14;
+        background-color: #0A0A0A;
       }
       /* Fix Auto-Zoom Safari */
       input, textarea, select { font-size: 16px !important; }
