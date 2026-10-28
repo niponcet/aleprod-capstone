@@ -5,6 +5,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initDB } from '../src/core/db/database';
 import { AuthProvider, useAuth } from '../src/core/context/AuthContext';
 import { colors } from '../src/core/theme/colors';
+import { setupAlertPolyfill } from '../src/core/utils/alertPolyfill';
+
+// Habilitar soporte universal de Alert.alert en PWA / WebKit
+setupAlertPolyfill();
 
 function RootNavigationLayout() {
   const { isAuthenticated, loading } = useAuth();

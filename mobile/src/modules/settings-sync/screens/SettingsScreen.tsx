@@ -27,7 +27,7 @@ import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
 
 interface SettingsScreenProps {
-  onSignOut?: () => void;
+  onSignOut?: () => void | Promise<void>;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => {
@@ -135,6 +135,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 
 
   const handleLogout = () => {
+    const executeLogout = async () => {
+      try {
+        await onSignOut?.();
+      } catch (err) {
+        console.warn('Error ejecutando cierre de sesión:', err);
+      }
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const confirmed = window.confirm(
+        'Cerrar Sesión\n\n¿Estás seguro de que deseas salir de la aplicación de terreno?'
+      );
+      if (confirmed) {
+        executeLogout();
+      }
+      return;
+    }
+
     Alert.alert(
       'Cerrar Sesión',
       '¿Estás seguro de que deseas salir de la aplicación de terreno?',
@@ -143,12 +161,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
         {
           text: 'Salir',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await supabase.auth.signOut();
-            } catch { }
-            onSignOut?.();
-          },
+          onPress: executeLogout,
         },
       ]
     );

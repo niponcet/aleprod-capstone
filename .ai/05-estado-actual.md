@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 27 de Octubre de 2026 (Sesión 43 — Shell PWA Nativo Edge-to-Edge para iOS Standalone, Safe Areas Dinámicas y Despeje de Home Indicator en TabBar).
+- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 44 — Desbloqueo y Polyfill de Alert.alert para React Native Web/PWA, Eliminación de Redundancia en SignOut).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -116,6 +116,18 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-28 (Sesión 44 — Desbloqueo y Polyfill de Alert.alert para React Native Web/PWA, Eliminación de Redundancia en SignOut):**
+  - **Diagnóstico del Fallo de 'Cerrar Sesión' en Modo PWA:**
+    - En React Native Web (`react-native-web`), la API `Alert.alert` está deliberadamente definida como un método vacío stub (`class Alert { static alert() {} }`).
+    - Al presionar el botón "Cerrar Sesión" en la versión PWA o navegador móvil, `Alert.alert` retornaba de inmediato sin renderizar ningún diálogo y sin ejecutar el callback `onPress` del array de botones, congelando la interacción para el usuario.
+  - **Polyfill Universal de Alertas Web (`mobile/src/core/utils/alertPolyfill.ts`):**
+    - Se creó `setupAlertPolyfill()` activado en el montaje raíz (`mobile/app/_layout.tsx`).
+    - Redirige alertas con un solo botón a `window.alert` y diálogos de confirmación o acción destructiva con múltiples botones a `window.confirm`, invocando automáticamente el callback correspondiente (`confirmButton.onPress` o `cancelButton.onPress`). Esto restaura de forma retroactiva el funcionamiento de todos los avisos informativos, errores y confirmaciones de la app móvil en entornos PWA.
+  - **Refactorización Limpia de Cerrar Sesión (`mobile/src/modules/settings-sync/screens/SettingsScreen.tsx`):**
+    - Se incorporó soporte explícito de confirmación en web (`window.confirm`) dentro de `handleLogout` con fallback a `Alert.alert` en plataformas nativas.
+    - Se eliminó la doble invocación redundante de `supabase.auth.signOut()`: ahora `SettingsScreen` delega limpiamente la revocación y purga de estado a `onSignOut()` (`AuthContext.signOut()`).
+  - **Verificación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
 - **2026-10-27 (Sesión 43 — Shell PWA Nativo Edge-to-Edge para iOS Standalone, Safe Areas Dinámicas y Despeje de Home Indicator en TabBar):**
   - **Diagnóstico de Defectos Visuales en iOS PWA Standalone:**
     1. Al abrir la app en iPhone como PWA en pantalla completa, la falta de `apple-mobile-web-app-status-bar-style: black-translucent` combinada con fondo blanco por defecto en WebKit provocaba una franja clara y forzaba íconos del sistema negros (hora, señal, batería) en vez de blancos.
