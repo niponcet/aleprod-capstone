@@ -248,7 +248,12 @@ export const EventsScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 120 },
+          {
+          paddingBottom:
+            Platform.OS === 'web'
+              ? ('calc(env(safe-area-inset-bottom, 0px) + 120px)' as any)
+              : insets.bottom + 120,
+        },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -542,7 +547,7 @@ export const EventsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#080C14',
+    backgroundColor: '#070B14',
   },
   topAmbientGlow: {
     position: 'absolute',

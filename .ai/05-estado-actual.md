@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 48 — Insets Dinámicos Edge-to-Edge, Aislamiento de Capas GPU contra Texto Borroso y Erradicación de Letterboxing).
+- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 49 — Arquitectura Edge-to-Edge Inferior PWA: Overlay Absoluto en LiquidGlassTabBar, Eliminación de Cortes en Contenedor de Escenas y Unificación de Fondo #070B14).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -115,6 +115,22 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-28 (Sesión 49 — Arquitectura Edge-to-Edge Inferior PWA: Overlay Absoluto en LiquidGlassTabBar, Eliminación de Cortes en Contenedor de Escenas y Unificación de Fondo #070B14):**
+  - **Auditoría y Corrección de `LiquidGlassTabBar.tsx`:**
+    - Se identificó que el contenedor raíz `overlayContainer` no tenía `bottom: 0` ni `backgroundColor: 'transparent'`, y que en el JSX se le asignaba `bottom: bottomOffset` directamente al contenedor, provocando un corte físico por encima del Home Indicator.
+    - Se corrigió `overlayContainer` con `position: 'absolute'`, `bottom: 0'`, `left: 0`, `right: 0`, `backgroundColor: 'transparent'` y `zIndex: 9999`.
+    - La separación del Home Indicator se inyecta ahora internamente en el wrapper mediante `paddingBottom: bottomOffset`, permitiendo que el overlay se extienda al 100% de la pantalla sin bloquear toques (`pointerEvents="box-none"`).
+  - **Corrección Arquitectónica del Contenedor de Escenas (`app/(tabs)/_layout.tsx`):**
+    - Se envolvió el layout en `<View style={{ flex: 1, backgroundColor: '#070B14' }}>`.
+    - En `<Tabs>`, se inyectó `tabBarStyle: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'transparent', borderTopWidth: 0, elevation: 0 }` y `sceneStyle: { backgroundColor: 'transparent' }` en `screenOptions`.
+    - Esto elimina el comportamiento por defecto de React Navigation que partía la pantalla verticalmente asignándole un espacio flex hermano a la barra de tabs, permitiendo que las escenas fluyan por debajo del menú.
+  - **Auditoría de Root (`app/_layout.tsx`):**
+    - Confirmado: Cero uso de `<SafeAreaView>` envolviendo el `<Stack>`. El árbol vive dentro de un `<View style={{ flex: 1, backgroundColor: '#070B14' }}>` limpio.
+  - **Padding del Contenido (`HomeScreen.tsx`, `EventsScreen.tsx`, `SettingsScreen.tsx`):**
+    - Se calibró `contentContainerStyle` en los `ScrollView` con cálculo dinámico multiplataforma: `Platform.OS === 'web' ? 'calc(env(safe-area-inset-bottom, 0px) + 120px)' : insets.bottom + 120`, protegiendo el último elemento de la vista bajo el menú flotante con holgura visual.
+  - **Verificación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
 
 - **2026-10-28 (Sesión 48 — Insets Dinámicos Edge-to-Edge, Aislamiento de Capas GPU contra Texto Borroso y Erradicación de Letterboxing):**
   - **Erradicación del Letterboxing Inferior (Unificación a #080C14):**

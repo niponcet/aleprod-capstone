@@ -316,7 +316,7 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
       style={[
         styles.overlayContainer,
         {
-          bottom: bottomOffset,
+          paddingBottom: bottomOffset,
           paddingHorizontal: blockSideMargin,
         },
       ]}
@@ -411,6 +411,8 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
 const styles = StyleSheet.create({
   overlayContainer: {
     position: 'absolute',
+    bottom: 0,
+    backgroundColor: 'transparent',
     left: 0,
     right: 0,
     zIndex: 9999,
