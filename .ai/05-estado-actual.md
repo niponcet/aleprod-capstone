@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 44 — Desbloqueo y Polyfill de Alert.alert para React Native Web/PWA, Eliminación de Redundancia en SignOut).
+- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 45 — Forzado de startUrl en Web Manifest y Rewrites a Raíz para PWA en Vercel).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -116,6 +116,15 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-28 (Sesión 45 — Forzado de startUrl en Web Manifest y Rewrites a Raíz para PWA en Vercel):**
+  - **Inyección de `startUrl: "/"` en `mobile/app.json`:**
+    - Garantiza que el `manifest.json` generado por Expo obligue a iOS Safari y Android a inicializar la PWA siempre desde la raíz (`/`), impidiendo que el sistema operativo ancle directamente a la subruta `/login` y evitando errores 404 al abrir el acceso directo de pantalla de inicio.
+  - **Alineación de Rewrites en `mobile/vercel.json`:**
+    - Actualización de regla de fallback SPA a `"source": "/(.*)", "destination": "/"` para resolución nativa del directorio raíz de salida en Vercel.
+  - **Verificación Técnica:**
+    - Sintaxis JSON validada sin errores en `app.json` y `vercel.json`.
+    - `npx expo config --type public` evaluado exitosamente.
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
 - **2026-10-28 (Sesión 44 — Desbloqueo y Polyfill de Alert.alert para React Native Web/PWA, Eliminación de Redundancia en SignOut):**
   - **Diagnóstico del Fallo de 'Cerrar Sesión' en Modo PWA:**
     - En React Native Web (`react-native-web`), la API `Alert.alert` está deliberadamente definida como un método vacío stub (`class Alert { static alert() {} }`).
