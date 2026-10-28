@@ -136,7 +136,7 @@
   - **Calibración de Safe Areas Superiores e Inferiores:**
     - **LiquidGlassTabBar.tsx:** Cálculo de `bottomOffset` adaptado para web/PWA a `'calc(env(safe-area-inset-bottom, 0px) + 20px)'`, logrando una elevación de 54px en iPhones con notch/Dynamic Island (despejando holgadamente los 34px del Home Indicator) y 26-44px en nativo.
     - **HomeScreen.tsx, EventsScreen.tsx y SettingsScreen.tsx:** Header `paddingTop` calibrado a `Platform.OS === 'web' ? 'calc(env(safe-area-inset-top, 0px) + 16px)' : Math.max(insets.top, 20) + 16`, evitando cualquier colisión con la Dynamic Island o barra de estado en modo Edge-to-Edge.
-    - **Barras de Estado:** Estandarizado `<StatusBar barStyle="light-content" backgroundColor="transparent" translucent />` y fondos raíces `#080C14` / `#0A0A0A` que se extienden hasta el borde físico superior (`top: 0`).
+    - **Barras de Estado:** Estandarizado `<StatusBar barStyle="light-content" />` y fondos raíces `#080C14` / `#0A0A0A` que se extienden hasta el borde físico superior (`top: 0`), eliminando props no estándar para tipado limpio multiplataforma.
   - **Verificación Técnica de Salud del Monorepo:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.

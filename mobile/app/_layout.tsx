@@ -74,7 +74,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="light-content" />
       <AuthProvider>
         <RootNavigationLayout />
       </AuthProvider>

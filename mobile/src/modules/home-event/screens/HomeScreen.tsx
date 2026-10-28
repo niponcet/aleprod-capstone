@@ -192,7 +192,7 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="light-content" />
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient
