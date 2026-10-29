@@ -157,7 +157,7 @@ export default function EventosPage() {
     <>
         {/* ── Resplandor Ambiental Sutil ── */}
         <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[150px]" />
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[var(--pr-glow)] rounded-full blur-[150px]" />
         </div>
 
         {/* ── Top Bar ── */}
@@ -202,7 +202,7 @@ export default function EventosPage() {
               type="button"
               onClick={() => fetchEventos()}
               disabled={loading}
-              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[#3F3F46] active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[var(--border-light)] active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               title="Recargar eventos"
             >
               <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
@@ -234,14 +234,14 @@ export default function EventosPage() {
         <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
         {/* Banner de Título (Limpio y directo, sin botones duplicados) */}
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--prs)] border border-[var(--pr)]/25 text-[var(--pr)] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
             Planificación y Montaje Operativo
           </div>
-          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--tx)]">
             Producciones y Eventos
           </h1>
-          <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-[var(--mu)] mt-1 max-w-2xl">
             Administración de fechas, recintos, metraje de pantalla y estado de activación para técnicos en terreno.
           </p>
         </div>
@@ -249,69 +249,69 @@ export default function EventosPage() {
         {/* ── KPIs Ejecutivos ── */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {/* Total */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#27272A] shadow-md flex items-center justify-between">
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[var(--bd)] card-shadow transition-shadow flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#A1A1AA] font-semibold">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[var(--mu)] font-semibold">
                 Total Registrados
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {totalEventos}
               </span>
               <span className="text-[11px] text-[#71717A] mt-0.5">Producciones anuales</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#27272A]/50 border border-[#27272A] flex items-center justify-center text-[#D4AF37]">
+            <div className="w-12 h-12 rounded-xl bg-[var(--kpi-total-icon-bg)] border border-[var(--kpi-total-icon-border)] text-[var(--kpi-total-icon-color)] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">stadium</span>
             </div>
           </div>
 
           {/* En Curso */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#10B981]/30 shadow-md flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/10 to-transparent pointer-events-none" />
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[#10B981]/30 card-shadow transition-shadow flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/[0.05] dark:from-[#10B981]/10 to-transparent pointer-events-none" />
             <div className="flex flex-col">
               <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#10B981] font-semibold flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
                 En Curso
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {enCurso}
               </span>
               <span className="text-[11px] text-[#10B981]/80 mt-0.5">Activos en terreno</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#10B981]/12 border border-[#10B981]/30 flex items-center justify-center text-[#10B981]">
+            <div className="w-12 h-12 rounded-xl bg-[var(--ok-badge-bg)] border border-[var(--ok)]/30 text-[var(--ok-text)] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">play_circle</span>
             </div>
           </div>
 
           {/* Planificados */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#D4AF37]/30 shadow-md flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#D4AF37]/08 to-transparent pointer-events-none" />
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[var(--pr)]/30 card-shadow transition-shadow flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-blue-500/[0.05] dark:from-[#D4AF37]/[0.08] to-transparent pointer-events-none" />
             <div className="flex flex-col">
-              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#D4AF37] font-semibold flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[var(--pr)] font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[var(--go)]" />
                 Planificados
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {planificados}
               </span>
-              <span className="text-[11px] text-[#D4AF37]/80 mt-0.5">Próximas fechas</span>
+              <span className="text-[11px] text-[var(--pr)]/80 mt-0.5">Próximas fechas</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/12 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+            <div className="w-12 h-12 rounded-xl bg-[var(--kpi-total-icon-bg)] border border-[var(--kpi-total-icon-border)] text-[var(--kpi-total-icon-color)] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">event_upcoming</span>
             </div>
           </div>
 
           {/* Finalizados */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#27272A] shadow-md flex items-center justify-between">
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[var(--bd)] card-shadow transition-shadow flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#71717A] font-semibold">
                 Finalizados
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {finalizados}
               </span>
               <span className="text-[11px] text-[#71717A] mt-0.5">Historial cerrado</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#27272A]/50 border border-[#27272A] flex items-center justify-center text-[#71717A]">
+            <div className="w-12 h-12 rounded-xl bg-[var(--kpi-done-icon-bg)] border border-[var(--kpi-done-icon-border)] text-[var(--kpi-done-icon-color)] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">task_alt</span>
             </div>
           </div>
@@ -319,14 +319,14 @@ export default function EventosPage() {
 
         {/* ── Filtros y Buscador ── */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="inline-flex p-1 rounded-xl bg-[#121212] border border-[#27272A] self-start overflow-x-auto">
+          <div className="inline-flex p-1 rounded-xl bg-[var(--sf)] border border-[var(--bd)] self-start overflow-x-auto">
             <button
               type="button"
               onClick={() => setFiltro("todas")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
                 filtro === "todas"
-                  ? "bg-[#D4AF37] text-[#0A0A0A] shadow-md"
-                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+                  ? "bg-[var(--go)] text-[var(--gt)] card-shadow transition-shadow"
+                  : "text-[var(--mu)] hover:text-[var(--tx)]"
               }`}
             >
               Todos ({totalEventos})
@@ -336,8 +336,8 @@ export default function EventosPage() {
               onClick={() => setFiltro("en_curso")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filtro === "en_curso"
-                  ? "bg-[#10B981] text-[#FFFFFF] shadow-md"
-                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+                  ? "bg-[#10B981] text-[var(--tx)] card-shadow transition-shadow"
+                  : "text-[var(--mu)] hover:text-[var(--tx)]"
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
@@ -348,11 +348,11 @@ export default function EventosPage() {
               onClick={() => setFiltro("planificado")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filtro === "planificado"
-                  ? "bg-[#78580a] text-[#FFFFFF] border border-[#D4AF37]/40 shadow-md"
-                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+                  ? "bg-[#78580a] text-[var(--tx)] border border-[#D4AF37]/40 card-shadow transition-shadow"
+                  : "text-[var(--mu)] hover:text-[var(--tx)]"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--go)]" />
               Planificados ({planificados})
             </button>
             <button
@@ -360,8 +360,8 @@ export default function EventosPage() {
               onClick={() => setFiltro("finalizado")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
                 filtro === "finalizado"
-                  ? "bg-[#27272A] text-[#FFFFFF]"
-                  : "text-[#71717A] hover:text-[#FFFFFF]"
+                  ? "bg-slate-200 text-slate-800 dark:bg-[#27272A] dark:text-[var(--tx)]"
+                  : "text-slate-500 dark:text-[#71717A] hover:text-[var(--tx)]"
               }`}
             >
               Finalizados ({finalizados})
@@ -377,17 +377,17 @@ export default function EventosPage() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar evento por nombre, locación o pantalla..."
-              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+              className="w-full h-10 pl-10 pr-4 bg-[var(--sf2)] border border-[var(--bd)] rounded-lg text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] transition-all"
             />
           </div>
         </div>
 
         {/* ── Tabla de Eventos ── */}
-        <div className="w-full rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden">
+        <div className="w-full rounded-2xl bg-white dark:bg-[var(--sf)] border border-slate-200 dark:border-[var(--bd)] card-shadow overflow-hidden">
           <div className="w-full overflow-x-auto pb-2">
             <table className="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold">
+                <tr className="border-b border-slate-200 dark:border-[var(--bd)] bg-slate-50 dark:bg-[#16161a] text-slate-500 dark:text-[var(--mu)] font-['Outfit'] uppercase tracking-wider font-semibold text-xs">
                   <th className="py-3.5 px-4 sm:px-6">Producción / Locación</th>
                   <th className="py-3.5 px-4">Configuración Técnica</th>
                   <th className="py-3.5 px-4">Metraje</th>
@@ -396,12 +396,12 @@ export default function EventosPage() {
                   <th className="py-3.5 px-4 sm:px-6 text-right">Gestión</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#27272A]">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-sm text-[#A1A1AA]">
+                    <td colSpan={6} className="py-12 text-center text-sm text-[var(--mu)]">
                       <div className="inline-flex items-center gap-2">
-                        <span className="material-symbols-outlined text-lg animate-spin text-[#D4AF37]">
+                        <span className="material-symbols-outlined text-lg animate-spin text-[var(--pr)]">
                           progress_activity
                         </span>
                         <span>Cargando eventos desde Supabase Cloud...</span>
@@ -410,7 +410,7 @@ export default function EventosPage() {
                   </tr>
                 ) : eventosFiltrados.length > 0 ? (
                   eventosFiltrados.map((ev) => (
-                    <tr key={ev.id} className="hover:bg-[#1E1E1E]/50 transition-colors group">
+                    <tr key={ev.id} className="hover:bg-slate-50/80 dark:hover:bg-[var(--sf2)]/50 transition-colors group">
                       {/* Nombre y Locación */}
                       <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center gap-3">
@@ -419,15 +419,15 @@ export default function EventosPage() {
                               ev.estado === "en_curso"
                                 ? "bg-[#10B981] animate-pulse"
                                 : ev.estado === "planificado"
-                                ? "bg-[#D4AF37]"
+                                ? "bg-[var(--go)]"
                                 : "bg-[#71717A]"
                             }`}
                           />
                           <div className="flex flex-col">
-                            <span className="font-semibold text-sm text-[#FFFFFF] group-hover:text-[#D4AF37] transition-colors">
+                            <span className="font-semibold text-sm text-[var(--tx)] group-hover:text-[var(--pr)] transition-colors">
                               {ev.nombre}
                             </span>
-                            <span className="text-xs text-[#A1A1AA] flex items-center gap-1 mt-0.5">
+                            <span className="text-xs text-[var(--mu)] flex items-center gap-1 mt-0.5">
                               <span className="material-symbols-outlined text-xs text-[#71717A]">
                                 location_on
                               </span>
@@ -439,14 +439,14 @@ export default function EventosPage() {
 
                       {/* Tipo de Pantalla */}
                       <td className="py-4 px-4">
-                        <span className="text-xs text-[#FFFFFF]">
+                        <span className="text-xs text-[var(--tx)]">
                           {ev.tipo_pantalla || "No especificada"}
                         </span>
                       </td>
 
                       {/* Metraje */}
                       <td className="py-4 px-4">
-                        <span className="px-2.5 py-1 rounded-md bg-[#1E1E1E] border border-[#27272A] text-xs font-mono font-bold text-[#D4AF37]">
+                        <span className="px-2.5 py-1 rounded-md bg-[var(--sf2)] border border-[var(--bd)] text-xs font-mono font-bold text-[var(--pr)]">
                           {ev.metros_cuadrados || 0} m²
                         </span>
                       </td>
@@ -454,7 +454,7 @@ export default function EventosPage() {
                       {/* Fechas */}
                       <td className="py-4 px-4">
                         <div className="flex flex-col">
-                          <span className="text-xs text-[#FFFFFF]">
+                          <span className="text-xs text-[var(--tx)]">
                             {new Date(ev.fecha_inicio).toLocaleDateString("es-CL", {
                               day: "2-digit",
                               month: "short",
@@ -475,18 +475,18 @@ export default function EventosPage() {
                       {/* Estado */}
                       <td className="py-4 px-4">
                         {ev.estado === "en_curso" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#DCFCE7] border border-[#BBF7D0] text-[#15803D] dark:bg-[#10B981]/15 dark:border-[#10B981]/30 dark:text-[#10B981] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#10B981] animate-pulse" />
                             En Curso
                           </span>
                         ) : ev.estado === "planificado" ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#DBEAFE] border border-[#BFDBFE] text-[#1D4ED8] dark:bg-[#D4AF37]/15 dark:border-[#D4AF37]/30 dark:text-[#D4AF37] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] dark:bg-[#D4AF37]" />
                             Planificado
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#27272A] text-[#71717A] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#71717A]" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 dark:bg-[#27272A] dark:border-transparent dark:text-[#71717A] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-[#71717A]" />
                             Finalizado
                           </span>
                         )}
@@ -500,7 +500,7 @@ export default function EventosPage() {
                           onChange={(e) =>
                             handleCambiarEstado(ev.id, e.target.value as Evento["estado"])
                           }
-                          className="px-2.5 py-1.5 rounded-lg text-[16px] md:text-xs font-['Outfit'] uppercase tracking-wider font-semibold bg-[#1E1E1E] border border-[#27272A] hover:border-[#D4AF37] text-[#FFFFFF] cursor-pointer transition-all focus:outline-none"
+                          className="px-2.5 py-1.5 rounded-lg text-[16px] md:text-xs font-['Outfit'] uppercase tracking-wider font-semibold bg-white border border-slate-200 text-slate-900 shadow-sm hover:bg-slate-50 dark:bg-[var(--sf2)] dark:border-[var(--bd)] dark:text-[var(--tx)] dark:shadow-none dark:hover:border-[#D4AF37] cursor-pointer transition-all focus:outline-none"
                         >
                           <option value="en_curso">● En Curso</option>
                           <option value="planificado">● Planificado</option>
@@ -525,15 +525,15 @@ export default function EventosPage() {
       {/* ── Modal Nueva Producción ── */}
       {modalAbierto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-[#121212] border border-[#27272A] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-full max-w-lg bg-[var(--sf)] border border-[var(--bd)] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
             {/* Header Modal */}
-            <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--bd)] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                <div className="w-10 h-10 rounded-xl bg-[var(--go)]/15 border border-[var(--pr)]/30 flex items-center justify-center text-[var(--pr)]">
                   <span className="material-symbols-outlined text-xl">event_available</span>
                 </div>
                 <div>
-                  <h3 className="font-['Outfit'] text-lg font-semibold text-[#FFFFFF]">
+                  <h3 className="font-['Outfit'] text-lg font-semibold text-[var(--tx)]">
                     Registrar Nueva Producción
                   </h3>
                   <span className="text-[11px] text-[#71717A]">
@@ -544,7 +544,7 @@ export default function EventosPage() {
               <button
                 type="button"
                 onClick={() => setModalAbierto(false)}
-                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[var(--sf2)] hover:bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--tx)] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
@@ -553,7 +553,7 @@ export default function EventosPage() {
             {/* Formulario */}
             <form onSubmit={handleCrearEvento} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Nombre del Evento / Producción
                 </label>
                 <input
@@ -562,12 +562,12 @@ export default function EventosPage() {
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   placeholder="Ej: Lollapalooza 2026 · Escenario Perry's"
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] transition-all"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Locación / Recinto
                 </label>
                 <input
@@ -576,13 +576,13 @@ export default function EventosPage() {
                   value={locacion}
                   onChange={(e) => setLocacion(e.target.value)}
                   placeholder="Ej: Parque Bicentenario de Cerrillos, Santiago"
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                     Fecha y Hora de Inicio
                   </label>
                   <input
@@ -590,25 +590,25 @@ export default function EventosPage() {
                     required
                     value={fechaInicio}
                     onChange={(e) => setFechaInicio(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                     Fecha de Término (Opcional)
                   </label>
                   <input
                     type="datetime-local"
                     value={fechaTermino}
                     onChange={(e) => setFechaTermino(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                     Metros Cuadrados (m²)
                   </label>
                   <input
@@ -617,11 +617,11 @@ export default function EventosPage() {
                     step="1"
                     value={metrosCuadrados}
                     onChange={(e) => setMetrosCuadrados(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                  <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                     Estado Inicial
                   </label>
                   <select
@@ -629,7 +629,7 @@ export default function EventosPage() {
                     onChange={(e) =>
                       setEstadoInicial(e.target.value as "planificado" | "en_curso")
                     }
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                   >
                     <option value="planificado">● Planificado (Próximo)</option>
                     <option value="en_curso">● En Curso (Activar Ahora)</option>
@@ -638,13 +638,13 @@ export default function EventosPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Configuración Técnica
                 </label>
                 <select
                   value={tipoPantalla}
                   onChange={(e) => setTipoPantalla(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                 >
                   <option value="Pantalla Escenario P3.9 Outdoor">
                     Pantalla Escenario P3.9 Outdoor (Alta Luminosidad)
@@ -661,18 +661,18 @@ export default function EventosPage() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#27272A]">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--bd)]">
                 <button
                   type="button"
                   onClick={() => setModalAbierto(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[var(--mu)] hover:text-[var(--tx)] transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={guardando}
-                  className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all shadow-md shadow-[#D4AF37]/15 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[var(--go)] hover:bg-[#C5A059] text-[var(--gt)] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all card-shadow transition-shadow shadow-[#D4AF37]/15 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <span className={`material-symbols-outlined text-base ${guardando ? "animate-spin" : ""}`}>
                     {guardando ? "progress_activity" : "event_available"}
@@ -706,7 +706,7 @@ export default function EventosPage() {
           }}
         >
           <span>Alejandra Producciones SpA • Dirección y Operaciones Técnicas</span>
-          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[#D4AF37] font-semibold">
+          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[var(--pr)] font-semibold">
             Módulo de Producciones v1.0
           </span>
         </div>

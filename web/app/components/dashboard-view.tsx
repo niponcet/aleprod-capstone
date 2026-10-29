@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "./theme-toggle";
 
 export interface DashboardViewProps {
   user: {
@@ -58,7 +59,6 @@ export function DashboardView({
   const supabase = createClient();
 
   /* ─── State ─── */
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [filter, setFilter] = useState<"all" | "en_curso" | "finalizado">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [eventos, setEventos] = useState(initialEventos);
@@ -73,20 +73,6 @@ export function DashboardView({
   const [nuevosM2, setNuevosM2] = useState("50");
   const [nuevoTipo, setNuevoTipo] = useState("Pista de Baile LED");
   const [nuevaFecha, setNuevaFecha] = useState(new Date().toISOString().split("T")[0]);
-
-  // Load theme preference
-  useEffect(() => {
-    const saved = localStorage.getItem("aleprod-theme") as "dark" | "light" | null;
-    if (saved) {
-      setTheme(saved);
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("aleprod-theme", next);
-  };
 
   /* ─── Realtime Subscriptions ─── */
   useEffect(() => {
@@ -226,7 +212,7 @@ export function DashboardView({
     <>
         {/* Top bar */}
         <header
-          className="px-4 py-3 sm:px-8 flex flex-wrap items-center gap-3 border-b border-[var(--bd)] bg-[var(--sf)] sticky top-0 z-30"
+          className="px-4 py-3 sm:px-8 flex flex-wrap items-center gap-3 border-b border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-md sticky top-0 z-30 transition-colors"
         >
           {/* Search Input */}
           <div style={{ position: "relative", flex: "1 1 280px", maxWidth: "520px" }}>
@@ -235,7 +221,7 @@ export function DashboardView({
               height="18"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="var(--mu)"
+              stroke="var(--pr)"
               strokeWidth="1.9"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -270,34 +256,7 @@ export function DashboardView({
           <div style={{ flex: "1 1 0" }}></div>
 
           {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-            title={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-            style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "12px",
-              border: "1px solid var(--bd)",
-              background: "var(--sf2)",
-              color: "var(--tx)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            {theme === "dark" ? (
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
-              </svg>
-            ) : (
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
-              </svg>
-            )}
-          </button>
+          <ThemeToggle className="!w-11 !h-11" />
 
           {/* Notifications Button */}
           <button
@@ -384,7 +343,7 @@ export function DashboardView({
           {/* Hero: Montaje Activo */}
           <section
             aria-label="Montaje activo"
-            className="bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] p-4 sm:p-6 flex flex-col lg:flex-row gap-6 items-stretch"
+            className="bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] p-4 sm:p-6 flex flex-col lg:flex-row gap-6 items-stretch card-shadow transition-shadow"
           >
             {/* Left side info */}
             <div
@@ -404,8 +363,8 @@ export function DashboardView({
                     gap: "8px",
                     padding: "6px 12px",
                     borderRadius: "999px",
-                    background: "var(--prs)",
-                    color: "var(--lk)",
+                    background: "var(--blue-badge-bg)",
+                    color: "var(--blue-text)",
                     fontSize: "11.5px",
                     fontWeight: 700,
                     letterSpacing: ".08em",
@@ -508,8 +467,8 @@ export function DashboardView({
               {/* 2. Operativos disponibles (Fila 1, Col 2) */}
               <div
                 style={{
-                  background: "var(--oks)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                  background: "var(--ok-badge-bg)",
+                  border: "1px solid var(--bd)",
                   borderRadius: "14px",
                   padding: "16px",
                   display: "flex",
@@ -517,7 +476,7 @@ export function DashboardView({
                   gap: "6px",
                 }}
               >
-                <span style={{ fontSize: "12.5px", color: "var(--ok)", fontWeight: 600 }}>
+                <span style={{ fontSize: "12.5px", color: "var(--ok-text)", fontWeight: 600 }}>
                   Operativos disponibles
                 </span>
                 <span
@@ -530,7 +489,7 @@ export function DashboardView({
                 >
                   {operativasM2} m²
                 </span>
-                <span style={{ fontSize: "12.5px", color: "var(--ok)" }}>
+                <span style={{ fontSize: "12.5px", color: "var(--ok-text)" }}>
                   {operativas} palmetas · {pctDisponible}% disponible
                 </span>
               </div>
@@ -538,8 +497,8 @@ export function DashboardView({
               {/* 3. En mantención (Fila 2, Col 1) */}
               <div
                 style={{
-                  background: "var(--was)",
-                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  background: "var(--wa-badge-bg)",
+                  border: "1px solid var(--bd)",
                   borderRadius: "14px",
                   padding: "16px",
                   display: "flex",
@@ -547,7 +506,7 @@ export function DashboardView({
                   gap: "6px",
                 }}
               >
-                <span style={{ fontSize: "12.5px", color: "var(--wa)", fontWeight: 600 }}>
+                <span style={{ fontSize: "12.5px", color: "var(--wa-text)", fontWeight: 600 }}>
                   En mantención
                 </span>
                 <span
@@ -560,7 +519,7 @@ export function DashboardView({
                 >
                   {mantencionM2} m²
                 </span>
-                <span style={{ fontSize: "12.5px", color: "var(--wa)" }}>
+                <span style={{ fontSize: "12.5px", color: "var(--wa-text)" }}>
                   {enMantencion} palmeta{enMantencion !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -568,8 +527,8 @@ export function DashboardView({
               {/* 4. Dados de baja (Fila 2, Col 2) */}
               <div
                 style={{
-                  background: "var(--ers)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  background: "var(--er-badge-bg)",
+                  border: "1px solid var(--bd)",
                   borderRadius: "14px",
                   padding: "16px",
                   display: "flex",
@@ -577,7 +536,7 @@ export function DashboardView({
                   gap: "6px",
                 }}
               >
-                <span style={{ fontSize: "12.5px", color: "var(--er)", fontWeight: 600 }}>
+                <span style={{ fontSize: "12.5px", color: "var(--er-text)", fontWeight: 600 }}>
                   Dados de baja
                 </span>
                 <span
@@ -590,7 +549,7 @@ export function DashboardView({
                 >
                   {(dadasDeBaja * 0.25).toFixed(1)} m²
                 </span>
-                <span style={{ fontSize: "12.5px", color: "var(--er)" }}>
+                <span style={{ fontSize: "12.5px", color: "var(--er-text)" }}>
                   {dadasDeBaja} palmeta{dadasDeBaja !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -605,7 +564,7 @@ export function DashboardView({
             {/* Eventos registrados */}
             <Link
               href="/eventos"
-              className="dash-row"
+              className="dash-row card-shadow transition-shadow"
               style={{
                 background: "var(--sf)",
                 border: "1px solid var(--bd)",
@@ -627,8 +586,8 @@ export function DashboardView({
                     width: "38px",
                     height: "38px",
                     borderRadius: "11px",
-                    background: "var(--prs)",
-                    color: "var(--lk)",
+                    background: "var(--blue-badge-bg)",
+                    color: "var(--blue-text)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -651,7 +610,7 @@ export function DashboardView({
             {/* Parque de palmetas */}
             <Link
               href="/palmetas"
-              className="dash-row"
+              className="dash-row card-shadow transition-shadow"
               style={{
                 background: "var(--sf)",
                 border: "1px solid var(--bd)",
@@ -673,8 +632,8 @@ export function DashboardView({
                     width: "38px",
                     height: "38px",
                     borderRadius: "11px",
-                    background: "var(--oks)",
-                    color: "var(--ok)",
+                    background: "var(--ok-badge-bg)",
+                    color: "var(--ok-text)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -700,7 +659,7 @@ export function DashboardView({
             {/* Incidencias en terreno */}
             <Link
               href="/incidencias"
-              className="dash-row"
+              className="dash-row card-shadow transition-shadow"
               style={{
                 background: "var(--sf)",
                 border: "1px solid var(--bd)",
@@ -753,7 +712,7 @@ export function DashboardView({
 
             {/* Stock de repuestos */}
             <div
-              className="dash-row"
+              className="dash-row card-shadow transition-shadow"
               style={{
                 background: "var(--sf)",
                 border: "1px solid var(--bd)",
@@ -810,7 +769,7 @@ export function DashboardView({
             {/* Left: Eventos y producciones */}
             <section
               aria-label="Eventos"
-              className="w-full lg:flex-1 min-w-0 bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] overflow-hidden"
+              className="w-full lg:flex-1 min-w-0 bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] overflow-hidden card-shadow transition-shadow"
             >
               <div
                 style={{
@@ -891,7 +850,7 @@ export function DashboardView({
                       <Link
                         key={ev.id}
                         href="/eventos"
-                        className="dash-row"
+                        className="dash-row card-shadow transition-shadow"
                         style={{
                           display: "flex",
                           flexWrap: "wrap",
@@ -948,8 +907,8 @@ export function DashboardView({
                             fontWeight: 700,
                             letterSpacing: ".04em",
                             whiteSpace: "nowrap",
-                            background: isLive ? "var(--prs)" : isDone ? "var(--sf2)" : "var(--was)",
-                            color: isLive ? "var(--lk)" : isDone ? "var(--mu)" : "var(--wa)",
+                            background: isLive ? "var(--blue-badge-bg)" : isDone ? "var(--neutral-badge-bg)" : "var(--wa-badge-bg)",
+                            color: isLive ? "var(--blue-text)" : isDone ? "var(--neutral-badge-text)" : "var(--wa-text)",
                           }}
                         >
                           {isLive ? "EN CURSO" : isDone ? "FINALIZADO" : "PLANIFICADO"}
@@ -991,6 +950,7 @@ export function DashboardView({
               {/* Requiere atención */}
               <section
                 aria-label="Requiere atención"
+                className="card-shadow transition-shadow"
                 style={{
                   background: "var(--sf)",
                   border: "1px solid var(--bd)",
@@ -1009,8 +969,8 @@ export function DashboardView({
                       fontWeight: 700,
                       padding: "3px 10px",
                       borderRadius: "999px",
-                      background: enMantencion > 0 ? "var(--was)" : "var(--oks)",
-                      color: enMantencion > 0 ? "var(--wa)" : "var(--ok)",
+                      background: enMantencion > 0 ? "var(--wa-badge-bg)" : "var(--ok-badge-bg)",
+                      color: enMantencion > 0 ? "var(--wa-text)" : "var(--ok-text)",
                     }}
                   >
                     {enMantencion > 0 ? `${enMantencion} palmeta${enMantencion > 1 ? "s" : ""}` : "Al día"}
@@ -1027,7 +987,7 @@ export function DashboardView({
                         <Link
                           key={p.id}
                           href="/incidencias"
-                          className="dash-row"
+                          className="dash-row card-shadow transition-shadow"
                           style={{
                             display: "flex",
                             gap: "12px",
@@ -1112,6 +1072,7 @@ export function DashboardView({
               {/* Estado del parque */}
               <section
                 aria-label="Estado del parque"
+                className="card-shadow transition-shadow"
                 style={{
                   background: "var(--sf)",
                   border: "1px solid var(--bd)",

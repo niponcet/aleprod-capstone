@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "./theme-toggle";
 
 interface SidebarProps {
   initialCounts?: {
@@ -314,7 +315,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden w-8 h-8 rounded-lg bg-[var(--sf2)] text-[var(--mu)] hover:text-white flex items-center justify-center border border-[var(--bd)] cursor-pointer"
+            className="md:hidden w-8 h-8 rounded-lg bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--pr)] flex items-center justify-center border border-[var(--bd)] cursor-pointer"
             aria-label="Cerrar menú"
           >
             <span className="material-symbols-outlined text-lg">close</span>
@@ -498,6 +499,32 @@ export function Sidebar({
 
       {/* Sidebar Footer */}
       <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "12px" }}>
+        {/* Selector de Tema (Modo Claro / Modo Oscuro) */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "8px 12px",
+            borderRadius: "12px",
+            background: "var(--sf2)",
+            border: "1px solid var(--bd)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "18px", color: "var(--mu)" }}
+            >
+              palette
+            </span>
+            <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--tx)" }}>
+              Tema
+            </span>
+          </div>
+          <ThemeToggle />
+        </div>
+
         {/* Sincronización Status */}
         <div
           style={{
@@ -564,6 +591,7 @@ export function Sidebar({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
+                color: "var(--tx)",
               }}
             >
               {nombre}

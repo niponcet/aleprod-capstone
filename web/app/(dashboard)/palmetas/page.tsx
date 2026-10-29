@@ -26,23 +26,23 @@ const ESTADO_CONFIG: Record<
 > = {
   operativo: {
     label: "Operativa",
-    color: "#10B981",
-    bg: "bg-[#10B981]/12",
-    border: "border-[#10B981]/30",
+    color: "var(--ok-text)",
+    bg: "bg-[#DCFCE7] dark:bg-[var(--ok-badge-bg)] text-[#15803D] dark:text-[var(--ok-text)]",
+    border: "border-[#BBF7D0] dark:border-[var(--ok)]/30",
     icon: "check_circle",
   },
   mantencion: {
     label: "En Mantención",
-    color: "#F59E0B",
-    bg: "bg-[#F59E0B]/12",
-    border: "border-[#F59E0B]/30",
+    color: "var(--wa-text)",
+    bg: "bg-[#FEF3C7] dark:bg-[var(--wa-badge-bg)] text-[#B45309] dark:text-[var(--wa-text)]",
+    border: "border-[#FDE68A] dark:border-[var(--wa)]/30",
     icon: "engineering",
   },
   baja: {
     label: "Baja Definitiva",
-    color: "#EF4444",
-    bg: "bg-[#EF4444]/12",
-    border: "border-[#EF4444]/30",
+    color: "var(--er-text)",
+    bg: "bg-[#FEE2E2] dark:bg-[var(--er-badge-bg)] text-[#B91C1C] dark:text-[var(--er-text)]",
+    border: "border-[#FECACA] dark:border-[var(--er)]/30",
     icon: "cancel",
   },
 };
@@ -175,7 +175,7 @@ export default function PalmetasPage() {
     <>
         {/* ── Ambient Glow ── */}
         <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[150px]" />
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[var(--pr-glow)] rounded-full blur-[150px]" />
           <div className="absolute top-2/3 -right-40 w-[400px] h-[400px] bg-[#10B981]/5 rounded-full blur-[160px]" />
         </div>
 
@@ -219,7 +219,7 @@ export default function PalmetasPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link
               href="/palmetas/etiquetado"
-              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[#D4AF37]/40 bg-gradient-to-r from-[#D4AF37]/15 to-[#D4AF37]/5 text-[var(--pr)] text-xs font-bold hover:border-[#D4AF37] hover:brightness-110 active:scale-95 transition-all shadow-sm no-underline"
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--pr)]/40 bg-[var(--prs)] text-[var(--pr)] text-xs font-bold hover:border-[var(--pr)] hover:brightness-110 active:scale-95 transition-all shadow-sm no-underline"
               title="Centro de Etiquetado y Serialización QR"
             >
               <span className="material-symbols-outlined text-base">
@@ -231,7 +231,7 @@ export default function PalmetasPage() {
             <button
               type="button"
               onClick={() => fetchPalmetas()}
-              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[#3F3F46] active:scale-95 transition-all shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[var(--border-light)] active:scale-95 transition-all shadow-sm cursor-pointer"
               title="Recargar datos del inventario"
             >
               <span className="material-symbols-outlined text-base">refresh</span>
@@ -252,14 +252,14 @@ export default function PalmetasPage() {
 
         {/* Title Banner (Limpio y directo, sin botones duplicados) */}
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--prs)] border border-[var(--pr)]/25 text-[var(--pr)] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--go)]" />
             Activos Serializados con QR
           </div>
-          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--tx)]">
             Parque de Palmetas LED
           </h1>
-          <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-[var(--mu)] mt-1 max-w-2xl">
             Registro, trazabilidad y gestión de estado de las baldosas LED del inventario centralizado.
           </p>
         </div>
@@ -267,80 +267,80 @@ export default function PalmetasPage() {
         {/* ── KPIs ── */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {/* Total */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#27272A] shadow-md flex items-center justify-between">
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[var(--bd)] card-shadow transition-shadow flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#A1A1AA] font-semibold">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[var(--mu)] font-semibold">
                 Total Parque
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {totalPalmetas}
               </span>
               <span className="text-[11px] text-[#71717A] mt-0.5">Unidades registradas</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#27272A]/50 border border-[#27272A] flex items-center justify-center text-[#D4AF37]">
+            <div className="w-12 h-12 rounded-xl bg-[var(--kpi-total-icon-bg)] border border-[var(--kpi-total-icon-border)] text-[var(--kpi-total-icon-color)] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">grid_view</span>
             </div>
           </div>
 
           {/* Operativas */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#10B981]/30 shadow-md flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/10 to-transparent pointer-events-none" />
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[#10B981]/30 card-shadow transition-shadow flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/[0.05] dark:from-[#10B981]/10 to-transparent pointer-events-none" />
             <div className="flex flex-col">
               <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#10B981] font-semibold flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#10B981]" />
                 Operativas
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {operativas}
               </span>
               <span className="text-[11px] text-[#10B981]/80 mt-0.5">Listas para montaje</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#10B981]/15 border border-[#10B981]/30 flex items-center justify-center text-[#10B981]">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 dark:bg-[#10B981]/15 dark:border-[#10B981]/30 dark:text-[#10B981] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">check_circle</span>
             </div>
           </div>
 
           {/* En Mantención */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#F59E0B]/25 shadow-md flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#F59E0B]/08 to-transparent pointer-events-none" />
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[#F59E0B]/25 card-shadow transition-shadow flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-amber-500/[0.05] dark:from-[#F59E0B]/08 to-transparent pointer-events-none" />
             <div className="flex flex-col">
               <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#F59E0B] font-semibold flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
                 En Mantención
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {enTaller}
               </span>
               <span className="text-[11px] text-[#F59E0B]/80 mt-0.5">En taller o con avería</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#F59E0B]/12 border border-[#F59E0B]/25 flex items-center justify-center text-[#F59E0B]">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 dark:bg-[#F59E0B]/12 dark:border-[#F59E0B]/25 dark:text-[#F59E0B] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">engineering</span>
             </div>
           </div>
 
           {/* De Baja */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#EF4444]/25 shadow-md flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#EF4444]/08 to-transparent pointer-events-none" />
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[#EF4444]/25 card-shadow transition-shadow flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-red-500/[0.05] dark:from-[#EF4444]/08 to-transparent pointer-events-none" />
             <div className="flex flex-col">
               <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#EF4444] font-semibold flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
                 De Baja
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {deBaja}
               </span>
               <span className="text-[11px] text-[#EF4444]/80 mt-0.5">Fuera de servicio</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#EF4444]/12 border border-[#EF4444]/25 flex items-center justify-center text-[#EF4444]">
+            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 text-red-600 dark:bg-[#EF4444]/12 dark:border-[#EF4444]/25 dark:text-[#EF4444] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">cancel</span>
             </div>
           </div>
         </section>
 
         {/* ── Filter Bar ── */}
-        <div className="p-4 rounded-xl bg-[#121212] border border-[#27272A] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-md">
+        <div className="p-4 rounded-xl bg-white dark:bg-[var(--sf)] border border-slate-200 dark:border-[var(--bd)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 card-shadow transition-shadow">
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 bg-[#1E1E1E] p-1 rounded-lg border border-[#27272A] overflow-x-auto">
+          <div className="flex items-center gap-1.5 bg-[var(--sf2)] p-1 rounded-lg border border-[var(--bd)] overflow-x-auto">
             {(
               [
                 { key: "todas", label: `Todas (${totalPalmetas})` },
@@ -356,13 +356,13 @@ export default function PalmetasPage() {
                 className={`px-3.5 py-1.5 rounded-md text-xs font-['Outfit'] font-semibold tracking-wider uppercase transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                   filtro === tab.key
                     ? tab.key === "todas"
-                      ? "bg-[#D4AF37] text-[#0A0A0A] shadow-sm"
+                      ? "bg-[var(--go)] text-[var(--gt)] shadow-sm"
                       : tab.key === "operativo"
                       ? "bg-[#10B981] text-white shadow-sm"
                       : tab.key === "mantencion"
-                      ? "bg-[#78580a] text-[#F7EEDB] border border-[#F59E0B]/40 shadow-sm"
-                      : "bg-[#4a1c1a] text-[#F7EEDB] border border-[#EF4444]/40 shadow-sm"
-                    : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+                      ? "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-[#78580a] dark:text-[#F7EEDB] dark:border-[#F59E0B]/40 shadow-sm"
+                      : "bg-red-100 text-red-800 border border-red-200 dark:bg-[#4a1c1a] dark:text-[#F7EEDB] dark:border-[#EF4444]/40 shadow-sm"
+                    : "text-[var(--mu)] hover:text-[var(--tx)]"
                 }`}
               >
                 {tab.dot && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tab.dot }} />}
@@ -381,17 +381,17 @@ export default function PalmetasPage() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por código (PL-001), UUID o lote..."
-              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
+              className="w-full h-10 pl-10 pr-4 bg-[var(--sf2)] border border-[var(--bd)] rounded-lg text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] focus:ring-1 focus:ring-[var(--pr)]/30 transition-all"
             />
           </div>
         </div>
 
         {/* ── Table ── */}
-        <div className="w-full rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden">
+        <div className="w-full rounded-2xl bg-white dark:bg-[var(--sf)] border border-slate-200 dark:border-[var(--bd)] card-shadow overflow-hidden">
           <div className="w-full overflow-x-auto pb-2">
             <table className="w-full min-w-[700px] text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold">
+                <tr className="border-b border-slate-200 dark:border-[var(--bd)] bg-slate-50 dark:bg-[#16161a] text-slate-500 dark:text-[var(--mu)] font-['Outfit'] uppercase tracking-wider font-semibold text-xs">
                   <th className="py-3.5 px-4 sm:px-6">Código / UUID</th>
                   <th className="py-3.5 px-4">Estado</th>
                   <th className="py-3.5 px-4">Lote</th>
@@ -400,12 +400,12 @@ export default function PalmetasPage() {
                   <th className="py-3.5 px-4 sm:px-6 text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#27272A]">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]">
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="py-16 text-center">
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-2 border-[var(--pr)] border-t-transparent rounded-full animate-spin" />
                         <span className="text-sm text-[#71717A]">Cargando inventario desde Supabase...</span>
                       </div>
                     </td>
@@ -416,16 +416,16 @@ export default function PalmetasPage() {
                     return (
                       <tr
                         key={p.id}
-                        className="hover:bg-[#1E1E1E]/50 transition-colors group"
+                        className="hover:bg-slate-50/80 dark:hover:bg-[var(--sf2)]/50 transition-colors group"
                       >
                         {/* Código / UUID */}
                         <td className="py-4 px-4 sm:px-6">
                           <div className="flex items-center gap-3">
-                            <div className="min-w-[56px] h-9 px-2.5 rounded-lg bg-[#1E1E1E] border border-[#27272A] flex items-center justify-center text-[#D4AF37] font-['Outfit'] font-bold text-xs tracking-wide shadow-inner shrink-0">
+                            <div className="min-w-[56px] h-9 px-2.5 rounded-lg bg-slate-100 dark:bg-[var(--sf2)] border border-slate-200 dark:border-[var(--bd)] flex items-center justify-center text-[var(--pr)] font-['Outfit'] font-bold text-xs tracking-wide shadow-inner shrink-0">
                               {p.codigo_visible}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-semibold text-sm text-[#FFFFFF] group-hover:text-[#D4AF37] transition-colors">
+                              <span className="font-semibold text-sm text-[var(--tx)] group-hover:text-[var(--pr)] transition-colors">
                                 {p.codigo_visible}
                               </span>
                               <span className="font-mono text-[10px] text-[#71717A]">
@@ -451,21 +451,21 @@ export default function PalmetasPage() {
 
                         {/* Lote */}
                         <td className="py-4 px-4">
-                          <span className="text-xs text-[#A1A1AA] font-medium">
+                          <span className="text-xs text-[var(--mu)] font-medium">
                             {p.lote_fabricacion || "—"}
                           </span>
                         </td>
 
                         {/* Ubicación */}
                         <td className="py-4 px-4">
-                          <span className="text-xs text-[#A1A1AA]">
+                          <span className="text-xs text-[var(--mu)]">
                             {UBICACION_LABELS[p.ubicacion_actual || ""] || p.ubicacion_actual || "—"}
                           </span>
                         </td>
 
                         {/* Última Revisión */}
                         <td className="py-4 px-4">
-                          <span className="text-xs text-[#A1A1AA]">
+                          <span className="text-xs text-[var(--mu)]">
                             {p.ultima_revision
                               ? new Date(p.ultima_revision).toLocaleDateString("es-CL", {
                                   day: "2-digit",
@@ -481,7 +481,7 @@ export default function PalmetasPage() {
                           <button
                             type="button"
                             onClick={() => openDetail(p)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#D4AF37] border border-[#27272A] hover:border-[#D4AF37]/40"
+                            className="px-3 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-[var(--sf2)] dark:border-[var(--bd)] dark:text-[var(--mu)] dark:hover:text-[var(--pr)]"
                           >
                             <span className="material-symbols-outlined text-sm">
                               open_in_new
@@ -507,11 +507,11 @@ export default function PalmetasPage() {
 
           {/* Table Footer */}
           {!loading && palmetasFiltradas.length > 0 && (
-            <div className="px-6 py-3 border-t border-[#27272A] bg-[#16161a] flex items-center justify-between">
+            <div className="px-6 py-3 border-t border-slate-200 dark:border-[var(--bd)] bg-slate-50 dark:bg-[#16161a] flex items-center justify-between">
               <span className="text-[11px] text-[#71717A] font-['Outfit']">
                 Mostrando {palmetasFiltradas.length} de {totalPalmetas} palmetas
               </span>
-              <span className="text-[10px] text-[#D4AF37] font-['Outfit'] uppercase tracking-wider font-semibold">
+              <span className="text-[10px] text-[var(--pr)] font-['Outfit'] uppercase tracking-wider font-semibold">
                 Datos en tiempo real • Supabase Cloud
               </span>
             </div>
@@ -522,15 +522,15 @@ export default function PalmetasPage() {
       {/* ── Detail / State-Change Modal ── */}
       {palmetaSeleccionada && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-[#121212] border border-[#27272A] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-fade-in-up">
+          <div className="w-full max-w-lg bg-[var(--sf)] border border-[var(--bd)] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-fade-in-up">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--bd)] pb-4">
               <div className="flex items-center gap-3">
-                <div className="min-w-[64px] h-10 px-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-['Outfit'] font-bold text-sm tracking-wide shrink-0">
+                <div className="min-w-[64px] h-10 px-3 rounded-xl bg-[var(--prs)] border border-[var(--pr)]/30 flex items-center justify-center text-[var(--pr)] font-['Outfit'] font-bold text-sm tracking-wide shrink-0">
                   {palmetaSeleccionada.codigo_visible}
                 </div>
                 <div>
-                  <h3 className="font-['Outfit'] text-lg font-semibold text-[#FFFFFF]">
+                  <h3 className="font-['Outfit'] text-lg font-semibold text-[var(--tx)]">
                     Ficha Técnica — {palmetaSeleccionada.codigo_visible}
                   </h3>
                   <span className="text-[11px] text-[#71717A] font-mono">
@@ -541,14 +541,14 @@ export default function PalmetasPage() {
               <button
                 type="button"
                 onClick={() => setPalmetaSeleccionada(null)}
-                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[var(--sf2)] hover:bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--tx)] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
 
             {/* Info Grid */}
-            <div className="grid grid-cols-2 gap-3 text-xs bg-[#1E1E1E]/60 p-4 rounded-xl border border-[#27272A]">
+            <div className="grid grid-cols-2 gap-3 text-xs bg-[var(--sf2)]/60 p-4 rounded-xl border border-[var(--bd)]">
               <div>
                 <span className="text-[#71717A] block">Estado Actual:</span>
                 <span
@@ -560,7 +560,7 @@ export default function PalmetasPage() {
               </div>
               <div>
                 <span className="text-[#71717A] block">Ubicación:</span>
-                <span className="font-medium text-[#FFFFFF] mt-0.5 block">
+                <span className="font-medium text-[var(--tx)] mt-0.5 block">
                   {UBICACION_LABELS[palmetaSeleccionada.ubicacion_actual || ""] ||
                     palmetaSeleccionada.ubicacion_actual ||
                     "Sin asignar"}
@@ -568,13 +568,13 @@ export default function PalmetasPage() {
               </div>
               <div>
                 <span className="text-[#71717A] block">Lote de Fabricación:</span>
-                <span className="text-[#FFFFFF] mt-0.5 block">
+                <span className="text-[var(--tx)] mt-0.5 block">
                   {palmetaSeleccionada.lote_fabricacion || "No registrado"}
                 </span>
               </div>
               <div>
                 <span className="text-[#71717A] block">Última Revisión:</span>
-                <span className="text-[#FFFFFF] mt-0.5 block">
+                <span className="text-[var(--tx)] mt-0.5 block">
                   {palmetaSeleccionada.ultima_revision
                     ? new Date(palmetaSeleccionada.ultima_revision).toLocaleDateString("es-CL", {
                         day: "2-digit",
@@ -588,7 +588,7 @@ export default function PalmetasPage() {
               </div>
               <div>
                 <span className="text-[#71717A] block">Fecha de Alta:</span>
-                <span className="text-[#FFFFFF] mt-0.5 block">
+                <span className="text-[var(--tx)] mt-0.5 block">
                   {new Date(palmetaSeleccionada.created_at).toLocaleDateString("es-CL", {
                     day: "2-digit",
                     month: "short",
@@ -598,7 +598,7 @@ export default function PalmetasPage() {
               </div>
               <div>
                 <span className="text-[#71717A] block">Código QR (UUID):</span>
-                <span className="text-[#D4AF37] mt-0.5 block font-mono text-[10px]">
+                <span className="text-[var(--pr)] mt-0.5 block font-mono text-[10px]">
                   {palmetaSeleccionada.qr_uuid}
                 </span>
               </div>
@@ -606,7 +606,7 @@ export default function PalmetasPage() {
 
             {/* State Change Form */}
             <div className="flex flex-col gap-3">
-              <span className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+              <span className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                 Cambiar Estado Operativo
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -623,10 +623,10 @@ export default function PalmetasPage() {
                         disabled={isCurrent}
                         className={`px-3 py-2.5 rounded-xl text-xs font-['Outfit'] font-semibold tracking-wider uppercase transition-all flex items-center gap-2 cursor-pointer border ${
                           isCurrent
-                            ? "opacity-40 cursor-not-allowed bg-[#1E1E1E] border-[#27272A] text-[#71717A]"
+                            ? "opacity-40 cursor-not-allowed bg-[var(--sf2)] border-[var(--bd)] text-[#71717A]"
                             : isSelected
-                            ? `${cfg.bg} ${cfg.border} shadow-md`
-                            : "bg-[#1E1E1E] border-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] hover:border-[#3F3F46]"
+                            ? `${cfg.bg} ${cfg.border} card-shadow transition-shadow`
+                            : "bg-[var(--sf2)] border-[var(--bd)] text-[var(--mu)] hover:text-[var(--tx)] hover:border-[var(--border-light)]"
                         }`}
                         style={isSelected && !isCurrent ? { color: cfg.color } : undefined}
                       >
@@ -654,7 +654,7 @@ export default function PalmetasPage() {
                     id="ubicacion-select"
                     value={nuevaUbicacion}
                     onChange={(e) => setNuevaUbicacion(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer"
+                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-lg text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] focus:ring-1 focus:ring-[var(--pr)]/30 transition-all cursor-pointer"
                   >
                     <option value="bodega_central">Bodega Central</option>
                     <option value="en_evento">En Evento</option>
@@ -665,11 +665,11 @@ export default function PalmetasPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#27272A]">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--bd)]">
               <button
                 type="button"
                 onClick={() => setPalmetaSeleccionada(null)}
-                className="px-4 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[var(--mu)] hover:text-[var(--tx)] transition-colors cursor-pointer"
               >
                 Cerrar
               </button>
@@ -679,7 +679,7 @@ export default function PalmetasPage() {
                   type="button"
                   disabled={cambiandoEstado}
                   onClick={handleUpdateEstado}
-                  className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all shadow-lg shadow-[#D4AF37]/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  className="px-4 py-2 rounded-xl bg-[var(--go)] hover:brightness-105 text-[var(--gt)] text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all shadow-lg shadow-[var(--pr)]/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                 >
                   {cambiandoEstado ? (
                     <>
@@ -720,7 +720,7 @@ export default function PalmetasPage() {
           }}
         >
           <span>Alejandra Producciones SpA • Dirección y Operaciones Técnicas</span>
-          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[#D4AF37] font-semibold">
+          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[var(--pr)] font-semibold">
             Módulo de Inventario Palmetas LED v1.0
           </span>
         </div>

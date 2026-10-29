@@ -171,7 +171,7 @@ export default function CentroEtiquetadoPage() {
     <>
       {/* ── Toast de Copiado ── */}
       {copiadoToast && (
-        <div className="fixed top-24 right-8 z-50 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-[#0A0A0A] text-xs font-['Outfit'] font-bold tracking-wide shadow-2xl flex items-center gap-2 animate-fade-in-up print:hidden">
+        <div className="fixed top-24 right-8 z-50 px-4 py-2.5 rounded-xl bg-[var(--go)] text-[var(--gt)] text-xs font-['Outfit'] font-bold tracking-wide shadow-2xl flex items-center gap-2 animate-fade-in-up print:hidden">
           <span className="material-symbols-outlined text-base">check_circle</span>
           {copiadoToast}
         </div>
@@ -228,7 +228,7 @@ export default function CentroEtiquetadoPage() {
 
       {/* ── Ambient Glow (Solo pantalla) ── */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden ambient-glow print:hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/8 rounded-full blur-[150px]" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[var(--pr-glow)] rounded-full blur-[150px]" />
         <div className="absolute top-2/3 -right-40 w-[400px] h-[400px] bg-[#10B981]/5 rounded-full blur-[160px]" />
       </div>
 
@@ -298,7 +298,7 @@ export default function CentroEtiquetadoPage() {
               textDecoration: "none",
               transition: "all 0.15s ease",
             }}
-            className="hover:border-[#3F3F46]"
+            className="hover:border-[var(--border-light)]"
           >
             <span className="material-symbols-outlined text-base">arrow_back</span>
             Volver al Inventario
@@ -338,28 +338,28 @@ export default function CentroEtiquetadoPage() {
         {/* Banner de Presentación */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--prs)] border border-[var(--pr)]/25 text-[var(--pr)] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--go)]" />
               Emisión de Identidad Física para Palmetas LED
             </div>
-            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+            <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--tx)]">
               Centro de Etiquetado y Serialización QR
             </h1>
-            <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1 max-w-3xl">
-              Genera planillas listas para impresión láser/adhesiva con códigos QR vectoriales y códigos cortos legibles (<code className="text-[#D4AF37] font-mono font-semibold">PL-XXXXXX</code>). Las palmetas vírgenes no tocan la BD hasta ser escaneadas en terreno con el Modo Ráfaga (HU-13).
+            <p className="text-xs sm:text-sm text-[var(--mu)] mt-1 max-w-3xl">
+              Genera planillas listas para impresión láser/adhesiva con códigos QR vectoriales y códigos cortos legibles (<code className="text-[var(--pr)] font-mono font-semibold">PL-XXXXXX</code>). Las palmetas vírgenes no tocan la BD hasta ser escaneadas en terreno con el Modo Ráfaga (HU-13).
             </p>
           </div>
 
           {/* KPI Resumen */}
-          <div className="p-3.5 px-5 rounded-2xl bg-[#121212] border border-[#27272A] flex items-center gap-4 self-start md:self-auto shrink-0 shadow-lg">
-            <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+          <div className="p-3.5 px-5 rounded-2xl bg-[var(--sf)] border border-[var(--bd)] flex items-center gap-4 self-start md:self-auto shrink-0 shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-[var(--prs)] border border-[var(--pr)]/30 flex items-center justify-center text-[var(--pr)]">
               <span className="material-symbols-outlined text-xl">qr_code_scanner</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10.5px] uppercase font-['Outfit'] tracking-wider text-[#A1A1AA] font-semibold">
+              <span className="text-[10.5px] uppercase font-['Outfit'] tracking-wider text-[var(--mu)] font-semibold">
                 Stickers en Planilla
               </span>
-              <span className="text-2xl font-bold font-['Outfit'] text-[#FFFFFF] leading-tight">
+              <span className="text-2xl font-bold font-['Outfit'] text-[var(--tx)] leading-tight">
                 {stickersActivos.length}
               </span>
             </div>
@@ -367,14 +367,14 @@ export default function CentroEtiquetadoPage() {
         </div>
 
         {/* ── Tabs Selector ── */}
-        <div className="flex items-center gap-2 border-b border-[#27272A] pb-3 print:hidden">
+        <div className="flex items-center gap-2 border-b border-[var(--bd)] pb-3 print:hidden">
           <button
             type="button"
             onClick={() => setTabActiva("nuevo")}
             className={`px-4 py-2 rounded-xl text-xs font-['Outfit'] font-bold tracking-wider uppercase transition-all flex items-center gap-2 cursor-pointer ${
               tabActiva === "nuevo"
-                ? "bg-[#D4AF37] text-[#0A0A0A] shadow-md shadow-[#D4AF37]/20"
-                : "bg-[#1E1E1E] text-[#A1A1AA] hover:text-[#FFFFFF] border border-[#27272A]"
+                ? "bg-[var(--go)] text-[var(--gt)] card-shadow transition-shadow shadow-[var(--pr)]/20"
+                : "bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--tx)] border border-[var(--bd)]"
             }`}
           >
             <span className="material-symbols-outlined text-base">add_circle</span>
@@ -386,8 +386,8 @@ export default function CentroEtiquetadoPage() {
             onClick={() => setTabActiva("reimpresion")}
             className={`px-4 py-2 rounded-xl text-xs font-['Outfit'] font-bold tracking-wider uppercase transition-all flex items-center gap-2 cursor-pointer ${
               tabActiva === "reimpresion"
-                ? "bg-[#D4AF37] text-[#0A0A0A] shadow-md shadow-[#D4AF37]/20"
-                : "bg-[#1E1E1E] text-[#A1A1AA] hover:text-[#FFFFFF] border border-[#27272A]"
+                ? "bg-[var(--go)] text-[var(--gt)] card-shadow transition-shadow shadow-[var(--pr)]/20"
+                : "bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--tx)] border border-[var(--bd)]"
             }`}
           >
             <span className="material-symbols-outlined text-base">history</span>
@@ -404,11 +404,11 @@ export default function CentroEtiquetadoPage() {
         {tabActiva === "nuevo" && (
           <div className="flex flex-col gap-5 print:hidden">
             {/* Panel de Configuración de Lote */}
-            <div className="p-5 rounded-2xl bg-[#121212] border border-[#27272A] shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="p-5 rounded-2xl bg-[var(--sf)] border border-[var(--bd)] card-shadow transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-4">
                 {/* Lote */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-['Outfit'] uppercase tracking-wider text-[#A1A1AA] font-semibold">
+                  <label className="text-[11px] font-['Outfit'] uppercase tracking-wider text-[var(--mu)] font-semibold">
                     Lote de Fabricación / Ingreso:
                   </label>
                   <input
@@ -416,13 +416,13 @@ export default function CentroEtiquetadoPage() {
                     value={loteReferencia}
                     onChange={(e) => setLoteReferencia(e.target.value.toUpperCase())}
                     placeholder="LOTE-102026"
-                    className="h-10 px-3.5 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-xs font-mono font-bold text-[#D4AF37] focus:outline-none focus:border-[#D4AF37] w-40"
+                    className="h-10 px-3.5 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-xs font-mono font-bold text-[var(--pr)] focus:outline-none focus:border-[var(--pr)] w-40"
                   />
                 </div>
 
                 {/* Cantidad Rápida */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-['Outfit'] uppercase tracking-wider text-[#A1A1AA] font-semibold">
+                  <label className="text-[11px] font-['Outfit'] uppercase tracking-wider text-[var(--mu)] font-semibold">
                     Cantidad a Emitir:
                   </label>
                   <div className="flex items-center gap-1.5">
@@ -436,8 +436,8 @@ export default function CentroEtiquetadoPage() {
                         }}
                         className={`h-10 px-3 rounded-xl text-xs font-['Outfit'] font-bold transition-all cursor-pointer border ${
                           cantidadStickers === num
-                            ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#D4AF37]"
-                            : "bg-[#1E1E1E] border-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF]"
+                            ? "bg-[var(--prs)] border-[var(--pr)] text-[var(--pr)]"
+                            : "bg-[var(--sf2)] border-[var(--bd)] text-[var(--mu)] hover:text-[var(--tx)]"
                         }`}
                       >
                         {num}
@@ -453,7 +453,7 @@ export default function CentroEtiquetadoPage() {
                         setCantidadStickers(val);
                         generarLoteVirgen(val, loteReferencia);
                       }}
-                      className="h-10 w-20 px-2.5 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-xs font-['Outfit'] text-center text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37]"
+                      className="h-10 w-20 px-2.5 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-xs font-['Outfit'] text-center text-[var(--tx)] focus:outline-none focus:border-[var(--pr)]"
                       title="Cantidad personalizada (1 a 120)"
                     />
                   </div>
@@ -464,7 +464,7 @@ export default function CentroEtiquetadoPage() {
               <button
                 type="button"
                 onClick={() => generarLoteVirgen(cantidadStickers, loteReferencia)}
-                className="self-start md:self-auto px-4 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                className="self-start md:self-auto px-4 py-2.5 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] border border-[var(--bd)] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[var(--mu)] hover:text-[var(--tx)] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
               >
                 <span className="material-symbols-outlined text-lg">refresh</span>
                 Generar Nuevos UUIDs
@@ -474,11 +474,11 @@ export default function CentroEtiquetadoPage() {
             {/* Aviso de Regla de Negocio */}
             <div className="p-4 rounded-xl bg-[#10B981]/10 border border-[#10B981]/25 flex items-start gap-3">
               <span className="material-symbols-outlined text-[#10B981] text-xl mt-0.5">verified_user</span>
-              <div className="flex flex-col text-xs text-[#A1A1AA] leading-relaxed">
-                <span className="font-['Outfit'] font-semibold text-[#FFFFFF] text-xs">
+              <div className="flex flex-col text-xs text-[var(--mu)] leading-relaxed">
+                <span className="font-['Outfit'] font-semibold text-[var(--tx)] text-xs">
                   Regla de Negocio Offline-First Garantizada
                 </span>
-                Estos stickers contienen UUIDs v4 vírgenes con su código visible derivado (<code className="text-[#D4AF37] font-mono">PL-XXXXXX</code>). <strong>No se han insertado filas en Supabase</strong>, protegiendo el inventario de registros huérfanos. Al pegar la etiqueta en la palmeta y escanearla con la App Móvil (Modo Ráfaga HU-13), el técnico dará de alta el equipo de forma atómica.
+                Estos stickers contienen UUIDs v4 vírgenes con su código visible derivado (<code className="text-[var(--pr)] font-mono">PL-XXXXXX</code>). <strong>No se han insertado filas en Supabase</strong>, protegiendo el inventario de registros huérfanos. Al pegar la etiqueta en la palmeta y escanearla con la App Móvil (Modo Ráfaga HU-13), el técnico dará de alta el equipo de forma atómica.
               </div>
             </div>
           </div>
@@ -488,7 +488,7 @@ export default function CentroEtiquetadoPage() {
         {tabActiva === "reimpresion" && (
           <div className="flex flex-col gap-5 print:hidden">
             {/* Buscador y Controles de Selección */}
-            <div className="p-4 rounded-2xl bg-[#121212] border border-[#27272A] shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div className="p-4 rounded-2xl bg-[var(--sf)] border border-[var(--bd)] card-shadow transition-shadow flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="relative flex-1 max-w-md">
                 <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#71717A] text-lg pointer-events-none">
                   search
@@ -498,7 +498,7 @@ export default function CentroEtiquetadoPage() {
                   value={busquedaBD}
                   onChange={(e) => setBusquedaBD(e.target.value)}
                   placeholder="Buscar activo por PL-001, UUID o Lote..."
-                  className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="w-full h-10 pl-10 pr-4 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)]"
                 />
               </div>
 
@@ -506,7 +506,7 @@ export default function CentroEtiquetadoPage() {
                 <button
                   type="button"
                   onClick={seleccionarTodosFiltrados}
-                  className="px-3.5 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-xs font-['Outfit'] font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] border border-[var(--bd)] text-xs font-['Outfit'] font-semibold text-[var(--mu)] hover:text-[var(--tx)] cursor-pointer"
                 >
                   Seleccionar Todo ({palmetasBDFiltradas.length})
                 </button>
@@ -514,14 +514,14 @@ export default function CentroEtiquetadoPage() {
                   type="button"
                   onClick={deseleccionarTodos}
                   disabled={stickersReimpresion.length === 0}
-                  className="px-3.5 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-xs font-['Outfit'] font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] cursor-pointer disabled:opacity-40"
+                  className="px-3.5 py-2 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] border border-[var(--bd)] text-xs font-['Outfit'] font-semibold text-[var(--mu)] hover:text-[var(--tx)] cursor-pointer disabled:opacity-40"
                 >
                   Limpiar Selección
                 </button>
                 <button
                   type="button"
                   onClick={fetchPalmetasBD}
-                  className="p-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] border border-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] cursor-pointer"
+                  className="p-2 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] border border-[var(--bd)] text-[var(--mu)] hover:text-[var(--tx)] cursor-pointer"
                   title="Recargar desde Supabase"
                 >
                   <span className="material-symbols-outlined text-lg">refresh</span>
@@ -530,11 +530,11 @@ export default function CentroEtiquetadoPage() {
             </div>
 
             {/* Tabla de Selección de Palmetas Registradas */}
-            <div className="rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden max-h-72 overflow-y-auto">
+            <div className="rounded-2xl bg-[var(--sf)] border border-[var(--bd)] shadow-xl overflow-hidden max-h-72 overflow-y-auto">
               <div className="w-full overflow-x-auto pb-2">
                 <table className="w-full min-w-[600px] text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold sticky top-0 z-10">
+                    <tr className="border-b border-[var(--bd)] bg-[#16161a] text-[var(--mu)] font-['Outfit'] uppercase tracking-wider font-semibold sticky top-0 z-10">
                       <th className="py-3 px-4 w-12 text-center">Sel.</th>
                       <th className="py-3 px-4">Código Visible / UUID</th>
                       <th className="py-3 px-4">Estado</th>
@@ -557,7 +557,7 @@ export default function CentroEtiquetadoPage() {
                             key={p.id}
                             onClick={() => toggleSeleccion(p.id)}
                             className={`cursor-pointer transition-colors ${
-                              isChecked ? "bg-[#D4AF37]/10" : "hover:bg-[#1E1E1E]/50"
+                              isChecked ? "bg-[var(--prs)]" : "hover:bg-[var(--sf2)]/50"
                             }`}
                           >
                             <td className="py-3 px-4 text-center">
@@ -565,12 +565,12 @@ export default function CentroEtiquetadoPage() {
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => {}} // Manejado por tr onClick
-                                className="accent-[#D4AF37] w-4 h-4 cursor-pointer rounded"
+                                className="accent-[var(--pr)] w-4 h-4 cursor-pointer rounded"
                               />
                             </td>
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2">
-                                <span className="font-['Outfit'] font-bold text-xs text-[#D4AF37]">
+                                <span className="font-['Outfit'] font-bold text-xs text-[var(--pr)]">
                                   {p.codigo_visible}
                                 </span>
                                 <span className="font-mono text-[10px] text-[#71717A]">
@@ -579,12 +579,12 @@ export default function CentroEtiquetadoPage() {
                               </div>
                             </td>
                             <td className="py-3 px-4">
-                              <span className="capitalize text-[11px] text-[#A1A1AA]">{p.estado}</span>
+                              <span className="capitalize text-[11px] text-[var(--mu)]">{p.estado}</span>
                             </td>
-                            <td className="py-3 px-4 text-[11px] text-[#A1A1AA]">
+                            <td className="py-3 px-4 text-[11px] text-[var(--mu)]">
                               {p.lote_fabricacion || p.lote_ingreso || "—"}
                             </td>
-                            <td className="py-3 px-4 text-[11px] text-[#A1A1AA]">
+                            <td className="py-3 px-4 text-[11px] text-[var(--mu)]">
                               {p.ubicacion_actual || "Bodega"}
                             </td>
                           </tr>
@@ -603,9 +603,9 @@ export default function CentroEtiquetadoPage() {
             </div>
 
             {stickersReimpresion.length > 0 && (
-              <div className="p-3.5 px-4 rounded-xl bg-[#1E1E1E] border border-[#27272A] flex items-center justify-between text-xs">
-                <span className="text-[#A1A1AA]">
-                  <strong className="text-[#D4AF37]">{stickersReimpresion.length}</strong> palmetas seleccionadas para reimpresión física de reemplazo.
+              <div className="p-3.5 px-4 rounded-xl bg-[var(--sf2)] border border-[var(--bd)] flex items-center justify-between text-xs">
+                <span className="text-[var(--mu)]">
+                  <strong className="text-[var(--pr)]">{stickersReimpresion.length}</strong> palmetas seleccionadas para reimpresión física de reemplazo.
                 </span>
                 <span className="text-[#10B981] font-['Outfit'] font-semibold">
                   Listas para imprimir en PDF
@@ -618,8 +618,8 @@ export default function CentroEtiquetadoPage() {
         {/* ── SECCIÓN DE STICKERS (Visualización en Pantalla y Grilla de Impresión) ── */}
         <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between print:hidden">
-            <h2 className="font-['Outfit'] text-base font-semibold text-[#FFFFFF] flex items-center gap-2">
-              <span className="material-symbols-outlined text-lg text-[#D4AF37]">style</span>
+            <h2 className="font-['Outfit'] text-base font-semibold text-[var(--tx)] flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg text-[var(--pr)]">style</span>
               Vista Previa de Planilla ({stickersActivos.length} etiquetas)
             </h2>
             <span className="text-xs text-[#71717A]">
@@ -637,18 +637,18 @@ export default function CentroEtiquetadoPage() {
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                 }}
-                className="group relative p-4 rounded-2xl bg-[#121212] border border-[#27272A] hover:border-[#D4AF37]/60 hover:shadow-xl hover:shadow-[#D4AF37]/10 flex flex-col gap-3 print-label-item"
+                className="group relative p-4 rounded-2xl bg-[var(--sf)] border border-[var(--bd)] hover:border-[var(--pr)]/60 hover:shadow-xl hover:shadow-[var(--pr)]/10 flex flex-col gap-3 print-label-item"
                 title="Clic para ver QR gigante y probar escaneo desde el monitor"
               >
                 {/* Header Sticker */}
-                <div className="flex items-center justify-between border-b border-[#27272A] pb-2 w-full">
+                <div className="flex items-center justify-between border-b border-[var(--bd)] pb-2 w-full">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#D4AF37]" />
-                    <span className="font-['Outfit'] font-bold text-[10px] tracking-wider text-[#FFFFFF] uppercase">
+                    <span className="w-2 h-2 rounded-full bg-[var(--go)]" />
+                    <span className="font-['Outfit'] font-bold text-[10px] tracking-wider text-[var(--tx)] uppercase">
                       ALEPROD · LED
                     </span>
                   </div>
-                  <span className="text-[9px] font-mono text-[#71717A] bg-[#1E1E1E] px-1.5 py-0.5 rounded">
+                  <span className="text-[9px] font-mono text-[#71717A] bg-[var(--sf2)] px-1.5 py-0.5 rounded">
                     #{idx + 1}
                   </span>
                 </div>
@@ -656,7 +656,7 @@ export default function CentroEtiquetadoPage() {
                 {/* Body Sticker: QR + Info */}
                 <div className="flex items-center gap-3 w-full">
                   {/* QR SVG Vectorial */}
-                  <div className="p-1.5 bg-white rounded-xl shadow-md shrink-0 flex items-center justify-center">
+                  <div className="p-1.5 bg-white rounded-xl card-shadow transition-shadow shrink-0 flex items-center justify-center">
                     <QRCodeSVG
                       value={item.qr_uuid}
                       size={68}
@@ -667,10 +667,10 @@ export default function CentroEtiquetadoPage() {
 
                   {/* Datos del Activo */}
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="font-['Outfit'] font-black text-lg text-[#D4AF37] tracking-tight group-hover:scale-105 transition-transform origin-left">
+                    <span className="font-['Outfit'] font-black text-lg text-[var(--pr)] tracking-tight group-hover:scale-105 transition-transform origin-left">
                       {item.codigo_visible}
                     </span>
-                    <span className="text-[10px] font-['Outfit'] text-[#A1A1AA] uppercase tracking-wider font-semibold mt-0.5">
+                    <span className="text-[10px] font-['Outfit'] text-[var(--mu)] uppercase tracking-wider font-semibold mt-0.5">
                       {item.lote}
                     </span>
                     <span className="font-mono text-[9px] text-[#71717A] truncate mt-1" title={item.qr_uuid}>
@@ -680,8 +680,8 @@ export default function CentroEtiquetadoPage() {
                 </div>
 
                 {/* Footer Sticker */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#27272A] text-[9.5px] text-[#71717A] print:hidden">
-                  <span className="flex items-center gap-1 text-[#D4AF37]">
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--bd)] text-[9.5px] text-[#71717A] print:hidden">
+                  <span className="flex items-center gap-1 text-[var(--pr)]">
                     <span className="material-symbols-outlined text-xs">zoom_in</span>
                     Probar Escaneo
                   </span>
@@ -696,19 +696,19 @@ export default function CentroEtiquetadoPage() {
       {/* ── MODAL DE VISTA ESCANEO EN PANTALLA (DEMO EN VIVO) ── */}
       {stickerZoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 print:hidden">
-          <div className="w-full max-w-md bg-[#121212] border border-[#27272A] rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col items-center gap-5 animate-fade-in-up">
+          <div className="w-full max-w-md bg-[var(--sf)] border border-[var(--bd)] rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col items-center gap-5 animate-fade-in-up">
             {/* Cabecera Modal */}
-            <div className="flex items-center justify-between w-full border-b border-[#27272A] pb-3">
+            <div className="flex items-center justify-between w-full border-b border-[var(--bd)] pb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#D4AF37] text-2xl">qr_code_scanner</span>
-                <span className="font-['Outfit'] font-bold text-sm text-[#FFFFFF] uppercase tracking-wider">
+                <span className="material-symbols-outlined text-[var(--pr)] text-2xl">qr_code_scanner</span>
+                <span className="font-['Outfit'] font-bold text-sm text-[var(--tx)] uppercase tracking-wider">
                   Simulador de Enrolamiento en Vivo
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setStickerZoom(null)}
-                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[var(--sf2)] hover:bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--tx)] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
@@ -716,16 +716,16 @@ export default function CentroEtiquetadoPage() {
 
             {/* Código Grande */}
             <div className="flex flex-col items-center">
-              <span className="font-['Outfit'] font-black text-3xl text-[#D4AF37] tracking-wider">
+              <span className="font-['Outfit'] font-black text-3xl text-[var(--pr)] tracking-wider">
                 {stickerZoom.codigo_visible}
               </span>
-              <span className="text-xs font-['Outfit'] uppercase tracking-widest text-[#A1A1AA] font-semibold mt-0.5">
+              <span className="text-xs font-['Outfit'] uppercase tracking-widest text-[var(--mu)] font-semibold mt-0.5">
                 {stickerZoom.lote} • {stickerZoom.isExisting ? "Activo Registrado" : "UUID Virgen"}
               </span>
             </div>
 
             {/* QR Gigante en Ultra Alto Contraste (Fondo Blanco Puro) */}
-            <div className="p-4 bg-white rounded-2xl shadow-2xl border-4 border-[#D4AF37] flex items-center justify-center">
+            <div className="p-4 bg-white rounded-2xl shadow-2xl border-4 border-[var(--pr)] flex items-center justify-center">
               <QRCodeSVG
                 value={stickerZoom.qr_uuid}
                 size={220}
@@ -735,21 +735,21 @@ export default function CentroEtiquetadoPage() {
             </div>
 
             {/* Instrucción para el Celular */}
-            <div className="p-3.5 rounded-xl bg-[#1E1E1E] border border-[#27272A] text-center w-full">
-              <p className="text-xs text-[#A1A1AA] leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-[var(--sf2)] border border-[var(--bd)] text-center w-full">
+              <p className="text-xs text-[var(--mu)] leading-relaxed">
                 📱 <strong className="text-white">Apunta tu celular a este monitor:</strong> Abre la app de Alejandra Producciones en <strong>Modo Ráfaga (HU-13)</strong> o <strong>Modo Inspección</strong> para escanear y enrolar de inmediato esta palmeta.
               </p>
             </div>
 
             {/* UUID Completo con Botón de Copiado */}
-            <div className="flex items-center justify-between w-full p-2.5 px-3 rounded-xl bg-[#0A0A0A] border border-[#27272A] text-xs">
+            <div className="flex items-center justify-between w-full p-2.5 px-3 rounded-xl bg-[var(--sf2)] border border-[var(--bd)] text-xs">
               <span className="font-mono text-[10.5px] text-[#71717A] truncate mr-2" title={stickerZoom.qr_uuid}>
                 {stickerZoom.qr_uuid}
               </span>
               <button
                 type="button"
                 onClick={() => copiarAlPortapapeles(stickerZoom.qr_uuid, stickerZoom.codigo_visible)}
-                className="px-2.5 py-1 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[10.5px] font-['Outfit'] text-[#D4AF37] hover:text-white uppercase font-bold tracking-wider flex items-center gap-1 cursor-pointer shrink-0"
+                className="px-2.5 py-1 rounded-lg bg-[var(--sf2)] hover:bg-[var(--sf2)] text-[10.5px] font-['Outfit'] text-[var(--pr)] hover:text-white uppercase font-bold tracking-wider flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <span className="material-symbols-outlined text-xs">content_copy</span>
                 Copiar
@@ -760,7 +760,7 @@ export default function CentroEtiquetadoPage() {
             <button
               type="button"
               onClick={() => setStickerZoom(null)}
-              className="w-full py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#FFFFFF] transition-colors cursor-pointer mt-1"
+              className="w-full py-2.5 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[var(--tx)] transition-colors cursor-pointer mt-1"
             >
               Cerrar Vista Escáner
             </button>

@@ -265,7 +265,7 @@ export default function IncidenciasPage() {
     <>
         {/* ── Resplandor Ambiental Sutil ── */}
         <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#D4AF37]/6 rounded-full blur-[150px]" />
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[var(--pr-glow)] rounded-full blur-[150px]" />
         </div>
 
         {/* ── Top Bar ── */}
@@ -310,7 +310,7 @@ export default function IncidenciasPage() {
               type="button"
               onClick={() => fetchIncidencias()}
               disabled={loading}
-              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[#3F3F46] active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[var(--border-light)] active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               title="Recargar incidencias"
             >
               <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
@@ -342,14 +342,14 @@ export default function IncidenciasPage() {
         <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
         {/* Banner de Título (Limpio y directo, sin botones duplicados) */}
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C24C44]/10 border border-[#C24C44]/25 text-[#C24C44] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#C24C44]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--er-badge-bg)] border border-[var(--er)]/30 text-[var(--er-text)] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--er)]" />
             Base de Datos Supabase en Vivo
           </div>
-          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[#FFFFFF]">
+          <h1 className="font-['Outfit'] text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--tx)]">
             Gestión de Incidencias Técnicas
           </h1>
-          <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-[var(--mu)] mt-1 max-w-2xl">
             Control en tiempo real de averías en terreno, trazabilidad de piezas y bitácora técnica de taller.
           </p>
         </div>
@@ -357,53 +357,53 @@ export default function IncidenciasPage() {
         {/* ── Métricas Rápidas (KPIs Semánticos) ── */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Card: Total */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#27272A] shadow-md flex items-center justify-between">
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[var(--bd)] card-shadow transition-shadow flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#A1A1AA] font-semibold">
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[var(--mu)] font-semibold">
                 Total Registradas
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {total}
               </span>
               <span className="text-[11px] text-[#71717A] mt-0.5">En Supabase Cloud</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#27272A]/50 border border-[#27272A] flex items-center justify-center text-[#D4AF37]">
+            <div className="w-12 h-12 rounded-xl bg-[var(--kpi-total-icon-bg)] border border-[var(--kpi-total-icon-border)] text-[var(--kpi-total-icon-color)] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">report</span>
             </div>
           </div>
 
           {/* Card: Pendientes (Rojo Atenuado Elegante) */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#C24C44]/25 shadow-md flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#C24C44]/08 to-transparent pointer-events-none" />
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[var(--er)]/30 card-shadow transition-shadow flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-red-500/[0.05] dark:from-[#C24C44]/08 to-transparent pointer-events-none" />
             <div className="flex flex-col">
-              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#C24C44] font-semibold flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#C24C44]" />
+              <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[var(--er-text)] font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[var(--er)]" />
                 Pendientes en Taller
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {pendientes}
               </span>
-              <span className="text-[11px] text-[#A1A1AA] mt-0.5">Requieren reparación técnica</span>
+              <span className="text-[11px] text-[var(--mu)] mt-0.5">Requieren reparación técnica</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#C24C44]/12 border border-[#C24C44]/25 flex items-center justify-center text-[#C24C44]">
+            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 text-red-600 dark:bg-[var(--er)]/12 dark:border-[var(--er)]/30 dark:text-[var(--er-text)] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">build_circle</span>
             </div>
           </div>
 
           {/* Card: Resueltas (Verde Esmeralda) */}
-          <div className="p-5 rounded-xl bg-[#121212] border border-[#10B981]/30 shadow-md flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/10 to-transparent pointer-events-none" />
+          <div className="p-5 rounded-xl bg-[var(--sf)] border border-[#10B981]/30 card-shadow transition-shadow flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-full bg-gradient-to-l from-[#10B981]/[0.05] dark:from-[#10B981]/10 to-transparent pointer-events-none" />
             <div className="flex flex-col">
               <span className="text-xs uppercase font-['Outfit'] tracking-wider text-[#10B981] font-semibold flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#10B981]" />
                 Solucionadas / Operativas
               </span>
-              <span className="text-3xl font-bold font-['Outfit'] text-[#FFFFFF] mt-1">
+              <span className="text-3xl font-bold font-['Outfit'] text-[var(--tx)] mt-1">
                 {resueltas}
               </span>
-              <span className="text-[11px] text-[#A1A1AA] mt-0.5">Listas para el próximo evento</span>
+              <span className="text-[11px] text-[var(--mu)] mt-0.5">Listas para el próximo evento</span>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-[#10B981]/12 border border-[#10B981]/30 flex items-center justify-center text-[#10B981]">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 dark:bg-[#10B981]/12 dark:border-[#10B981]/30 dark:text-[#10B981] flex items-center justify-center">
               <span className="material-symbols-outlined text-2xl">verified</span>
             </div>
           </div>
@@ -412,14 +412,14 @@ export default function IncidenciasPage() {
         {/* ── Barra de Filtros y Búsqueda ── */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           {/* Tabs de Filtro */}
-          <div className="inline-flex p-1 rounded-xl bg-[#121212] border border-[#27272A] self-start">
+          <div className="inline-flex p-1 rounded-xl bg-white dark:bg-[var(--sf)] border border-slate-200 dark:border-[var(--bd)] self-start card-shadow">
             <button
               type="button"
               onClick={() => setFiltro("todas")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
                 filtro === "todas"
-                  ? "bg-[#D4AF37] text-[#0A0A0A] shadow-md shadow-[#D4AF37]/10"
-                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+                  ? "bg-[var(--go)] text-[var(--gt)] card-shadow transition-shadow shadow-[#D4AF37]/10"
+                  : "text-[var(--mu)] hover:text-[var(--tx)]"
               }`}
             >
               Todas ({total})
@@ -429,11 +429,11 @@ export default function IncidenciasPage() {
               onClick={() => setFiltro("pendientes")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filtro === "pendientes"
-                  ? "bg-[#C24C44] text-[#FFFFFF] shadow-md shadow-[#C24C44]/20"
-                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+                  ? "bg-[var(--er)] text-[var(--tx)] card-shadow transition-shadow shadow-[#C24C44]/20"
+                  : "text-[var(--mu)] hover:text-[var(--tx)]"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C24C44]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--er)]" />
               Pendientes ({pendientes})
             </button>
             <button
@@ -441,8 +441,8 @@ export default function IncidenciasPage() {
               onClick={() => setFiltro("resueltas")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filtro === "resueltas"
-                  ? "bg-[#10B981] text-[#FFFFFF] shadow-md shadow-[#10B981]/20"
-                  : "text-[#A1A1AA] hover:text-[#FFFFFF]"
+                  ? "bg-[#10B981] text-[var(--tx)] card-shadow transition-shadow shadow-[#10B981]/20"
+                  : "text-[var(--mu)] hover:text-[var(--tx)]"
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
@@ -460,17 +460,17 @@ export default function IncidenciasPage() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por código (PL-AF69C8), evento o falla..."
-              className="w-full h-10 pl-10 pr-4 bg-[#1E1E1E] border border-[#27272A] rounded-lg text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all"
+              className="w-full h-10 pl-10 pr-4 bg-[var(--sf2)] border border-[var(--bd)] rounded-lg text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] focus:ring-1 focus:ring-[var(--pr)]/30 transition-all"
             />
           </div>
         </div>
 
         {/* ── Tabla Ejecutiva de Incidencias ── */}
-        <div className="w-full rounded-2xl bg-[#121212] border border-[#27272A] shadow-xl overflow-hidden">
+        <div className="w-full rounded-2xl bg-white dark:bg-[var(--sf)] border border-slate-200 dark:border-[var(--bd)] card-shadow overflow-hidden">
           <div className="w-full overflow-x-auto pb-2">
             <table className="w-full min-w-[720px] text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-[#27272A] bg-[#16161a] text-[#A1A1AA] font-['Outfit'] uppercase tracking-wider font-semibold">
+                <tr className="border-b border-slate-200 dark:border-[var(--bd)] bg-slate-50 dark:bg-[#16161a] text-slate-500 dark:text-[var(--mu)] font-['Outfit'] uppercase tracking-wider font-semibold text-xs">
                   <th className="py-3.5 px-4 sm:px-6">Palmeta / UUID</th>
                   <th className="py-3.5 px-4">Falla Reportada</th>
                   <th className="py-3.5 px-4">Evento de Origen</th>
@@ -479,12 +479,12 @@ export default function IncidenciasPage() {
                   <th className="py-3.5 px-4 sm:px-6 text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#27272A]">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#27272A]">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-sm text-[#A1A1AA]">
+                    <td colSpan={6} className="py-12 text-center text-sm text-[var(--mu)]">
                       <div className="inline-flex items-center gap-2">
-                        <span className="material-symbols-outlined text-lg animate-spin text-[#D4AF37]">
+                        <span className="material-symbols-outlined text-lg animate-spin text-[var(--pr)]">
                           progress_activity
                         </span>
                         <span>Cargando incidencias reales desde Supabase...</span>
@@ -495,16 +495,16 @@ export default function IncidenciasPage() {
                   incidenciasFiltradas.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-[#1E1E1E]/50 transition-colors group"
+                      className="hover:bg-slate-50/80 dark:hover:bg-[var(--sf2)]/50 transition-colors group"
                     >
                       {/* Palmeta / UUID */}
                       <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center gap-3">
-                          <div className="min-w-[64px] h-9 px-2.5 rounded-lg bg-[#1E1E1E] border border-[#27272A] flex items-center justify-center text-[#D4AF37] font-['Outfit'] font-bold text-xs tracking-wide shadow-inner shrink-0">
+                          <div className="min-w-[64px] h-9 px-2.5 rounded-lg bg-slate-100 dark:bg-[var(--sf2)] border border-slate-200 dark:border-[var(--bd)] flex items-center justify-center text-[var(--pr)] font-['Outfit'] font-bold text-xs tracking-wide shadow-inner shrink-0">
                             {item.codigo_palmeta}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-sm text-[#FFFFFF] group-hover:text-[#D4AF37] transition-colors">
+                            <span className="font-semibold text-sm text-[var(--tx)] group-hover:text-[var(--pr)] transition-colors">
                               {item.codigo_palmeta}
                             </span>
                             <span className="font-mono text-[10px] text-[#71717A]">
@@ -517,7 +517,7 @@ export default function IncidenciasPage() {
                       {/* Falla Reportada */}
                       <td className="py-4 px-4">
                         <div className="flex flex-col">
-                          <span className="font-medium text-[#FFFFFF] text-xs">
+                          <span className="font-medium text-[var(--tx)] text-xs">
                             {item.tipo_falla}
                           </span>
                           {item.descripcion && (
@@ -526,7 +526,7 @@ export default function IncidenciasPage() {
                             </span>
                           )}
                           {item.foto_url && (
-                            <span className="text-[10.5px] text-[#D4AF37] inline-flex items-center gap-1 mt-0.5">
+                            <span className="text-[10.5px] text-[var(--pr)] inline-flex items-center gap-1 mt-0.5">
                               <span className="material-symbols-outlined text-xs">image</span>
                               Foto adjunta
                             </span>
@@ -536,7 +536,7 @@ export default function IncidenciasPage() {
 
                       {/* Evento */}
                       <td className="py-4 px-4">
-                        <span className="text-xs text-[#A1A1AA] font-medium">
+                        <span className="text-xs text-[var(--mu)] font-medium">
                           {item.evento_nombre}
                         </span>
                       </td>
@@ -544,7 +544,7 @@ export default function IncidenciasPage() {
                       {/* Fecha y Técnico */}
                       <td className="py-4 px-4">
                         <div className="flex flex-col">
-                          <span className="text-xs text-[#FFFFFF]">
+                          <span className="text-xs text-[var(--tx)]">
                             {new Date(item.fecha_ocurrencia).toLocaleString("es-CL", {
                               year: "numeric",
                               month: "2-digit",
@@ -562,13 +562,13 @@ export default function IncidenciasPage() {
                       {/* Estado */}
                       <td className="py-4 px-4">
                         {item.resuelto ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#DCFCE7] border border-[#BBF7D0] text-[#15803D] dark:bg-[#10B981]/15 dark:border-[#10B981]/30 dark:text-[#10B981] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] dark:bg-[#10B981]" />
                             Resuelto
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C24C44]/12 border border-[#C24C44]/30 text-[#E59892] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#C24C44]" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEE2E2] border border-[#FECACA] text-[#B91C1C] dark:bg-[var(--er)]/12 dark:border-[#C24C44]/30 dark:text-[#E59892] font-['Outfit'] font-semibold text-[10.5px] uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] dark:bg-[var(--er)]" />
                             Pendiente
                           </span>
                         )}
@@ -584,8 +584,8 @@ export default function IncidenciasPage() {
                           }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                             item.resuelto
-                              ? "bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] border border-[#27272A]"
-                              : "bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] shadow-md shadow-[#D4AF37]/10"
+                              ? "bg-white border border-slate-200 text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-[var(--sf2)] dark:border-[var(--bd)] dark:text-[var(--mu)] dark:hover:text-[var(--tx)]"
+                              : "bg-[var(--go)] hover:bg-[#C5A059] text-[var(--gt)] card-shadow transition-shadow shadow-[#D4AF37]/10"
                           }`}
                         >
                           <span className="material-symbols-outlined text-sm">
@@ -612,15 +612,15 @@ export default function IncidenciasPage() {
       {/* ── Modal de Detalle y Resolución Técnica ── */}
       {incidenciaSeleccionada && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-[#121212] border border-[#27272A] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-full max-w-lg bg-[var(--sf)] border border-[var(--bd)] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
             {/* Header Modal */}
-            <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--bd)] pb-4">
               <div className="flex items-center gap-3">
-                <div className="min-w-[64px] h-10 px-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] font-['Outfit'] font-bold text-sm tracking-wide shrink-0">
+                <div className="min-w-[64px] h-10 px-3 rounded-xl bg-[var(--go)]/10 border border-[var(--pr)]/30 flex items-center justify-center text-[var(--pr)] font-['Outfit'] font-bold text-sm tracking-wide shrink-0">
                   {incidenciaSeleccionada.codigo_palmeta}
                 </div>
                 <div>
-                  <h3 className="font-['Outfit'] text-lg font-semibold text-[#FFFFFF]">
+                  <h3 className="font-['Outfit'] text-lg font-semibold text-[var(--tx)]">
                     Detalle de Falla — {incidenciaSeleccionada.codigo_palmeta}
                   </h3>
                   <span className="text-[11px] text-[#71717A]">
@@ -631,35 +631,35 @@ export default function IncidenciasPage() {
               <button
                 type="button"
                 onClick={() => setIncidenciaSeleccionada(null)}
-                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[var(--sf2)] hover:bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--tx)] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
 
             {/* Ficha Resumen */}
-            <div className="grid grid-cols-2 gap-3 text-xs bg-[#1E1E1E]/60 p-4 rounded-xl border border-[#27272A]">
+            <div className="grid grid-cols-2 gap-3 text-xs bg-[var(--sf2)]/60 p-4 rounded-xl border border-[var(--bd)]">
               <div>
                 <span className="text-[#71717A] block">Tipo de Falla:</span>
-                <span className="font-semibold text-[#FFFFFF] mt-0.5 block">
+                <span className="font-semibold text-[var(--tx)] mt-0.5 block">
                   {incidenciaSeleccionada.tipo_falla}
                 </span>
               </div>
               <div>
                 <span className="text-[#71717A] block">Evento de Ocurrencia:</span>
-                <span className="font-medium text-[#D4AF37] mt-0.5 block">
+                <span className="font-medium text-[var(--pr)] mt-0.5 block">
                   {incidenciaSeleccionada.evento_nombre}
                 </span>
               </div>
               <div>
                 <span className="text-[#71717A] block">Técnico que reportó:</span>
-                <span className="text-[#FFFFFF] mt-0.5 block">
+                <span className="text-[var(--tx)] mt-0.5 block">
                   {incidenciaSeleccionada.tecnico_nombre}
                 </span>
               </div>
               <div>
                 <span className="text-[#71717A] block">Fecha de Ocurrencia:</span>
-                <span className="text-[#FFFFFF] mt-0.5 block">
+                <span className="text-[var(--tx)] mt-0.5 block">
                   {new Date(incidenciaSeleccionada.fecha_ocurrencia).toLocaleString("es-CL")}
                 </span>
               </div>
@@ -669,7 +669,7 @@ export default function IncidenciasPage() {
             {incidenciaSeleccionada.descripcion && (
               <div className="flex flex-col gap-1 text-xs">
                 <span className="text-[#71717A]">Observaciones en Terreno:</span>
-                <p className="text-[#FFFFFF] bg-[#1E1E1E]/40 p-3 rounded-xl border border-[#27272A]/70">
+                <p className="text-[var(--tx)] bg-[var(--sf2)]/40 p-3 rounded-xl border border-[var(--bd)]/70">
                   {incidenciaSeleccionada.descripcion}
                 </p>
               </div>
@@ -678,17 +678,17 @@ export default function IncidenciasPage() {
             {/* Evidencia Fotográfica (si existe) */}
             {incidenciaSeleccionada.foto_url && (
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <span className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Evidencia Capturada en Terreno
                 </span>
-                <div className="w-full h-44 rounded-xl overflow-hidden border border-[#27272A] relative bg-[#1E1E1E]">
+                <div className="w-full h-44 rounded-xl overflow-hidden border border-[var(--bd)] relative bg-[var(--sf2)]">
                   <img
                     src={incidenciaSeleccionada.foto_url}
                     alt="Evidencia técnica"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-md text-[10px] text-[#FFFFFF] flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs text-[#D4AF37]">
+                  <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-black/70 backdrop-blur-md text-[10px] text-[var(--tx)] flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs text-[var(--pr)]">
                       photo_camera
                     </span>
                     Captura in situ
@@ -701,7 +701,7 @@ export default function IncidenciasPage() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="solucion-textarea"
-                className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']"
+                className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']"
               >
                 {incidenciaSeleccionada.resuelto
                   ? "Bitácora de Reparación Aplicada:"
@@ -709,7 +709,7 @@ export default function IncidenciasPage() {
               </label>
 
               {incidenciaSeleccionada.resuelto ? (
-                <div className="p-3.5 rounded-xl bg-[#10B981]/10 border border-[#10B981]/20 text-xs text-[#FFFFFF] leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-[#10B981]/10 border border-[#10B981]/20 text-xs text-[var(--tx)] leading-relaxed">
                   {incidenciaSeleccionada.solucion_tecnica || "Sin notas técnicas registradas."}
                 </div>
               ) : (
@@ -719,17 +719,17 @@ export default function IncidenciasPage() {
                   value={solucionInput}
                   onChange={(e) => setSolucionInput(e.target.value)}
                   placeholder="Ej: Módulo LED cambiado por repuesto SKU MOD-LED-01. Soldadura de conector y prueba de 2 horas sin fallas."
-                  className="w-full p-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all resize-none"
+                  className="w-full p-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] focus:ring-1 focus:ring-[var(--pr)]/30 transition-all resize-none"
                 />
               )}
             </div>
 
             {/* Botones de Acción */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#27272A]">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--bd)]">
               <button
                 type="button"
                 onClick={() => setIncidenciaSeleccionada(null)}
-                className="px-4 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[var(--mu)] hover:text-[var(--tx)] transition-colors cursor-pointer"
               >
                 Cerrar
               </button>
@@ -755,18 +755,18 @@ export default function IncidenciasPage() {
       {/* ── Modal Nueva Incidencia (Pruebas & Registro Manual) ── */}
       {modalCrearAbierto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-[#121212] border border-[#27272A] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-full max-w-lg bg-[var(--sf)] border border-[var(--bd)] rounded-2xl shadow-2xl p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
             {/* Header Modal */}
-            <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--bd)] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                <div className="w-10 h-10 rounded-xl bg-[var(--go)]/15 border border-[var(--pr)]/30 flex items-center justify-center text-[var(--pr)]">
                   <span className="material-symbols-outlined text-xl">report_problem</span>
                 </div>
                 <div>
-                  <h3 className="font-['Outfit'] text-lg font-semibold text-[#FFFFFF]">
+                  <h3 className="font-['Outfit'] text-lg font-semibold text-[var(--tx)]">
                     Reportar Incidencia
                   </h3>
-                  <span className="text-[11px] text-[#A1A1AA]">
+                  <span className="text-[11px] text-[var(--mu)]">
                     Registro directo en Supabase Cloud
                   </span>
                 </div>
@@ -774,7 +774,7 @@ export default function IncidenciasPage() {
               <button
                 type="button"
                 onClick={() => setModalCrearAbierto(false)}
-                className="w-8 h-8 rounded-lg bg-[#1E1E1E] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFFFFF] flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[var(--sf2)] hover:bg-[var(--sf2)] text-[var(--mu)] hover:text-[var(--tx)] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
@@ -784,13 +784,13 @@ export default function IncidenciasPage() {
             <form onSubmit={handleCrearIncidencia} className="flex flex-col gap-4">
               {/* Selector Palmeta */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Palmeta LED Afectada
                 </label>
                 <select
                   value={nuevaPalmetaId}
                   onChange={(e) => setNuevaPalmetaId(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                   required
                 >
                   {palmetasDisponibles.map((p) => (
@@ -803,13 +803,13 @@ export default function IncidenciasPage() {
 
               {/* Selector Evento */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Evento de Ocurrencia
                 </label>
                 <select
                   value={nuevoEventoId}
                   onChange={(e) => setNuevoEventoId(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                 >
                   <option value="">(Sin evento específico)</option>
                   {eventosDisponibles.map((ev) => (
@@ -822,13 +822,13 @@ export default function IncidenciasPage() {
 
               {/* Tipo de Falla */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Tipo de Falla Técnica
                 </label>
                 <select
                   value={nuevoTipoFalla}
                   onChange={(e) => setNuevoTipoFalla(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] focus:outline-none focus:border-[#D4AF37] transition-all"
+                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all"
                   required
                 >
                   <option value="Módulo LED Quemado">Módulo LED Quemado (Píxeles muertos / apagado)</option>
@@ -842,7 +842,7 @@ export default function IncidenciasPage() {
 
               {/* Descripción / Observaciones */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider font-['Outfit']">
+                <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
                   Observaciones Técnicas (Opcional)
                 </label>
                 <textarea
@@ -850,23 +850,23 @@ export default function IncidenciasPage() {
                   value={nuevaDescripcion}
                   onChange={(e) => setNuevaDescripcion(e.target.value)}
                   placeholder="Detalles observados en terreno o motivo del reporte..."
-                  className="w-full p-3 bg-[#1E1E1E] border border-[#27272A] rounded-xl text-[16px] md:text-sm text-[#FFFFFF] placeholder-[#71717A] focus:outline-none focus:border-[#D4AF37] transition-all resize-none"
+                  className="w-full p-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] transition-all resize-none"
                 />
               </div>
 
               {/* Botones */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#27272A]">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--bd)]">
                 <button
                   type="button"
                   onClick={() => setModalCrearAbierto(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1E1E1E] hover:bg-[#27272A] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#FFFFFF] transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[var(--sf2)] hover:bg-[var(--sf2)] text-xs font-['Outfit'] uppercase tracking-wider font-semibold text-[var(--mu)] hover:text-[var(--tx)] transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={guardandoNueva}
-                  className="px-4 py-2 rounded-xl bg-[#D4AF37] hover:bg-[#C5A059] text-[#0A0A0A] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all shadow-md shadow-[#D4AF37]/15 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[var(--go)] hover:bg-[#C5A059] text-[var(--gt)] font-['Outfit'] font-semibold text-xs tracking-wider uppercase transition-all card-shadow transition-shadow shadow-[#D4AF37]/15 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <span className={`material-symbols-outlined text-base ${guardandoNueva ? "animate-spin" : ""}`}>
                     {guardandoNueva ? "progress_activity" : "add_task"}
@@ -900,7 +900,7 @@ export default function IncidenciasPage() {
           }}
         >
           <span>Alejandra Producciones SpA • Dirección y Operaciones Técnicas</span>
-          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[#D4AF37] font-semibold">
+          <span className="font-['Outfit'] text-[10px] uppercase tracking-wider text-[var(--pr)] font-semibold">
             Módulo de Incidencias v2.0 (Supabase Real-Time)
           </span>
         </div>

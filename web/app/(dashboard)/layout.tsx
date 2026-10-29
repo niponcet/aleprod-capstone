@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { Sidebar } from "@/app/components/sidebar";
+import { ThemeToggle } from "@/app/components/theme-toggle";
 
 export default function DashboardLayout({
   children,
@@ -21,20 +22,22 @@ export default function DashboardLayout({
 
   return (
     <div
-      data-theme="dark"
-      className="min-h-screen bg-[var(--bg)] text-[var(--tx)] flex flex-col md:flex-row font-['Inter',sans-serif] selection:bg-[#D4AF37]/20 selection:text-[#D4AF37]"
+      className="min-h-screen bg-[var(--bg)] text-[var(--tx)] flex flex-col md:flex-row font-['Inter',sans-serif] selection:bg-[var(--sel-bg)] selection:text-[var(--sel-text)] transition-colors duration-200"
     >
       {/* Mobile Top Header (Visible only on < md screens, hidden on print) */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 bg-[var(--sf)] border-b border-[var(--bd)] sticky top-0 z-30 print:hidden">
         {/* Hamburger Menu Button (ON THE LEFT) */}
-        <button
-          type="button"
-          onClick={handleOpenMenu}
-          aria-label="Abrir menú de navegación"
-          className="w-10 h-10 rounded-xl bg-[var(--sf2)] border border-[var(--bd)] text-[var(--tx)] hover:text-white flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-sm"
-        >
-          <span className="material-symbols-outlined text-2xl">menu</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleOpenMenu}
+            aria-label="Abrir menú de navegación"
+            className="w-10 h-10 rounded-xl bg-[var(--sf2)] border border-[var(--bd)] text-[var(--tx)] hover:text-[var(--pr)] flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-sm"
+          >
+            <span className="material-symbols-outlined text-2xl">menu</span>
+          </button>
+          <ThemeToggle />
+        </div>
 
         {/* Brand / Logo (ON THE RIGHT) */}
         <Link
@@ -42,7 +45,7 @@ export default function DashboardLayout({
           className="flex items-center gap-2.5 text-inherit no-underline active:scale-95 transition-transform"
         >
           <div className="flex flex-col text-right">
-            <span className="font-['Outfit'] font-black text-sm tracking-wider text-white">
+            <span className="font-['Outfit'] font-black text-sm tracking-wider text-[var(--tx)]">
               ALEPROD
             </span>
             <span className="text-[10px] text-[var(--mu)] uppercase tracking-wider font-semibold">
@@ -62,7 +65,7 @@ export default function DashboardLayout({
       />
 
       {/* Main Viewport */}
-      <div className="flex-1 min-w-0 flex flex-col w-full">
+      <div className="flex-1 min-w-0 flex flex-col w-full bg-app-gradient">
         {children}
       </div>
     </div>

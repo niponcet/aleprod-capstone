@@ -1,39 +1,203 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
 
-/* ─── Design Tokens: Alejandra Producciones ─── */
+/* ─── Design Tokens: Alejandra Producciones (Tailwind v4 inline theme) ─── */
 @theme inline {
   /* Tipografía */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
   /* Fondos Base */
-  --color-background: #0A0A0A;
-  --color-foreground: #FFFFFF;
-  --color-surface: #121212;
-  --color-surface-elevated: #1E1E1E;
+  --color-background: var(--bg);
+  --color-foreground: var(--tx);
+  --color-surface: var(--sf);
+  --color-surface-elevated: var(--sf2);
 
-  /* Dorado Corporativo */
-  --color-gold: #D4AF37;
-  --color-gold-hover: #C5A059;
-  --color-gold-dim: rgba(212, 175, 55, 0.15);
-  --color-gold-glow: rgba(212, 175, 55, 0.08);
+  /* Acento Primario */
+  --color-gold: var(--pr);
+  --color-gold-hover: var(--pr-hover);
+  --color-gold-dim: var(--prs);
+  --color-gold-glow: var(--pr-glow);
 
   /* Bordes y Separadores */
-  --color-border: #27272A;
-  --color-border-light: #3F3F46;
+  --color-border: var(--bd);
+  --color-border-light: var(--border-light);
 
   /* Texto */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A1A1AA;
-  --color-text-muted: #71717A;
+  --color-text-primary: var(--tx);
+  --color-text-secondary: var(--mu);
+  --color-text-muted: var(--mu3);
 
   /* Semáforo Semántico */
-  --color-success: #10B981;
-  --color-success-dark: #059669;
-  --color-warning: #F59E0B;
-  --color-warning-dark: #D97706;
-  --color-danger: #EF4444;
-  --color-danger-dark: #DC2626;
+  --color-success: var(--ok);
+  --color-success-dark: var(--oks);
+  --color-warning: var(--wa);
+  --color-warning-dark: var(--was);
+  --color-danger: var(--er);
+  --color-danger-dark: var(--ers);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK THEME — Modo por defecto (OLED Deep Black + Dorado corporativo)
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root,
+[data-theme="dark"],
+.dark {
+  /* Fondos y Superficies */
+  --bg: #0A0A0A;
+  --sf: #121212;
+  --sf2: #1E1E1E;
+
+  /* Bordes */
+  --bd: #27272A;
+  --border-light: #3F3F46;
+
+  /* Tipografía */
+  --tx: #FFFFFF;
+  --mu: #A1A1AA;
+  --mu3: #71717A;
+
+  /* Acento Primario (Dorado corporativo) */
+  --pr: #D4AF37;
+  --pr-hover: #C5A059;
+  --pr-glow: rgba(212, 175, 55, 0.08);
+  --lk: #D4AF37;
+  --prs: rgba(212, 175, 55, 0.15);
+
+  /* Semáforo Semántico */
+  --ok: #10B981;
+  --oks: rgba(16, 185, 129, 0.12);
+  --ok-text: #10B981;
+  --ok-badge-bg: rgba(16, 185, 129, 0.12);
+
+  --wa: #F59E0B;
+  --was: rgba(245, 158, 11, 0.12);
+  --wa-text: #F59E0B;
+  --wa-badge-bg: rgba(245, 158, 11, 0.12);
+
+  --er: #EF4444;
+  --ers: rgba(239, 68, 68, 0.12);
+  --er-text: #EF4444;
+  --er-badge-bg: rgba(239, 68, 68, 0.12);
+
+  /* Insignia de marca */
+  --go: #D4AF37;
+  --gt: #0A0A0A;
+
+  /* Glass / Contextual */
+  --glass-bg: rgba(18, 18, 18, 0.7);
+  --glass-border: rgba(212, 175, 55, 0.12);
+  --input-bg: rgba(255, 255, 255, 0.04);
+  --input-bg-hover: rgba(255, 255, 255, 0.06);
+
+  /* Sombras */
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
+
+  /* Azul informativo (usado en badges "montaje activo" dark) */
+  --blue: #3B82F6;
+  --blue-badge-bg: rgba(59, 130, 246, 0.12);
+  --blue-text: #60A5FA;
+
+  /* Neutro badges */
+  --neutral-badge-bg: #1E1E1E;
+  --neutral-badge-text: #A1A1AA;
+
+  /* Selection */
+  --sel-bg: rgba(212, 175, 55, 0.2);
+  --sel-text: #D4AF37;
+
+  /* KPI Icon Boxes */
+  --kpi-total-icon-bg: rgba(39, 39, 42, 0.5);
+  --kpi-total-icon-border: var(--bd);
+  --kpi-total-icon-color: var(--pr);
+
+  --kpi-done-icon-bg: rgba(39, 39, 42, 0.5);
+  --kpi-done-icon-border: var(--bd);
+  --kpi-done-icon-color: #71717A;
+
+  color-scheme: dark;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT THEME — Paleta Aleprod Terreno (Azul Hielo + Blanco + Acento Azul)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="light"],
+.light {
+  /* Fondos y Superficies */
+  --bg: #DCE8FA;
+  --sf: #FFFFFF;
+  --sf2: #F1F5F9;
+
+  /* Bordes */
+  --bd: #E2E8F0;
+  --border-light: #CBD5E1;
+
+  /* Tipografía */
+  --tx: #0F172A;
+  --mu: #64748B;
+  --mu3: #94A3B8;
+
+  /* Acento Primario (Azul Aleprod) */
+  --pr: #1D63EB;
+  --pr-hover: #154EC1;
+  --pr-glow: rgba(29, 99, 235, 0.08);
+  --lk: #1D63EB;
+  --prs: rgba(29, 99, 235, 0.12);
+
+  /* Semáforo Semántico — Modo Claro (WCAG AA sobre blanco) */
+  --ok: #16A34A;
+  --oks: #DCFCE7;
+  --ok-text: #15803D;
+  --ok-badge-bg: #DCFCE7;
+
+  --wa: #F59E0B;
+  --was: #FEF3C7;
+  --wa-text: #B45309;
+  --wa-badge-bg: #FEF3C7;
+
+  --er: #EF4444;
+  --ers: #FEE2E2;
+  --er-text: #B91C1C;
+  --er-badge-bg: #FEE2E2;
+
+  /* Insignia de marca */
+  --go: #3B82F6;
+  --gt: #FFFFFF;
+
+  /* Glass / Contextual */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.8);
+  --input-bg: #F1F5F9;
+  --input-bg-hover: #E8EDF4;
+
+  /* Sombras con tinte azulado (Aleprod Terreno style) */
+  --shadow-card: 0 8px 24px -4px rgba(29, 99, 235, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-elevated: 0 12px 32px -6px rgba(29, 99, 235, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06);
+
+  /* Azul informativo (montaje activo) */
+  --blue: #2563EB;
+  --blue-badge-bg: #EBF3FF;
+  --blue-text: #1D63EB;
+
+  /* Neutro badges */
+  --neutral-badge-bg: #F1F5F9;
+  --neutral-badge-text: #334155;
+
+  /* Selection */
+  --sel-bg: rgba(29, 99, 235, 0.15);
+  --sel-text: #1D63EB;
+
+  /* KPI Icon Boxes */
+  --kpi-total-icon-bg: #EFF6FF;
+  --kpi-total-icon-border: #DBEAFE;
+  --kpi-total-icon-color: #1D63EB;
+
+  --kpi-done-icon-bg: #F1F5F9;
+  --kpi-done-icon-border: #E2E8F0;
+  --kpi-done-icon-color: #475569;
+
+  color-scheme: light;
 }
 
 /* ─── Base Styles ─── */
@@ -42,8 +206,8 @@
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
+  background-color: var(--bg);
+  color: var(--tx);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -54,23 +218,23 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-background);
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-light);
+  background: var(--border-light);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gold);
+  background: var(--pr);
 }
 
-/* ─── Focus Ring global ─── */
+/* ─── Focus Ring global accesible (WCAG 2.1 AA) ─── */
 *:focus-visible {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--pr);
   outline-offset: 2px;
 }
 
-/* ─── Login Animations ─── */
+/* ─── Login & UI Animations ─── */
 @keyframes float-orb {
   0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
   25% { transform: translate(30px, -50px) scale(1.1); opacity: 0.5; }
@@ -132,13 +296,13 @@ body {
 
 /* ─── Glass Effect ─── */
 .glass {
-  background: rgba(18, 18, 18, 0.7);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(212, 175, 55, 0.12);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
 }
 
-/* ─── Gold gradient text ─── */
+/* ─── Gold gradient text (dark only) ─── */
 .text-gold-gradient {
   background: linear-gradient(135deg, #D4AF37 0%, #F5D678 50%, #C5A059 100%);
   -webkit-background-clip: text;
@@ -150,10 +314,10 @@ body {
 .input-field {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--color-border);
+  background: var(--input-bg);
+  border: 1px solid var(--bd);
   border-radius: 12px;
-  color: var(--color-text-primary);
+  color: var(--tx);
   font-size: 16px;
   transition: all 0.25s ease;
 }
@@ -165,19 +329,19 @@ body {
 }
 
 .input-field::placeholder {
-  color: var(--color-text-muted);
+  color: var(--mu3);
 }
 
 .input-field:hover {
-  border-color: var(--color-border-light);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-light);
+  background: var(--input-bg-hover);
 }
 
 .input-field:focus {
   outline: none;
-  border-color: var(--color-gold);
-  background: rgba(212, 175, 55, 0.04);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  border-color: var(--pr);
+  background: var(--prs);
+  box-shadow: 0 0 0 3px var(--prs);
 }
 
 /* ─── Button Styles ─── */
@@ -242,47 +406,7 @@ body {
   left: -100%;
 }
 
-/* ─── Dashboard Executive Theme Tokens (Alejandra Producciones Branding - 03-UI-UX) ─── */
-[data-theme="dark"] {
-  --bg: #0A0A0A;                  /* Negro Profundo OLED */
-  --sf: #121212;                  /* Superficie de tarjetas / sidebar */
-  --sf2: #1E1E1E;                 /* Superficie elevada / contenedores */
-  --bd: #27272A;                  /* Bordes neutros */
-  --tx: #FFFFFF;                  /* Blanco Puro */
-  --mu: #A1A1AA;                  /* Texto secundario neutro */
-  --pr: #D4AF37;                  /* Dorado Primario Corporativo */
-  --lk: #D4AF37;                  /* Dorado para enlaces y acentos */
-  --prs: rgba(212, 175, 55, 0.15); /* Dorado translúcido / Glow */
-  --ok: #10B981;                  /* Verde Esmeralda Operativo */
-  --oks: rgba(16, 185, 129, 0.12); /* Verde translúcido */
-  --wa: #F59E0B;                  /* Ámbar Cálido En Mantención */
-  --was: rgba(245, 158, 11, 0.12); /* Ámbar translúcido */
-  --er: #EF4444;                  /* Rojo Coral Falla Crítica / Baja */
-  --ers: rgba(239, 68, 68, 0.12);  /* Rojo translúcido */
-  --go: #D4AF37;                  /* Dorado Primario */
-  --gt: #0A0A0A;                  /* Texto alto contraste sobre dorado */
-}
-
-[data-theme="light"] {
-  --bg: #F8F9FA;
-  --sf: #FFFFFF;
-  --sf2: #F1F3F5;
-  --bd: #E4E4E7;
-  --tx: #0A0A0A;
-  --mu: #71717A;
-  --pr: #D4AF37;
-  --lk: #B89628;
-  --prs: rgba(212, 175, 55, 0.15);
-  --ok: #059669;
-  --oks: rgba(16, 185, 129, 0.12);
-  --wa: #D97706;
-  --was: rgba(245, 158, 11, 0.12);
-  --er: #DC2626;
-  --ers: rgba(239, 68, 68, 0.12);
-  --go: #D4AF37;
-  --gt: #0A0A0A;
-}
-
+/* ─── Interactive hover helpers ─── */
 .dash-nav:hover {
   background: var(--sf2);
   color: var(--tx);
@@ -296,3 +420,14 @@ body {
   filter: brightness(1.08);
 }
 
+/* ─── Light-mode specific card shadows ─── */
+[data-theme="light"] .card-shadow,
+.light .card-shadow {
+  box-shadow: var(--shadow-card);
+}
+
+/* ─── Light background gradient (applied to dashboard main area) ─── */
+[data-theme="light"] .bg-app-gradient,
+.light .bg-app-gradient {
+  background: linear-gradient(180deg, #EAF2FF 0%, #DCE8FA 100%);
+}

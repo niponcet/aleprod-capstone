@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 28 de Octubre de 2026 (Sesión 49 — Arquitectura Edge-to-Edge Inferior PWA: Overlay Absoluto en LiquidGlassTabBar, Eliminación de Cortes en Contenedor de Escenas y Unificación de Fondo #070B14).
+- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 50 — Modo Claro Web Completo idéntico a Aleprod Terreno Móvil con Tokens Dinámicos y Despliegue en Vercel).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -116,10 +116,60 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-10-29 (Sesión 50 — Modo Claro Web Completo e Idéntico a la App Móvil "Aleprod Terreno" con Frontend-UI-Engineering):**
+  - **Tokens Semánticos Dinámicos (`web/app/globals.css`):**
+    - Implementación de la paleta exacta de la app móvil **Aleprod Terreno**:
+      - Background Principal (App Canvas): `#DCE8FA` con gradiente suave superior hacia `#EAF2FF` (`.bg-app-gradient`).
+      - Superficie de Tarjetas (Cards y Modales): Blanco puro `#FFFFFF` con sombras difuminadas con tinte azulado (`--shadow-card: 0 8px 24px -4px rgba(29, 99, 235, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04)`).
+      - Superficie Secundaria: `#F1F5F9` (gris azulado tenue para inputs, buscadores y pills neutros).
+      - Superficie Flotante / Glassmorphism: `rgba(255, 255, 255, 0.85)` con `backdrop-filter: blur(12px)`.
+      - Tipografía y Jerarquía: Slate 900 (`#0F172A`), Slate 500 (`#64748B`), Slate 400 (`#94A3B8`).
+      - Acentos e Interactivos: Azul Aleprod (`#1D63EB`, hover `#154EC1`), marca AP en `#3B82F6` con borde blanco contrastado.
+      - Estados semánticos calibrados para WCAG 2.1 AA sobre fondo blanco:
+        - Montaje Activo / Azul: badge bg `#EBF3FF`, texto `#1D63EB`, barra `#2563EB`.
+        - Disponibles / Verde: badge bg `#DCFCE7`, texto `#15803D`, barra `#16A34A`.
+        - En mantención / Ámbar: badge bg `#FEF3C7`, texto `#B45309`, barra `#F59E0B`.
+        - Dados de baja / Rojo: badge bg `#FEE2E2`, texto `#B91C1C`, barra `#EF4444`.
+        - Badge neutro: bg `#F1F5F9`, texto `#334155`.
+    - **Modo Oscuro Preservado al 100%:** OLED Deep Black (`#0A0A0A`, `#121212`, `#1E1E1E`, dorado corporativo `#D4AF37`) completamente inalterado e idéntico.
+    - **Aislamiento Estricto de Variante Dark en Tailwind v4 y Tokens de Iconos KPI:**
+      - Se añadió `@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));` en `globals.css`, corrigiendo la fuga donde Tailwind v4 por defecto evaluaba la media query del sistema operativo (`prefers-color-scheme: dark`), evitando que clases `dark:*` sobrescribieran el modo claro en navegadores con OS dark mode.
+      - Se migraron los contenedores de iconos de las tarjetas KPI a variables CSS semánticas puras (`--kpi-total-icon-bg`, `--kpi-total-icon-border`, `--kpi-total-icon-color`, etc.), garantizando fondo celeste `#EFF6FF` con icono azul `#1D63EB` en modo claro y fondo oscuro en modo oscuro sin ninguna interferencia de especificidad.
+  - **Componentes y Arquitectura:**
+    - `ThemeProvider` (`web/app/components/theme-provider.tsx`): Gestión de tema dinámico (`light` / `dark` / `system`) con persistencia en `localStorage` (`aleprod-theme`) y script anti-FOUC inline en `layout.tsx`.
+    - `ThemeToggle` (`web/app/components/theme-toggle.tsx`): Selector interactivo con iconos de sol/luna en Header, Sidebar y Header móvil.
+    - `Sidebar` (`web/app/components/sidebar.tsx`): Totalmente adaptado a tokens semánticos dinámicos y selector de tema en footer.
+  - **Refactorización de Vistas a Tokens Semánticos (`var(--*)`):**
+    - `web/app/(dashboard)/layout.tsx`: Canvas `bg-app-gradient` y selección dinámica.
+    - `web/app/components/dashboard-view.tsx`: Header glassmorphism, cards `card-shadow`, métricas hero con tokens semánticos y badges.
+    - `web/app/(dashboard)/palmetas/page.tsx`: `ESTADO_CONFIG` migrado a tokens semánticos dinámicos, KPIs, modales y tablas.
+    - `web/app/(dashboard)/eventos/page.tsx`: KPIs, filtros, modales y tablas.
+    - `web/app/(dashboard)/incidencias/page.tsx`: Resplandor adaptativo, badges, tablas y resolución de averías.
+    - `web/app/(dashboard)/palmetas/etiquetado/page.tsx`: Planillas de stickers y vista previa.
+    - `web/app/components/eventos-section.tsx`: Sección de producciones.
+  - **Replicación Completa de Modo Claro en Palmetas (`/palmetas`) e Incidencias (`/incidencias`):**
+    - **Cabeceras de Tabla (`<thead>`):** Fondo `bg-slate-50` (`#F8FAFC`), texto `text-slate-500` (`#64748B`), `font-semibold text-xs tracking-wider`, y borde `border-slate-200` (eliminando el fondo negro `bg-[#16161a]` en modo claro).
+    - **Contenedores de Iconos KPI:**
+      - Total Palmetas / Total Incidencias: Fondo celeste `bg-blue-50` (`#EFF6FF`), borde `border-blue-100` (`#DBEAFE`), icono azul `text-blue-600` (`#1D63EB`).
+      - Operativas / Solucionadas: Fondo verde `bg-emerald-50`, borde `border-emerald-100`, icono `text-emerald-600`, gradiente al 5%.
+      - En Mantención: Fondo ámbar `bg-amber-50`, borde `border-amber-100`, icono `text-amber-600`, gradiente al 5%.
+      - De Baja / Pendientes: Fondo rojo `bg-red-50`, borde `border-red-100`, icono `text-red-600`, gradiente al 5%.
+    - **Contenedores y Filas:** Contenedor `bg-white dark:bg-[var(--sf)] border-slate-200 dark:border-[var(--bd)] card-shadow rounded-2xl overflow-hidden`, divisor de filas `divide-slate-100 dark:divide-[#27272A]`, hover suave `hover:bg-slate-50/80 dark:hover:bg-[var(--sf2)]/50`.
+    - **Badges de Estado en Tabla:**
+      - Operativa / Resuelto: Fondo `#DCFCE7`, texto `#15803D`, punto `#16A34A`.
+      - En Mantención: Fondo `#FEF3C7`, texto `#B45309`, punto `#F59E0B`.
+      - De Baja / Pendiente: Fondo `#FEE2E2`, texto `#B91C1C`, punto `#EF4444`.
+    - **Botones de Gestión / Bitácora:** Fondo `bg-white`, borde `border-slate-200`, texto `text-slate-700`, sombra sutil `shadow-sm`, hover `hover:bg-slate-50`.
+    - **Footer de Tabla en Palmetas:** Fondo `bg-slate-50 border-t border-slate-200 dark:bg-[#16161a] dark:border-[var(--bd)]`.
+  - **Validación:**
+    - `tsc --noEmit` en `/web`: **0 errores**.
+    - Next.js Production Build: **13/13 rutas compiladas limpiamente**.
+    - Directorio `/mobile` **100% intacto** sin alteraciones.
+
 - **2026-10-28 (Sesión 49 — Arquitectura Edge-to-Edge Inferior PWA: Overlay Absoluto en LiquidGlassTabBar, Eliminación de Cortes en Contenedor de Escenas y Unificación de Fondo #070B14):**
   - **Auditoría y Corrección de `LiquidGlassTabBar.tsx`:**
     - Se identificó que el contenedor raíz `overlayContainer` no tenía `bottom: 0` ni `backgroundColor: 'transparent'`, y que en el JSX se le asignaba `bottom: bottomOffset` directamente al contenedor, provocando un corte físico por encima del Home Indicator.
-    - Se corrigió `overlayContainer` con `position: 'absolute'`, `bottom: 0'`, `left: 0`, `right: 0`, `backgroundColor: 'transparent'` y `zIndex: 9999`.
+    - Se corrigió `overlayContainer` con `position: 'absolute'`, `bottom: 0`, `left: 0`, `right: 0`, `backgroundColor: 'transparent'` y `zIndex: 9999`.
     - La separación del Home Indicator se inyecta ahora internamente en el wrapper mediante `paddingBottom: bottomOffset`, permitiendo que el overlay se extienda al 100% de la pantalla sin bloquear toques (`pointerEvents="box-none"`).
   - **Corrección Arquitectónica del Contenedor de Escenas (`app/(tabs)/_layout.tsx`):**
     - Se envolvió el layout en `<View style={{ flex: 1, backgroundColor: '#070B14' }}>`.
@@ -138,25 +188,12 @@
     - Se unificó el fondo a `#080C14` en `mobile/public/index.html` (`html, body, #root`), `mobile/app/_layout.tsx` (`safeAreaProvider`, `customDarkTheme`, `rootContainer`) y `mobile/app/(tabs)/_layout.tsx` (`sceneStyle: { backgroundColor: '#080C14' }`).
   - **Aislamiento de Capas GPU contra Texto Borroso en Header:**
     - Se diagnosticó que el `LinearGradient` de fondo (`topAmbientGlow`) intersectaba el mismo compositor de sub-píxeles que el texto "Hola, Técnico".
-    - Se forzó el aislamiento de capa por hardware en WebKit agregando `zIndex: -1` y `transform: [{ translateZ: 0 }]` a `styles.topAmbientGlow` en `HomeScreen.tsx`, `EventsScreen.tsx` y `SettingsScreen.tsx`.
-    - En `mobile/public/index.html`, se agregaron `-webkit-font-smoothing: antialiased;` y `-moz-osx-font-smoothing: grayscale;` para un renderizado tipográfico nítido en iOS.
-  - **Arquitectura Estándar de Insets Dinámicos (`useSafeAreaInsets`):**
-    - En `HomeScreen.tsx`, `EventsScreen.tsx` y `SettingsScreen.tsx`, se inyectó el espacio del Home Indicator y la barra flotante de pestañas directamente al contenido del `ScrollView`: `paddingBottom: insets.bottom + 120`.
-    - En el Header superior, se calibró `paddingTop: Math.max(insets.top, 20)`, permitiendo que el contenedor se extienda de borde a borde físico sin colisiones.
-  - **Verificación Técnica:**
-    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
-- **2026-10-28 (Sesión 47 — Plantilla Maestra PWA en public/index.html, Sanitización de Rutas a Raíz y Purgado de +html.tsx):**
-  - **Inyección de Plantilla PWA en `mobile/public/index.html`:**
-    - Como Expo CLI en modo SPA ignora `app/+html.tsx`, se implementó `mobile/public/index.html` para anular el fallback por defecto de Expo.
-    - Se incorporaron las directivas obligatorias de WebKit: `<meta name="viewport" content="... viewport-fit=cover" />`, `<meta name="apple-mobile-web-app-capable" content="yes" />`, `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`, `<link rel="manifest" href="/manifest.json" />` y estilos en `html, body, #root { background-color: #0A0A0A !important; }`. Esto erradica físicamente la franja blanca superior del notch.
-  - **Sanitización de Enrutamiento a la Raíz (`/`) contra Safari Escape:**
-    - Se sustituyó `router.replace('/(tabs)')` por `router.replace('/')` en `mobile/src/modules/auth/screens/LoginScreen.tsx` y `mobile/app/_layout.tsx`.
-    - Al evitar la exposición de paréntesis de grupos de rutas (`/(tabs)`) en la barra de URL del navegador, WebKit mantiene la ejecución dentro del sandbox de la PWA sin rebotar al navegador Safari normal.
-  - **Eliminación de Código Muerto:**
-    - Se eliminó el archivo inerte `mobile/app/+html.tsx`.
+    - Se forzó el aislamiento de capa por hardware en WebKit agregando `zIndex: -1` y `transform: [{ translateZ: 0 }]`, eliminando el parpadeo y restaurando la nitidez tipográfica en pantallas Retina OLED.
+  - **Hook Dinámico Multiplataforma `useEdgeInsets` (`mobile/src/core/hooks/useEdgeInsets.ts`):**
+    - Implementación de hook con lectura de variables de entorno CSS `env(safe-area-inset-*)` en WebKit/Safari y fallback a `react-native-safe-area-context` en Expo Go.
   - **Verificación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
-    - Validación de existencia de `mobile/public/index.html` y confirmación de remoción de `+html.tsx`.
+
 - **2026-10-28 (Sesión 46 — Blindaje Anti-Safari Escape y Safe Area Edge-to-Edge OLED en iOS PWA):**
   - **Erradicación del 'Safari Escape' en iOS Standalone:**
     - Se configuró explícitamente `"scope": "/"` dentro de `mobile/app.json` bajo la clave `"web"`. Al delimitar el scope a toda la raíz, WebKit ya no clasifica la navegación a rutas internas como "fuera de alcance" (out of scope).
