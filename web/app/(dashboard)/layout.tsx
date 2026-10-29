@@ -42,6 +42,7 @@ export default function DashboardLayout({
         {/* Brand / Logo (ON THE RIGHT) */}
         <Link
           href="/"
+          prefetch={true}
           className="flex items-center gap-2.5 text-inherit no-underline active:scale-95 transition-transform"
         >
           <div className="flex flex-col text-right">

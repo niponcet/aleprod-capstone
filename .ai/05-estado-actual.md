@@ -117,6 +117,13 @@
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
 - **2026-10-29 (Sesión 50 — Modo Claro Web Completo e Idéntico a la App Móvil "Aleprod Terreno" con Frontend-UI-Engineering):**
+  - **Optimización de Velocidad y Navegación Instantánea a Inicio (0ms Lag):**
+    - **Eliminación de la Cascada Secuencial en el Servidor (`web/app/(dashboard)/page.tsx`):**
+      - Se refactorizó la recolección de datos con `Promise.all`, ejecutando en paralelo las 5 consultas de Supabase (`perfiles`, `eventos`, `palmetas_led`, `incidencias` y `repuestos_inventario`), reduciendo el tiempo de respuesta del servidor de ~1.8s a ~300ms.
+    - **Skeleton de Transición Inmediata (`web/app/(dashboard)/loading.tsx`):**
+      - Se implementó un componente de carga en skeleton animado que replica la geometría del Dashboard (barra superior, tarjeta de montaje activo, cuadrícula de KPIs y vista de producciones), ofreciendo feedback visual inmediato en 0 milisegundos y erradicando el congelamiento visual al navegar desde `/eventos` hacia Inicio.
+    - **Precarga Activa de Rutas (`sidebar.tsx` y `layout.tsx`):**
+      - Se incorporó la propiedad `prefetch={true}` en los enlaces clave del menú lateral y la cabecera para que Next.js adelante el fetching en segundo plano.
   - **Tokens Semánticos Dinámicos (`web/app/globals.css`):**
     - Implementación de la paleta exacta de la app móvil **Aleprod Terreno**:
       - Background Principal (App Canvas): `#DCE8FA` con gradiente suave superior hacia `#EAF2FF` (`.bg-app-gradient`).

@@ -264,6 +264,7 @@ export function Sidebar({
         <div className="flex items-center justify-between">
           <Link
             href="/"
+            prefetch={true}
             onClick={() => onClose?.()}
             style={{
               display: "flex",
@@ -345,6 +346,7 @@ export function Sidebar({
               <Link
                 key={item.label}
                 href={item.href}
+                prefetch={true}
                 onClick={() => onClose?.()}
                 className="dash-nav"
                 aria-current={isActive ? "page" : undefined}
