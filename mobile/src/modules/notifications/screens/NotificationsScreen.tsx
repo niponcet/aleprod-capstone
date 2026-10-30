@@ -6,8 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,7 +59,7 @@ const SAMPLE_NOTIFICATIONS: NotificationMockItem[] = [
 ];
 
 export const NotificationsScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
+  const { insets } = useEdgeInsets();
   const router = useRouter();
 
   const [activeSegment, setActiveSegment] = useState<'all' | 'alert' | 'system'>('all');
@@ -100,7 +101,17 @@ export const NotificationsScreen: React.FC = () => {
       />
 
       {/* Header Superior Nativo */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top + 12 }]}>
+      <View
+        style={[
+          styles.headerContainer,
+          {
+            paddingTop:
+              Platform.OS === 'web'
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 12px), 20px)' as any)
+                : insets.top + 12,
+          },
+        ]}
+      >
         <View style={styles.headerLeft}>
           <TouchableOpacity
             style={styles.backButton}
@@ -169,7 +180,15 @@ export const NotificationsScreen: React.FC = () => {
 
       {/* Lista de Notificaciones */}
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom:
+              Platform.OS === 'web'
+                ? ('calc(env(safe-area-inset-bottom, 0px) + 24px)' as any)
+                : insets.bottom + 24,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {filteredNotifications.length > 0 ? (

@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 50 — Modo Claro Web Completo idéntico a Aleprod Terreno Móvil con Tokens Dinámicos y Despliegue en Vercel).
+- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 52 — Corrección Controlada Edge-to-Edge iOS PWA: Abstracción Central de Safe Areas con useEdgeInsets, Calibración Geométrica Header/ScrollView/TabBar, Limpieza de Shell WebKit y Web App Manifest Oficial).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
@@ -115,6 +115,41 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-29 (Sesión 52 — Fase 3: Corrección de Regresiones, ScreenSafeContainer y Cobertura Completa de Safe Areas PWA/Nativo):**
+  - **Corrección de Regresión Nativa (+12px):**
+    - Se refactorizó `useEdgeInsets.ts` separando explícitamente `webTopSpace = 12` y `nativeTopSpace = 0`. Esto garantiza que en iOS y Android nativos el cálculo sea estrictamente `Math.max(insets.top + 0, 20) === Math.max(insets.top, 20)`, restaurando la geometría original al 100%.
+  - **Erradicación del Bug de Concatenación en SafeAreaView Web (`ScreenSafeContainer.tsx`):**
+    - Se diseñó el componente `ScreenSafeContainer`: en Web renderiza un `<View>` estándar con `safeAreaStyle` (CSS `env(...)`), erradicando la concatenación aritmética (`"env(...)0"`) de `SafeAreaView.web.js`; en Nativo renderiza `<SafeAreaView edges={...}>` preservando la gestión nativa sin Safe Area duplicada.
+    - Conectado en `LoginScreen.tsx`, `ForgotPasswordScreen.tsx` y `AssetDetailScreen.tsx`.
+  - **Generación y Calibración de Iconos PWA iOS:**
+    - Generado `apple-touch-icon.png` de 180×180 px con interpolación bicúbica de alta fidelidad desde el icono de 1024px.
+    - Actualizado `mobile/public/manifest.json` reflejando las dimensiones exactas: `1024x1024` para `icon.png`, `180x180` para `apple-touch-icon.png` y `48x48` para `favicon.png`.
+    - Inyectado `<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />` y `<link rel="apple-touch-icon" href="/icon.png" />` en `mobile/public/index.html`.
+    - Protegido en `mobile/vercel.json` para evitar que SPA rewrites capturen recursos estáticos.
+  - **Cobertura Completa de Safe Areas:**
+    - Migradas a `useEdgeInsets` las pantallas secundarias restantes: `EventDetailScreen.tsx`, `ActivityHistoryScreen.tsx`, `NotificationsScreen.tsx` y `ScannerScreen.tsx`, protegiendo cabeceras, botones de cierre (✕), selectores superiores y controles flotantes frente a la Dynamic Island y el Home Indicator.
+  - **Validación Técnica Monorepo:**
+    - `npx expo export --platform web`: Compilación limpia, assets estáticos e `index.html` generados.
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - `npx expo-doctor`: **19/20 checks aprobados** (únicamente advertencia de patch versions menores sin tocar dependencias).
+
+- **2026-10-29 (Sesión 51 — Erradicación Definitiva de Franjas en PWA Standalone, Inset 0 Absoluto en #root, Unificación Cromática a #070B14 y Eliminación de Autofill Amarillo en Inputs):**
+  - **Diagnóstico del Desacople Cromático y Causa de la Franja Inferior:**
+    - Se identificó que mientras los componentes y temas internos de la app estaban configurados en `#070B14`, el archivo `mobile/public/index.html` (`html, body, #root`), `app.json` (`theme-color`, `backgroundColor`) y `LoginScreen.tsx` (`rootContainer`, `safeArea`) mantenían `#0A0A0A` (negro carbón).
+    - Al usar `height: 100%`, WebKit en iOS Standalone dimensionaba `#root` al viewport de layout (excluyendo los 34px del Home Indicator), dejando al descubierto el fondo `#0A0A0A` de `body`, lo que provocaba la franja negra cortada debajo de las cards.
+  - **Reestructuración de Inset 0 Absoluto (`mobile/public/index.html`):**
+    - Se fijó `#root` con `position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; min-height: 100dvh; background-color: #070B14 !important; overflow: hidden;`.
+    - Se unificó `html, body` a `background-color: #070B14 !important; min-height: 100dvh;` y `<meta name="theme-color" content="#070B14" />`.
+    - Se sincronizó `app.json` con `backgroundColor: "#070B14"` y `themeColor: "#070B14"`.
+  - **Eliminación del Autofill Amarillento en Inputs (Safari/Chrome):**
+    - Se inyectó la regla CSS de sombra interna `input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #14171C inset !important; -webkit-text-fill-color: #FFFFFF !important; caret-color: #FFFFFF !important; border-radius: 8px !important; transition: background-color 50000s ease-in-out 0s; }` neutralizando por completo el fondo amarillo pastel forzado por el autocompletado del navegador.
+    - Se eliminaron los contornos por defecto (`outline: none !important;`).
+  - **Rediseño Premium y Reactivo del Formulario de Login (`LoginScreen.tsx` y `ForgotPasswordScreen.tsx`):**
+    - Fondo unificado a `#070B14` y adición de resplandor ambiental superior (`LinearGradient`) dorado corporativo.
+    - Estados de foco dinámicos (`isEmailFocused`, `isPasswordFocused`): borde ámbar `#E59819`, elevación con halo suave e íconos interactivos dorados.
+    - Metadatos de autocompletado nativo (`autoComplete="email"`, `textContentType="emailAddress"`, `autoComplete="current-password"`, `textContentType="password"`, `selectionColor={colors.primaryAmber}`).
+  - **Verificación Técnica:** `npx tsc --noEmit` en `/mobile` con **0 errores**.
 
 - **2026-10-29 (Sesión 50 — Modo Claro Web Completo e Idéntico a la App Móvil "Aleprod Terreno" con Frontend-UI-Engineering):**
   - **Optimización de Velocidad y Navegación Instantánea a Inicio (0ms Lag):**

@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenSafeContainer } from '../../../core/components/ScreenSafeContainer';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
@@ -112,7 +112,7 @@ export const AssetDetailScreen: React.FC = () => {
   const isMantencion = currentStatus.toLowerCase().includes('mantención') || currentStatus.toLowerCase().includes('reparación');
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <ScreenSafeContainer style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" />
 
       {/* Header Superior */}
@@ -333,7 +333,7 @@ export const AssetDetailScreen: React.FC = () => {
           setCurrentStatus('• En Mantención');
         }}
       />
-    </SafeAreaView>
+    </ScreenSafeContainer>
   );
 };
 

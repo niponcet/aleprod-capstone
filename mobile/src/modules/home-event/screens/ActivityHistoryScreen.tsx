@@ -13,8 +13,9 @@ import {
   useWindowDimensions,
   TouchableWithoutFeedback,
   ScrollView,
+  Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
@@ -28,7 +29,7 @@ import { triggerHaptic } from '../../../core/utils/haptics';
 
 export const ActivityHistoryScreen: React.FC = () => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { insets } = useEdgeInsets();
   const { width: screenWidth } = useWindowDimensions();
 
   const [incidents, setIncidents] = useState<UnifiedIncident[]>([]);
@@ -355,7 +356,17 @@ export const ActivityHistoryScreen: React.FC = () => {
       <StatusBar barStyle="light-content" />
 
       {/* Header Fijo Superior */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top + 8 }]}>
+      <View
+        style={[
+          styles.headerContainer,
+          {
+            paddingTop:
+              Platform.OS === 'web'
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 8px), 20px)' as any)
+                : insets.top + 8,
+          },
+        ]}
+      >
         <View style={styles.headerTopRow}>
           <TouchableOpacity
             style={styles.backButton}
@@ -456,7 +467,17 @@ export const ActivityHistoryScreen: React.FC = () => {
         <TouchableWithoutFeedback onPress={() => setIsDropdownOpen(false)}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
-              <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
+              <View
+                style={[
+                  styles.modalSheet,
+                  {
+                    paddingBottom:
+                      Platform.OS === 'web'
+                        ? ('calc(env(safe-area-inset-bottom, 0px) + 20px)' as any)
+                        : insets.bottom + 20,
+                  },
+                ]}
+              >
                 {/* Indicador de agarre superior */}
                 <View style={styles.sheetHandle} />
 
@@ -568,7 +589,12 @@ export const ActivityHistoryScreen: React.FC = () => {
           renderItem={renderIncidentCard}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: insets.bottom + 30 },
+            {
+              paddingBottom:
+                Platform.OS === 'web'
+                  ? ('calc(env(safe-area-inset-bottom, 0px) + 30px)' as any)
+                  : insets.bottom + 30,
+            },
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}

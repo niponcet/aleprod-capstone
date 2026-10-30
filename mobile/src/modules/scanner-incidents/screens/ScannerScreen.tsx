@@ -7,8 +7,9 @@ import {
   StatusBar,
   Animated,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,7 +31,7 @@ interface ToastState {
 
 export const ScannerScreen = () => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { insets } = useEdgeInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [mode, setMode] = useState<'inspection' | 'burst'>('inspection');
@@ -73,7 +74,15 @@ export const ScannerScreen = () => {
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 }]}>
         <StatusBar barStyle="light-content" />
         <TouchableOpacity
-          style={[styles.closeButtonRight, { top: Math.max(insets.top + 6, 44) }]}
+          style={[
+            styles.closeButtonRight,
+            {
+              top:
+                Platform.OS === 'web'
+                  ? ('max(calc(env(safe-area-inset-top, 0px) + 12px), 44px)' as any)
+                  : Math.max(insets.top + 6, 44),
+            },
+          ]}
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
@@ -208,7 +217,10 @@ export const ScannerScreen = () => {
         style={[
           styles.closeButtonRight,
           {
-            top: Math.max(insets.top + 6, 44),
+            top:
+              Platform.OS === 'web'
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 12px), 44px)' as any)
+                : Math.max(insets.top + 6, 44),
           },
         ]}
         onPress={() => {
@@ -225,7 +237,10 @@ export const ScannerScreen = () => {
         style={[
           styles.modeToggleContainer,
           {
-            marginTop: Math.max(insets.top + 50, 96),
+            marginTop:
+              Platform.OS === 'web'
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 50px), 96px)' as any)
+                : Math.max(insets.top + 50, 96),
           },
         ]}
       >
@@ -400,7 +415,17 @@ export const ScannerScreen = () => {
       </View>
 
       {/* Barra Inferior con Controles de Simulación dentro de LiquidGlass */}
-      <View style={[styles.bottomControls, { paddingBottom: Math.max(insets.bottom + 16, 28) }]}>
+      <View
+        style={[
+          styles.bottomControls,
+          {
+            paddingBottom:
+              Platform.OS === 'web'
+                ? ('calc(env(safe-area-inset-bottom, 0px) + 16px)' as any)
+                : Math.max(insets.bottom + 16, 28),
+          },
+        ]}
+      >
         <LiquidGlassView borderRadius={16} style={styles.bottomGlassCard}>
           <View style={styles.bottomControlsRow}>
             <TouchableOpacity

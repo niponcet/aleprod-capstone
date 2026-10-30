@@ -11,7 +11,7 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,7 +32,7 @@ interface SettingsScreenProps {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(84, 12);
   const { width: screenWidth } = useWindowDimensions();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -167,7 +167,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
     );
   };
 
-  const headerTopPadding = Math.max(insets.top, 20);
+
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
@@ -200,8 +200,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
           {
           paddingBottom:
             Platform.OS === 'web'
-              ? ('calc(env(safe-area-inset-bottom, 0px) + 120px)' as any)
-              : insets.bottom + 120,
+              ? (scrollBottomPadding as any)
+              : (scrollBottomPadding as any),
         },
         ]}
         showsVerticalScrollIndicator={false}

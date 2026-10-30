@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../hooks/useEdgeInsets';
 import { Ionicons } from '@expo/vector-icons';
 import { triggerHaptic } from '../utils/haptics';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
@@ -88,7 +88,7 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
   navigateToTab,
 }) => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { tabBarBottomOffset } = useEdgeInsets();
   const { width: screenWidth } = useWindowDimensions();
   const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null);
 
@@ -303,8 +303,8 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
   // Separación vertical de seguridad Edge-to-Edge (respeta la barra de inicio / Home Indicator de iOS y navbar de Android/PWA)
   const bottomOffset =
     Platform.OS === 'web'
-      ? ('calc(env(safe-area-inset-bottom, 0px) + 20px)' as any)
-      : Math.max(insets.bottom, 16) + 10;
+      ? (tabBarBottomOffset as any)
+      : (tabBarBottomOffset as any);
 
   // Índice visual efectivo (resuelve taps inmediatos y sincronización instantánea)
   const effectiveIndex =

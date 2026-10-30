@@ -22,8 +22,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "backgroundColor": "#0A0A0A",
-      "themeColor": "#0A0A0A",
+      "backgroundColor": "#070B14",
+      "themeColor": "#070B14",
       "display": "standalone",
       "barStyle": "black-translucent",
       "startUrl": "/",
@@ -32,7 +32,7 @@
         "viewport": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
         "apple-mobile-web-app-capable": "yes",
         "apple-mobile-web-app-status-bar-style": "black-translucent",
-        "theme-color": "#0A0A0A"
+        "theme-color": "#070B14"
       }
     },
     "plugins": [

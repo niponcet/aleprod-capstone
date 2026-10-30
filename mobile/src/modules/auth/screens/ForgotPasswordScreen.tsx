@@ -12,7 +12,7 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenSafeContainer } from '../../../core/components/ScreenSafeContainer';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +24,7 @@ export const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
 
   const handleSendResetEmail = async () => {
     const trimmedEmail = email.trim();
@@ -77,7 +78,7 @@ export const ForgotPasswordScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <ScreenSafeContainer style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
@@ -150,23 +151,31 @@ export const ForgotPasswordScreen: React.FC = () => {
               {/* Input Correo */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Correo electrónico</Text>
-                <View style={styles.inputWrapper}>
+                <View style={[styles.inputWrapper, isEmailFocused && styles.inputWrapperFocused]}>
                   <Ionicons
                     name="mail-outline"
                     size={20}
-                    color="#64748B"
+                    color={isEmailFocused ? colors.primaryAmber : '#64748B'}
                     style={styles.inputIcon}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      Platform.OS === 'web' && ({ outlineStyle: 'none' } as any),
+                    ]}
                     placeholder="tecnico@aleprod.cl"
                     placeholderTextColor="#475569"
                     value={email}
                     onChangeText={setEmail}
+                    onFocus={() => setIsEmailFocused(true)}
+                    onBlur={() => setIsEmailFocused(false)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    autoComplete="email"
+                    textContentType="emailAddress"
                     editable={!loading}
+                    selectionColor={colors.primaryAmber}
                   />
                 </View>
               </View>
@@ -217,14 +226,14 @@ export const ForgotPasswordScreen: React.FC = () => {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenSafeContainer>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#070B14',
   },
   keyboardContainer: {
     flex: 1,
@@ -323,12 +332,21 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F131D',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#14171C',
+    borderWidth: 1.5,
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 14,
-    height: 48,
+    height: 52,
+  },
+  inputWrapperFocused: {
+    borderColor: colors.primaryAmber,
+    backgroundColor: '#181C26',
+    shadowColor: colors.primaryAmber,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   inputIcon: {
     marginRight: 10,

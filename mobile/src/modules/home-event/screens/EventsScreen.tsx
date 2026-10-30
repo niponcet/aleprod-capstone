@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,7 +37,7 @@ export interface EventItem {
 type MainTabType = 'en_curso' | 'historial';
 
 export const EventsScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(84, 12);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const { canStartEvent, role } = useAuth();
@@ -208,7 +208,7 @@ export const EventsScreen: React.FC = () => {
     }
   };
 
-  const headerTopPadding = Math.max(insets.top, 20);
+
 
   return (
     <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
@@ -251,8 +251,8 @@ export const EventsScreen: React.FC = () => {
           {
           paddingBottom:
             Platform.OS === 'web'
-              ? ('calc(env(safe-area-inset-bottom, 0px) + 120px)' as any)
-              : insets.bottom + 120,
+              ? (scrollBottomPadding as any)
+              : (scrollBottomPadding as any),
         },
         ]}
         showsVerticalScrollIndicator={false}

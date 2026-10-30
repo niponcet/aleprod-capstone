@@ -10,7 +10,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#0A0A0A" />
+    <meta name="theme-color" content="#070B14" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="/icon.png" />
     <link rel="manifest" href="/manifest.json" />
 
     <style id="expo-reset">
@@ -25,27 +27,54 @@
         }
       }
       /* Utilidades inyectables */
-      .edge-to-edge-pb { padding-bottom: calc(var(--sab) + 120px) !important; }
-      .edge-to-edge-pt { padding-top: calc(var(--sat) + 10px) !important; }
+      .edge-to-edge-pb { padding-bottom: calc(var(--sab) + 84px) !important; }
+      .edge-to-edge-pt { padding-top: max(calc(var(--sat) + 12px), 20px) !important; }
 
+      /* Base y reseteo Edge-to-Edge limpio para WebKit */
       html, body {
+        width: 100%;
         height: 100%;
-        background-color: #0A0A0A !important;
+        min-height: 100dvh;
+        background-color: #070B14 !important;
         margin: 0;
         padding: 0;
-        overscroll-behavior-y: none;
+        overflow: hidden;
+        overscroll-behavior: none;
         -webkit-tap-highlight-color: transparent;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
+
       #root {
         display: flex;
+        width: 100%;
         height: 100%;
+        min-height: 100dvh;
         flex: 1;
-        background-color: #0A0A0A;
+        background-color: #070B14 !important;
+        overflow: hidden;
       }
+
       /* Fix Auto-Zoom Safari */
       input, textarea, select { font-size: 16px !important; }
+
+      /* Erradicar el fondo amarillento/blanco de Autofill en iOS Safari y Chrome */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover, 
+      input:-webkit-autofill:focus, 
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px #14171C inset !important;
+        box-shadow: 0 0 0 1000px #14171C inset !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        caret-color: #FFFFFF !important;
+        border-radius: 8px !important;
+        transition: background-color 50000s ease-in-out 0s;
+      }
+
+      /* Eliminar el contorno/outline por defecto del navegador al hacer focus */
+      input:focus, textarea:focus, select:focus {
+        outline: none !important;
+      }
     </style>
   </head>
   <body>

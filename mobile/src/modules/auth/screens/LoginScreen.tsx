@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenSafeContainer } from '../../../core/components/ScreenSafeContainer';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +27,8 @@ export const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem('@aleprod_saved_email')
@@ -101,7 +103,14 @@ export const LoginScreen: React.FC = () => {
   return (
     <View style={styles.rootContainer}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+      {/* Glow ambiental superior dorado corporativo */}
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.14)', 'rgba(7, 11, 20, 0.4)', 'transparent']}
+        locations={[0, 0.45, 1]}
+        style={styles.topAmbientGlow}
+        pointerEvents="none"
+      />
+      <ScreenSafeContainer style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -133,23 +142,31 @@ export const LoginScreen: React.FC = () => {
             {/* Campo Correo Electrónico */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>CORREO ELECTRÓNICO</Text>
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, isEmailFocused && styles.inputWrapperFocused]}>
                 <Ionicons
                   name="mail-outline"
                   size={20}
-                  color={colors.textSecondary}
+                  color={isEmailFocused ? colors.primaryAmber : colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any),
+                  ]}
                   placeholder="tecnico@aleprod.cl"
                   placeholderTextColor={colors.textMuted}
                   value={email}
                   onChangeText={setEmail}
+                  onFocus={() => setIsEmailFocused(true)}
+                  onBlur={() => setIsEmailFocused(false)}
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
+                  autoComplete="email"
+                  textContentType="emailAddress"
                   editable={!loading}
+                  selectionColor={colors.primaryAmber}
                 />
               </View>
             </View>
@@ -157,23 +174,31 @@ export const LoginScreen: React.FC = () => {
             {/* Campo Contraseña */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>CONTRASEÑA</Text>
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, isPasswordFocused && styles.inputWrapperFocused]}>
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
-                  color={colors.textSecondary}
+                  color={isPasswordFocused ? colors.primaryAmber : colors.textSecondary}
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any),
+                  ]}
                   placeholder="••••••••••••"
                   placeholderTextColor={colors.textMuted}
                   value={password}
                   onChangeText={setPassword}
+                  onFocus={() => setIsPasswordFocused(true)}
+                  onBlur={() => setIsPasswordFocused(false)}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  autoComplete="current-password"
+                  textContentType="password"
                   editable={!loading}
+                  selectionColor={colors.primaryAmber}
                 />
                 <TouchableOpacity
                   style={styles.eyeButton}
@@ -185,7 +210,7 @@ export const LoginScreen: React.FC = () => {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color={colors.textSecondary}
+                    color={isPasswordFocused ? colors.primaryAmber : colors.textSecondary}
                   />
                 </TouchableOpacity>
               </View>
@@ -249,7 +274,7 @@ export const LoginScreen: React.FC = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      </SafeAreaView>
+      </ScreenSafeContainer>
     </View>
   );
 };
@@ -257,11 +282,20 @@ export const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#070B14',
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#070B14',
+  },
+  topAmbientGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 350,
+    zIndex: 0,
+    transform: [{ translateZ: 0 } as any],
   },
   keyboardContainer: {
     flex: 1,
@@ -343,11 +377,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 52,
+  },
+  inputWrapperFocused: {
+    borderColor: colors.primaryAmber,
+    backgroundColor: '#181C26',
+    shadowColor: colors.primaryAmber,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   inputIcon: {
     marginRight: 10,
@@ -357,6 +400,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 16,
     height: '100%',
+    backgroundColor: 'transparent',
   },
   eyeButton: {
     padding: 6,

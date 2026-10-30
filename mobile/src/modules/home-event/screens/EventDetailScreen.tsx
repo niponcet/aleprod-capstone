@@ -10,8 +10,9 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
@@ -37,7 +38,7 @@ export interface IncidentItem {
 }
 
 export const EventDetailScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
+  const { insets } = useEdgeInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{
     id: string;
@@ -500,7 +501,17 @@ export const EventDetailScreen: React.FC = () => {
       <StatusBar barStyle="light-content" />
 
       {/* Barra de Navegación Superior Fija */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+      <View
+        style={[
+          styles.topBar,
+          {
+            paddingTop:
+              Platform.OS === 'web'
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 8px), 20px)' as any)
+                : insets.top + 8,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
@@ -522,7 +533,15 @@ export const EventDetailScreen: React.FC = () => {
         renderItem={renderIncidentItem}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyIncidents}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          {
+            paddingBottom:
+              Platform.OS === 'web'
+                ? ('calc(env(safe-area-inset-bottom, 0px) + 40px)' as any)
+                : insets.bottom + 40,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
