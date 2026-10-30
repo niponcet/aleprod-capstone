@@ -7,10 +7,10 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 50 — Modo Claro Web Completo idéntico a Aleprod Terreno Móvil con Tokens Dinámicos y Despliegue en Vercel).
+- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 51 — Integración de Skill y Configuración de shadcn/ui en Web, Optimización de Rendimiento y Despliegue en Vercel).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente). Skill de `shadcn` configurada y activa con Next.js 16 + Tailwind v4 (`components.json`, `@/components/ui/button.tsx`, `@/lib/utils.ts`).
 - **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS, triggers alineados de código visible y storage bucket `evidencias-incidencias` activos y verificados.
 
 ---
