@@ -37,7 +37,7 @@ export interface EventItem {
 type MainTabType = 'en_curso' | 'historial';
 
 export const EventsScreen: React.FC = () => {
-  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(84, 12);
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(74, 12);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const { canStartEvent, role } = useAuth();
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: 320,
     zIndex: -1,
-    transform: [{ translateZ: 0 } as any],
+
   },
   headerContainer: {
     flexDirection: 'row',

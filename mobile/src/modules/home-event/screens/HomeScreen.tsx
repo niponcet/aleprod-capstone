@@ -38,7 +38,7 @@ import { TAB_OFFSET } from '../../../core/constants/navigation';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
-  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(84, 12);
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(74, 12);
   const { width: screenWidth } = useWindowDimensions();
   const [activeEvent, setActiveEvent] = useState<LocalEvento | null>(null);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: 320,
     zIndex: -1,
-    transform: [{ translateZ: 0 } as any],
+
   },
   headerContainer: {
     flexDirection: 'row',

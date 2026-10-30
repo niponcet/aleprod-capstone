@@ -2,6 +2,7 @@
 
 import { useState, useMemo, type FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -318,17 +319,16 @@ export default function LoginPage() {
         {/* Top Header inside Form Panel (Logo corporativo sin iconos de sol/luna) */}
         <div className="login-rise flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-base tracking-wide flex-shrink-0 shadow-sm"
-              style={{
-                background: "var(--tx)",
-                color: "var(--bg)",
-              }}
-            >
-              AP
-            </div>
+            <Image
+              src="/logo.webp"
+              alt="Aleprod"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full object-contain shrink-0"
+              priority
+            />
             <div className="flex flex-col">
-              <span className="text-[14px] sm:text-[15px] font-bold leading-tight">Alejandra Producciones</span>
+              <span className="text-[15px] sm:text-[16px] font-bold leading-tight">Aleprod</span>
               <span className="text-[11px] sm:text-xs" style={{ color: "var(--mu)" }}>
                 Suite central · Dirección y jefaturas
               </span>

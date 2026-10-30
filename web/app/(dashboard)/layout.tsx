@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Sidebar } from "@/app/components/sidebar";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 
@@ -53,9 +54,14 @@ export default function DashboardLayout({
               Panel Gerencial
             </span>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-[var(--go)] text-[var(--gt)] flex items-center justify-center font-extrabold text-sm tracking-wider shadow-sm">
-            AP
-          </div>
+          <Image
+            src="/logo.webp"
+            alt="Aleprod"
+            width={36}
+            height={36}
+            className="w-9 h-9 rounded-full object-contain shrink-0"
+            priority
+          />
         </Link>
       </header>
 

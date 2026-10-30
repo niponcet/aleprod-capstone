@@ -57,7 +57,7 @@ export interface EdgeInsetsResult {
  * @param nativeTopSpace Margen adicional superior para Headers en Nativo (por defecto 0px para mantener la calibración nativa original).
  */
 export function useEdgeInsets(
-  bottomSpace: number = 84,
+  bottomSpace: number = 74,
   webTopSpace: number = 12,
   nativeTopSpace: number = 0
 ): EdgeInsetsResult {
@@ -67,7 +67,7 @@ export function useEdgeInsets(
     return {
       topPadding: `max(calc(env(safe-area-inset-top, 0px) + ${webTopSpace}px), 20px)`,
       bottomPadding: `calc(env(safe-area-inset-bottom, 0px) + ${bottomSpace}px)`,
-      tabBarBottomOffset: `calc(env(safe-area-inset-bottom, 0px) + 10px)`,
+      tabBarBottomOffset: `max(env(safe-area-inset-bottom, 0px), 10px)`,
       leftPadding: 'env(safe-area-inset-left, 0px)',
       rightPadding: 'env(safe-area-inset-right, 0px)',
       safeAreaStyle: {
@@ -83,7 +83,7 @@ export function useEdgeInsets(
   return {
     topPadding: Math.max(insets.top + nativeTopSpace, 20),
     bottomPadding: insets.bottom + bottomSpace,
-    tabBarBottomOffset: Math.max(insets.bottom, 16) + 10,
+    tabBarBottomOffset: insets.bottom > 0 ? insets.bottom : 10,
     leftPadding: insets.left,
     rightPadding: insets.right,
     safeAreaStyle: {},

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "./theme-toggle";
@@ -276,29 +277,18 @@ export function Sidebar({
               minWidth: 0,
             }}
           >
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "12px",
-                background: "var(--go)",
-                color: "var(--gt)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 800,
-                fontSize: "15px",
-                letterSpacing: ".02em",
-                boxShadow: "0 2px 8px rgba(212,175,55,.25)",
-                flexShrink: 0,
-              }}
-            >
-              AP
-            </div>
+            <Image
+              src="/logo.webp"
+              alt="Aleprod"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-full object-contain shrink-0"
+              priority
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
               <span
                 style={{
-                  fontSize: "15px",
+                  fontSize: "16px",
                   fontWeight: 700,
                   lineHeight: 1.1,
                   whiteSpace: "nowrap",
@@ -306,7 +296,7 @@ export function Sidebar({
                   textOverflow: "ellipsis",
                 }}
               >
-                Alejandra Producciones
+                Aleprod
               </span>
               <span style={{ fontSize: "12px", color: "var(--mu)" }}>Panel de gerencia</span>
             </div>

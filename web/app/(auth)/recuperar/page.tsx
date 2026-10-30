@@ -81,7 +81,7 @@ export default function RecuperarPasswordPage() {
                   <img
                     alt="Alejandra Producciones Logo"
                     className="h-9 w-auto object-contain brightness-110"
-                    src="https://lh3.googleusercontent.com/aida/AEtjO1VhD59IUPiobf3YTT2yIa8C86pYbC0AlKUfYQcG9_LbWfzIps7xhIICL7jtnP2YK3Lku_foGXgO-4FnTTqpfwKthLf7OwoPoE-8EPdznTiuKAlOvvt66rIrqTOTBZo3j6gjAxt7289wyrbeMgAsbNsGVQa8z52wx2LQV60mlRwKz2tRyH_i61mj6gDZIH0FFHSJF6WjfTNkJn043U7y0IlntM84ljmV-2SyItG5GEnH8UwA7jkOZNMhZCE"
+                    src="/logo.webp"
                   />
                 </div>
                 <div className="flex flex-col">

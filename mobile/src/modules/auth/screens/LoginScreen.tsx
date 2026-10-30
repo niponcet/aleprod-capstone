@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: 350,
     zIndex: 0,
-    transform: [{ translateZ: 0 } as any],
+
   },
   keyboardContainer: {
     flex: 1,

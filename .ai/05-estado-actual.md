@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 50 — Modo Claro Web Completo idéntico a Aleprod Terreno Móvil con Tokens Dinámicos y Despliegue en Vercel).
+- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 54 — Corrección de Crash translateZ en Expo Nativo y Calibración Opción 2 de Barra Flotante LiquidGlass).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente). Skill de `shadcn` configurada y activa con Next.js 16 + Tailwind v4 (`components.json`, `@/components/ui/button.tsx`, `@/lib/utils.ts`).
@@ -115,6 +115,38 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-10-29 (Sesión 54 — Corrección de Crash translateZ en Expo Nativo y Calibración Opción 2 de Barra Flotante LiquidGlass):**
+  - **Resolución de Invariant Violation Crash en Expo Go / iOS Nativo:**
+    - Se identificó el error crítico `[Invariant Violation: Invalid transform translateZ: {"translateZ":0}]` generado en `processTransform.js` al renderizar `<LinearGradient style={styles.topAmbientGlow}>`.
+    - La propiedad 3D de WebKit `translateZ` no forma parte de la especificación nativa de transforms de React Native (Fabric / Paper) y provocaba el aborto inmediato del bundle en runtime nativo.
+    - Se erradicó `transform: [{ translateZ: 0 }]` de todos los componentes afectados:
+      - `mobile/src/modules/home-event/screens/HomeScreen.tsx`
+      - `mobile/src/modules/home-event/screens/EventsScreen.tsx`
+      - `mobile/src/modules/settings-sync/screens/SettingsScreen.tsx`
+      - `mobile/src/modules/auth/screens/LoginScreen.tsx`
+  - **Implementación de Opción 2: Calibración Geométrica de Cápsula Flotante LiquidGlass:**
+    - Se calibró `tabBarBottomOffset` en `mobile/src/core/hooks/useEdgeInsets.ts` eliminando el margen forzado de `+10px` en WebKit para evitar la elevación excesiva de 44px sobre la base del dispositivo:
+      - En Web: `max(env(safe-area-inset-bottom, 0px), 10px)` — En iPhone con Face ID/Dynamic Island adopta exactamente 34px (el área del Home Indicator), y 10px en Desktop/Android.
+      - En Nativo: `insets.bottom > 0 ? insets.bottom : 10`.
+    - Se ajustó el despeje `bottomSpace` de ScrollViews de 84px a 74px en `HomeScreen`, `EventsScreen`, `SettingsScreen` y `public/index.html` (`.edge-to-edge-pb`), manteniendo 16px exactos de visibilidad al final del recorrido ($74 - 58 = 16$).
+  - **Verificación Técnica Monorepo:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación exitosa en 2639ms con todos los bundles y assets generados**.
+
+- **2026-10-29 (Sesión 53 — Despliegue del Logo Real Oficial en WebP y Renombrado a 'Aleprod' en Dashboard y Login Web):**
+  - **Integración del Logo Gráfico Oficial (`logo.webp`):**
+    - Se incorporó el isotipo/logo circular real de la marca (`web/design/logo.webp`) a `web/public/logo.webp` (y sincronizado preventivamente en `mobile/assets/` y `mobile/public/`).
+    - Se reemplazó el contenedor tipográfico "AP" por el componente optimizado `<Image src="/logo.webp" alt="Aleprod" ... />` de `next/image` en:
+      - [web/app/components/sidebar.tsx](file:///c:/workspace/aleprod-capstone/web/app/components/sidebar.tsx): Dimensiones $40\times 40$ px, `rounded-full`, `object-contain`.
+      - [web/app/(dashboard)/layout.tsx](file:///c:/workspace/aleprod-capstone/web/app/(dashboard)/layout.tsx): Cabecera móvil responsive con dimensiones $36\times 36$ px.
+      - [web/app/(auth)/login/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(auth)/login/page.tsx): Encabezado del formulario de inicio de sesión.
+      - [web/app/(auth)/recuperar/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(auth)/recuperar/page.tsx) y [web/app/(auth)/actualizar-contrasena/page.tsx](file:///c:/workspace/aleprod-capstone/web/app/(auth)/actualizar-contrasena/page.tsx): Reemplazando URLs externas de Google User Content por `/logo.webp` local.
+  - **Renombrado de Marca a 'Aleprod':**
+    - Se actualizó el título principal del sidebar de "Alejandra Producciones" a **"Aleprod"** (`fontSize: 16px, fontWeight: 700`) y en el formulario de login web, unificando la identidad con la cabecera móvil.
+  - **Validación Técnica Monorepo:**
+    - `npx tsc --noEmit` en `/web` y `/mobile`: **0 errores**.
+    - `npm run build` en `/web`: **Compilación exitosa (Turbopack, Next.js 16.3.8) con 13/13 rutas operativas**.
 
 - **2026-10-29 (Sesión 52 — Fase 3: Corrección de Regresiones, ScreenSafeContainer y Cobertura Completa de Safe Areas PWA/Nativo):**
   - **Corrección de Regresión Nativa (+12px):**
