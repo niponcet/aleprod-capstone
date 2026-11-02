@@ -25,6 +25,7 @@ import { syncAllPendingData } from '../../../core/api/sync';
 import { supabase } from '../../../core/api/supabase';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { TAB_OFFSET } from '../../../core/constants/navigation';
+import { ConfirmModal } from '../../../core/components/ConfirmModal';
 
 interface SettingsScreenProps {
   onSignOut?: () => void | Promise<void>;
@@ -38,6 +39,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
   const [syncing, setSyncing] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>('tecnico@aleprod.cl');
   const [userName, setUserName] = useState<string>('Técnico Terreno');
+  const [isLogoutModalVisible, setLogoutModalVisible] = useState<boolean>(false);
 
   // Obtener conteo consolidado de pendientes cada vez que la pantalla gana foco
   useFocusEffect(
@@ -135,36 +137,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 
 
   const handleLogout = () => {
-    const executeLogout = async () => {
-      try {
-        await onSignOut?.();
-      } catch (err) {
-        console.warn('Error ejecutando cierre de sesión:', err);
-      }
-    };
+    setLogoutModalVisible(true);
+  };
 
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const confirmed = window.confirm(
-        'Cerrar Sesión\n\n¿Estás seguro de que deseas salir de la aplicación de terreno?'
-      );
-      if (confirmed) {
-        executeLogout();
-      }
-      return;
+  const handleConfirmLogout = async () => {
+    setLogoutModalVisible(false);
+    try {
+      await onSignOut?.();
+    } catch (err) {
+      console.warn('Error ejecutando cierre de sesión:', err);
     }
-
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que deseas salir de la aplicación de terreno?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Salir',
-          style: 'destructive',
-          onPress: executeLogout,
-        },
-      ]
-    );
   };
 
 
@@ -348,12 +330,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 
             <TouchableOpacity
               style={styles.optionRow}
-              onPress={() =>
-                Alert.alert(
-                  'Manual de Usuario Terreno',
-                  'Regla de los 3 Taps:\n1. Apunta y escanea el código QR.\n2. Toca el tipo de incidencia detectada.\n3. Presiona confirmar reporte.'
-                )
-              }
+              onPress={() => router.push('/manual')}
               activeOpacity={0.7}
             >
               <View style={styles.optionLeftGroup}>
@@ -367,12 +344,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 
             <TouchableOpacity
               style={styles.optionRow}
-              onPress={() =>
-                Alert.alert(
-                  'Soporte Técnico',
-                  'Mesa de Ayuda Alejandra Producciones:\nCorreo: soporte@aleprod.cl\nTeléfono Terreno: +56 9 8765 4321'
-                )
-              }
+              onPress={() => router.push('/soporte')}
               activeOpacity={0.7}
             >
               <View style={styles.optionLeftGroup}>
@@ -397,6 +369,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
         {/* Versión y Build */}
         <Text style={styles.versionText}>Aleprod Móvil · Versión 1.2.4 (Build 2026.09)</Text>
       </ScrollView>
+
+      {/* Modal de Confirmación de Cierre de Sesión */}
+      <ConfirmModal
+        visible={isLogoutModalVisible}
+        title="Cerrar Sesión"
+        message="Si cierras sesión, deberás volver a ingresar con tu correo y contraseña para acceder al sistema."
+        confirmText="Salir"
+        cancelText="Cancelar"
+        isDestructive
+        onConfirm={handleConfirmLogout}
+        onCancel={() => setLogoutModalVisible(false)}
+      />
     </View>
   );
 };
@@ -457,7 +441,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 4,
-    paddingBottom: 120,
   },
   profileCard: {
     flexDirection: 'row',

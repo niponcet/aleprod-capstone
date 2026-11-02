@@ -6,7 +6,6 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +20,7 @@ import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { supabase } from '../../../core/api/supabase';
 import { useAuth } from '../../../core/context/AuthContext';
+import { useToast } from '../../../core/context/ToastContext';
 
 export interface StartEventBottomSheetProps {
   visible: boolean;
@@ -51,6 +51,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
   onSuccess,
 }) => {
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('');
@@ -138,26 +139,43 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
     const trimmedVenue = venue.trim();
 
     if (!trimmedName) {
-      Alert.alert('Campo requerido', 'Por favor ingresa un nombre identificatorio para el evento.');
+      triggerHaptic('warning');
+      showToast({
+        type: 'warning',
+        title: 'CAMPO REQUERIDO',
+        message: 'Por favor ingresa un nombre identificatorio para el evento.',
+      });
       return;
     }
 
     if (!trimmedVenue) {
-      Alert.alert('Campo requerido', 'Por favor especifica el sitio o recinto donde se realizará el montaje.');
+      triggerHaptic('warning');
+      showToast({
+        type: 'warning',
+        title: 'CAMPO REQUERIDO',
+        message: 'Por favor especifica el sitio o recinto donde se realizará el montaje.',
+      });
       return;
     }
 
     if (!hasPista && !hasPirotecnia) {
-      Alert.alert(
-        'Equipamiento requerido',
-        'Debes incluir al menos un servicio técnico: Pista de Baile LED o Pirotecnia.'
-      );
+      triggerHaptic('warning');
+      showToast({
+        type: 'warning',
+        title: 'EQUIPAMIENTO REQUERIDO',
+        message: 'Debes incluir al menos un servicio técnico: Pista de Baile LED o Pirotecnia.',
+      });
       return;
     }
 
     let parsedMeters = parseFloat(meters);
     if (hasPista && (isNaN(parsedMeters) || parsedMeters <= 0)) {
-      Alert.alert('Metros inválidos', 'Ingresa una cantidad de metros cuadrados válida para la pista.');
+      triggerHaptic('warning');
+      showToast({
+        type: 'warning',
+        title: 'METROS INVÁLIDOS',
+        message: 'Ingresa una cantidad de metros cuadrados válida para la pista.',
+      });
       return;
     }
 
@@ -198,26 +216,21 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
       }
 
       triggerHaptic('success');
-      Alert.alert(
-        'Evento Iniciado con Éxito',
-        `El evento "${trimmedName}" (${configLabel}) ha sido creado en Supabase Cloud y activado para tu turno.`,
-        [
-          {
-            text: 'Continuar',
-            onPress: () => {
-              resetForm();
-              onClose();
-              onSuccess?.(data);
-            },
-          },
-        ]
-      );
+      showToast({
+        type: 'success',
+        title: 'EVENTO INICIADO',
+        message: `El evento "${trimmedName}" (${configLabel}) ha sido creado y activado.`,
+      });
+      resetForm();
+      onClose();
+      onSuccess?.(data);
     } catch (err: any) {
-      triggerHaptic('warning');
-      Alert.alert(
-        'Error al crear el evento',
-        err?.message || 'No fue posible guardar el evento en la nube. Verifica tu conexión.'
-      );
+      triggerHaptic('error');
+      showToast({
+        type: 'error',
+        title: 'ERROR AL CREAR EVENTO',
+        message: err?.message || 'No fue posible guardar el evento en la nube. Verifica tu conexión.',
+      });
     } finally {
       setSaving(false);
     }

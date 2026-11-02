@@ -645,7 +645,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 4,
-    paddingBottom: 120,
   },
   activeMountCard: {
     backgroundColor: '#121620',

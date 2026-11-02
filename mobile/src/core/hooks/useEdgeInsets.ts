@@ -5,19 +5,19 @@ export interface EdgeInsetsResult {
   /**
    * Padding superior para Headers.
    * En Web: usa CSS env(safe-area-inset-top) + webTopSpace con un piso defensivo de 20px (Desktop/Android).
-   * En Nativo: usa insets.top + nativeTopSpace con un piso mínimo de 20px (nativeTopSpace = 0 preserva la geometría exacta original).
+   * En Nativo: usa insets.top + nativeTopSpace con un piso mínimo de 20px (nativeTopSpace = 8 estandariza el despeje visual del Header frente al Notch/Dynamic Island).
    */
   topPadding: number | string;
   /**
    * Padding inferior para ScrollViews.
-   * En Web: usa CSS env(safe-area-inset-bottom) + bottomSpace (84px por defecto).
-   * En Nativo: usa insets.bottom + bottomSpace.
+   * En Web: usa CSS env(safe-area-inset-bottom) + bottomSpace (74px por defecto).
+   * En Nativo: usa bottomSpace directamente (UIKit/react-native-screens ya inyecta insets.bottom automáticamente al ScrollView).
    */
   bottomPadding: number | string;
   /**
    * Despeje inferior para barras flotantes (TabBar).
-   * En Web: env(safe-area-inset-bottom) + 10px.
-   * En Nativo: insets.bottom + 10px (o piso de 16px + 10px).
+   * En Web: max(calc(env(safe-area-inset-bottom, 0px) - 14px), 12px).
+   * En Nativo: Math.max(insets.bottom - 14, 12) (aproximadamente 20px en iPhone con Face ID).
    */
   tabBarBottomOffset: number | string;
   /**
@@ -52,14 +52,14 @@ export interface EdgeInsetsResult {
  * - En Nativo: utiliza mediciones de react-native-safe-area-context preservando
  *   la geometría original sin agregar desfases artificiales (nativeTopSpace = 0 por defecto).
  *
- * @param bottomSpace Margen adicional inferior para ScrollViews (por defecto 84px para despejar la barra flotante).
+ * @param bottomSpace Margen adicional inferior para ScrollViews (por defecto 74px para despejar la barra flotante).
  * @param webTopSpace Margen adicional superior para Headers en Web (por defecto 12px sobre el área segura de la Dynamic Island/Notch).
- * @param nativeTopSpace Margen adicional superior para Headers en Nativo (por defecto 0px para mantener la calibración nativa original).
+ * @param nativeTopSpace Margen adicional superior para Headers en Nativo (por defecto 8px para respiración visual frente a la Dynamic Island/Notch).
  */
 export function useEdgeInsets(
   bottomSpace: number = 74,
   webTopSpace: number = 12,
-  nativeTopSpace: number = 0
+  nativeTopSpace: number = 8
 ): EdgeInsetsResult {
   const insets = useSafeAreaInsets();
 
@@ -67,7 +67,7 @@ export function useEdgeInsets(
     return {
       topPadding: `max(calc(env(safe-area-inset-top, 0px) + ${webTopSpace}px), 20px)`,
       bottomPadding: `calc(env(safe-area-inset-bottom, 0px) + ${bottomSpace}px)`,
-      tabBarBottomOffset: `max(env(safe-area-inset-bottom, 0px), 10px)`,
+      tabBarBottomOffset: `max(calc(env(safe-area-inset-bottom, 0px) - 14px), 12px)`,
       leftPadding: 'env(safe-area-inset-left, 0px)',
       rightPadding: 'env(safe-area-inset-right, 0px)',
       safeAreaStyle: {
@@ -82,8 +82,8 @@ export function useEdgeInsets(
 
   return {
     topPadding: Math.max(insets.top + nativeTopSpace, 20),
-    bottomPadding: insets.bottom + bottomSpace,
-    tabBarBottomOffset: insets.bottom > 0 ? insets.bottom : 10,
+    bottomPadding: bottomSpace,
+    tabBarBottomOffset: Math.max(insets.bottom - 14, 12),
     leftPadding: insets.left,
     rightPadding: insets.right,
     safeAreaStyle: {},

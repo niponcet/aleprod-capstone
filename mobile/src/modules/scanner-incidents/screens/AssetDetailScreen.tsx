@@ -10,24 +10,34 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { ScreenSafeContainer } from '../../../core/components/ScreenSafeContainer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
+import { triggerHaptic } from '../../../core/utils/haptics';
+import { ConfirmModal } from '../../../core/components/ConfirmModal';
+import { InfoModal } from '../../../core/components/InfoModal';
 import { ReportIncidentModal } from '../components/ReportIncidentModal';
 import { insertLocalIncidencia } from '../../../core/db/database';
+import { decommissionPalmeta } from '../../../core/api/palmetas';
+import { useToast } from '../../../core/context/ToastContext';
 import { supabase } from '../../../core/api/supabase';
 import { fetchHybridIncidents, UnifiedIncident } from '../../../core/api/incidencias';
 
 export const AssetDetailScreen: React.FC = () => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ uuid?: string; title?: string; status?: string }>();
 
   const rawUuid = params.uuid || 'TEST-QR-001';
   const initialStatus = params.status || '• Operativo';
 
+  const { showToast } = useToast();
   const [currentStatus, setCurrentStatus] = useState<string>(initialStatus);
+  const [decommissioning, setDecommissioning] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [helpModalVisible, setHelpModalVisible] = useState<boolean>(false);
+  const [isDecommissionModalVisible, setDecommissionModalVisible] = useState<boolean>(false);
   const [incidents, setIncidents] = useState<UnifiedIncident[]>([]);
   const [assetMeta, setAssetMeta] = useState<{
     codigo_visible?: string;
@@ -79,44 +89,74 @@ export const AssetDetailScreen: React.FC = () => {
   }, [loadData]);
 
   const handleDecommission = () => {
-    Alert.alert(
-      'Confirmar Baja del Activo',
-      `¿Estás seguro de registrar la baja del módulo "${displayTitle}"?\n\nEsta acción registrará la baja física en el SQLite local y se sincronizará con la bodega central de Supabase.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sí, Dar de Baja',
-          style: 'destructive',
-          onPress: () => {
-            try {
-              insertLocalIncidencia(
-                rawUuid,
-                'Falla Crítica - Dado de Baja',
-                undefined,
-                'Baja confirmada por técnico en terreno',
-                'Festival Estadio Nacional'
-              );
-              setCurrentStatus('• Dado de Baja');
-              loadData();
-              Alert.alert('Activo Actualizado', 'El módulo ha sido registrado como "Dado de baja".');
-            } catch {
-              Alert.alert('Error', 'No se pudo guardar la baja en el almacenamiento local.');
-            }
-          },
-        },
-      ]
-    );
+    triggerHaptic('warning');
+    setDecommissionModalVisible(true);
+  };
+
+  const handleExecuteDecommission = async () => {
+    setDecommissionModalVisible(false);
+    // Optimistic UI: actualizar estado en pantalla inmediatamente
+    const previousStatus = currentStatus;
+    setCurrentStatus('• Dado de Baja');
+    setDecommissioning(true);
+
+    try {
+      const result = await decommissionPalmeta(
+        rawUuid,
+        'Baja confirmada por técnico en terreno',
+        'Festival Estadio Nacional'
+      );
+
+      if (result.mode === 'cloud') {
+        showToast({
+          type: 'success',
+          title: 'ACTIVO DADO DE BAJA',
+          message: 'Actualizado en tiempo real en Supabase.',
+          code: rawUuid,
+        });
+      } else {
+        showToast({
+          type: 'offline',
+          title: 'GUARDADO LOCALMENTE',
+          message: 'Guardado localmente. Se sincronizará cuando haya conexión.',
+          code: rawUuid,
+        });
+      }
+
+      loadData();
+    } catch (err: any) {
+      console.error('Error durante la baja del activo:', err);
+      setCurrentStatus(previousStatus);
+      showToast({
+        type: 'error',
+        title: 'ERROR AL DAR DE BAJA',
+        message: err?.message || 'No se pudo registrar la baja del activo.',
+        code: rawUuid,
+      });
+    } finally {
+      setDecommissioning(false);
+    }
   };
 
   const isBaja = currentStatus.toLowerCase().includes('baja') || currentStatus.toLowerCase().includes('crítica');
   const isMantencion = currentStatus.toLowerCase().includes('mantención') || currentStatus.toLowerCase().includes('reparación');
 
   return (
-    <ScreenSafeContainer style={styles.safeArea} edges={['top', 'bottom']}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header Superior */}
-      <View style={styles.header}>
+      {/* Header Superior Inmersivo (Edge-to-Edge) */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop:
+              Platform.OS === 'web'
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 8px), 20px)' as any)
+                : insets.top + 8,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
@@ -129,20 +169,15 @@ export const AssetDetailScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.moreButton}
-          onPress={() =>
-            Alert.alert(
-              'Opciones de Palmeta',
-              `UUID: ${rawUuid}\nEstado: ${currentStatus}\nEventos previos: 4`,
-              [{ text: 'Cerrar' }]
-            )
-          }
+          onPress={() => setHelpModalVisible(true)}
           activeOpacity={0.7}
         >
-          <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
+          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -302,15 +337,32 @@ export const AssetDetailScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Barra Inferior Fija de Acciones (2 botones mitad y mitad) */}
-      <View style={styles.bottomBar}>
+      {/* Barra Inferior Fija de Acciones Anclada (Edge-to-Edge) */}
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            paddingBottom:
+              Platform.OS === 'web'
+                ? ('calc(env(safe-area-inset-bottom, 0px) + 16px)' as any)
+                : insets.bottom + 16,
+          },
+        ]}
+      >
         <TouchableOpacity
-          style={styles.decommissionButton}
+          style={[styles.decommissionButton, decommissioning && { opacity: 0.6 }]}
           onPress={handleDecommission}
+          disabled={decommissioning}
           activeOpacity={0.8}
         >
-          <Ionicons name="trash-outline" size={18} color={colors.danger} style={{ marginRight: 6 }} />
-          <Text style={styles.decommissionButtonText}>Dar de Baja</Text>
+          {decommissioning ? (
+            <ActivityIndicator size="small" color={colors.danger} style={{ marginRight: 6 }} />
+          ) : (
+            <Ionicons name="trash-outline" size={18} color={colors.danger} style={{ marginRight: 6 }} />
+          )}
+          <Text style={styles.decommissionButtonText}>
+            {decommissioning ? 'Guardando...' : 'Dar de Baja'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -333,12 +385,34 @@ export const AssetDetailScreen: React.FC = () => {
           setCurrentStatus('• En Mantención');
         }}
       />
-    </ScreenSafeContainer>
+
+      {/* Modal de Ayuda de Uso del Módulo */}
+      <InfoModal
+        visible={helpModalVisible}
+        title="Uso del Módulo"
+        description="Desde esta pantalla puedes consultar las especificaciones técnicas del activo y su lote. Utiliza los botones inferiores para 'Dar de baja' el equipo en caso de falla crítica, o 'Reportar falla' para programar una mantención técnica."
+        buttonText="Entendido"
+        onClose={() => setHelpModalVisible(false)}
+      />
+
+      {/* Modal de Confirmación de Baja del Activo */}
+      <ConfirmModal
+        visible={isDecommissionModalVisible}
+        title="Confirmar Baja del Activo"
+        message={`¿Estás seguro de registrar la baja del módulo "${displayTitle}"?\n\nEsta acción registrará la baja física en el sistema y descontará el equipo del inventario operativo.`}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        isDestructive={true}
+        confirmLoading={decommissioning}
+        onConfirm={handleExecuteDecommission}
+        onCancel={() => setDecommissionModalVisible(false)}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: colors.background,
   },
@@ -347,10 +421,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
   backButton: {
     width: 38,
@@ -605,8 +683,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: colors.backgroundDark,
+    paddingTop: 14,
+    backgroundColor: colors.background,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },

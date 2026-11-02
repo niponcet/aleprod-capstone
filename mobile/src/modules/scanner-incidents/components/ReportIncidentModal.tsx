@@ -22,6 +22,8 @@ import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { insertLocalIncidencia } from '../../../core/db/database';
+import { reportIncident } from '../../../core/api/incidencias';
+import { useToast } from '../../../core/context/ToastContext';
 
 export interface ReportIncidentModalProps {
   visible: boolean;
@@ -55,6 +57,7 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
   onSuccess,
   onRequestScan,
 }) => {
+  const { showToast } = useToast();
   const [activeQr, setActiveQr] = useState<string>(qrUuid || '');
   const [isManualInput, setIsManualInput] = useState<boolean>(!qrUuid);
   const [selectedComponent, setSelectedComponent] = useState<string>('Conector de poder');
@@ -158,7 +161,7 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const cleanQr = activeQr.trim();
     if (!cleanQr) {
       triggerHaptic('warning');
@@ -170,29 +173,47 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
     }
 
     setSaving(true);
+    const effectiveEvent = eventoNombre || eventoId || 'Festival Estadio Nacional';
+
     try {
-      const effectiveEvent = eventoNombre || eventoId || 'Festival Estadio Nacional';
+      // Flujo Online-First con Offline-Fallback automático
+      const result = await reportIncident({
+        qrUuid: cleanQr,
+        tipoFalla: selectedComponent,
+        fotoUri: photoUri ?? undefined,
+        observaciones: observations.trim() || undefined,
+        eventoIdOrNombre: effectiveEvent,
+      });
 
-      insertLocalIncidencia(
-        cleanQr,
-        selectedComponent,
-        photoUri ?? undefined,
-        observations.trim() || undefined,
-        effectiveEvent
-      );
-
-      triggerHaptic('success');
       setSaving(false);
       onClose();
-      Alert.alert(
-        'Falla Reportada con Éxito',
-        `Palmeta: ${cleanQr}\nFalla: ${selectedComponent}\nEvento: ${effectiveEvent}\n\nEl reporte se guardó en la base de datos SQLite local y se sincronizará automáticamente cuando haya internet.`,
-        [{ text: 'Entendido', onPress: () => onSuccess?.() }]
-      );
-    } catch (error) {
-      triggerHaptic('warning');
+
+      if (result.mode === 'cloud') {
+        showToast({
+          type: 'success',
+          title: 'FALLA REPORTADA',
+          message: 'Incidencia sincronizada en tiempo real con Supabase.',
+          code: cleanQr,
+        });
+      } else {
+        showToast({
+          type: 'offline',
+          title: 'GUARDADO LOCALMENTE',
+          message: 'Guardado localmente. Se sincronizará cuando haya conexión.',
+          code: cleanQr,
+        });
+      }
+
+      onSuccess?.();
+    } catch (error: any) {
+      triggerHaptic('error');
       setSaving(false);
-      Alert.alert('Error', 'Ocurrió un error al guardar la incidencia localmente.');
+      showToast({
+        type: 'error',
+        title: 'ERROR AL GUARDAR',
+        message: error?.message || 'Ocurrió un error al registrar la incidencia.',
+        code: cleanQr,
+      });
     }
   };
 

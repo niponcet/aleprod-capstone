@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initDB } from '../src/core/db/database';
 import { AuthProvider, useAuth } from '../src/core/context/AuthContext';
+import { ToastProvider } from '../src/core/context/ToastContext';
 import { colors } from '../src/core/theme/colors';
 import { setupAlertPolyfill } from '../src/core/utils/alertPolyfill';
 
@@ -78,6 +79,8 @@ function RootNavigationLayout() {
         <Stack.Screen name="event-detail" options={{ headerShown: false }} />
         <Stack.Screen name="activity-history" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="soporte" options={{ headerShown: false }} />
+        <Stack.Screen name="manual" options={{ headerShown: false }} />
       </Stack>
     </View>
   );
@@ -94,7 +97,9 @@ export default function RootLayout() {
       <StatusBar style="light" />
       <ThemeProvider value={customDarkTheme}>
         <AuthProvider>
-          <RootNavigationLayout />
+          <ToastProvider>
+            <RootNavigationLayout />
+          </ToastProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>

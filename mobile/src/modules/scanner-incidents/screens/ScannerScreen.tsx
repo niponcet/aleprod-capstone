@@ -40,6 +40,12 @@ export const ScannerScreen = () => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [currentLote] = useState<string>(() => generateLoteIngreso());
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [torchActive, setTorchActive] = useState<boolean>(false);
+
+  const toggleTorch = () => {
+    triggerHaptic('light');
+    setTorchActive((prev) => !prev);
+  };
 
   // Animación del banner toast rápido
   const toastAnim = useRef(new Animated.Value(0)).current;
@@ -75,8 +81,10 @@ export const ScannerScreen = () => {
         <StatusBar barStyle="light-content" />
         <TouchableOpacity
           style={[
-            styles.closeButtonRight,
+            styles.headerButton,
             {
+              position: 'absolute',
+              right: 18,
               top:
                 Platform.OS === 'web'
                   ? ('max(calc(env(safe-area-inset-top, 0px) + 12px), 44px)' as any)
@@ -88,17 +96,17 @@ export const ScannerScreen = () => {
         >
           <Ionicons name="close" size={22} color="#EF4444" />
         </TouchableOpacity>
-        <Ionicons name="camera-outline" size={48} color={colors.primaryAmber} style={{ marginBottom: 16 }} />
-        <Text style={styles.permissionText}>
-          Necesitamos acceso a la cámara para escanear los QR de las palmetas LED.
-        </Text>
-        <TouchableOpacity
-          style={styles.permissionButton}
-          onPress={requestPermission}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.permissionButtonText}>Otorgar Permiso</Text>
-        </TouchableOpacity>
+          <Ionicons name="camera-outline" size={54} color="#60A5FA" style={{ marginBottom: 16 }} />
+          <Text style={styles.permissionText}>
+            Necesitamos acceso a la cámara para escanear los QR de las palmetas LED.
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermission}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.permissionButtonText}>Habilitar Cámara</Text>
+          </TouchableOpacity>
       </View>
     );
   }
@@ -206,31 +214,59 @@ export const ScannerScreen = () => {
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
+        enableTorch={torchActive}
         onBarcodeScanned={scanned || isProcessing ? undefined : handleBarcodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
         }}
       />
 
-      {/* Botón Cerrar (✕) */}
-      <TouchableOpacity
+      {/* Header Flotante Unificado con IncidentScannerModal */}
+      <View
         style={[
-          styles.closeButtonRight,
+          styles.headerContainer,
           {
             top:
               Platform.OS === 'web'
-                ? ('max(calc(env(safe-area-inset-top, 0px) + 12px), 44px)' as any)
-                : Math.max(insets.top + 6, 44),
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 10px), 20px)' as any)
+                : insets.top + 10,
           },
         ]}
-        onPress={() => {
-          triggerHaptic('selection');
-          router.back();
-        }}
-        activeOpacity={0.8}
       >
-        <Ionicons name="close" size={22} color="#EF4444" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => {
+            triggerHaptic('selection');
+            router.back();
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="close" size={22} color={colors.textPrimary} />
+        </TouchableOpacity>
+
+        <View style={styles.headerInfo}>
+          <Text style={styles.headerTitle}>Escanear Palmeta</Text>
+          <Text style={styles.headerSubtitle} numberOfLines={1}>
+            {mode === 'burst' ? `Modo Ráfaga · Lote ${currentLote}` : 'Modo Inspección Técnica'}
+          </Text>
+        </View>
+
+        {/* Botón Linterna */}
+        <TouchableOpacity
+          style={[
+            styles.headerButton,
+            torchActive && styles.headerButtonTorchActive,
+          ]}
+          onPress={toggleTorch}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={torchActive ? 'flash' : 'flash-outline'}
+            size={20}
+            color={torchActive ? '#FFFFFF' : '#94A3B8'}
+          />
+        </TouchableOpacity>
+      </View>
 
       {/* Selector Superior de Modo con LiquidGlass */}
       <View
@@ -239,8 +275,8 @@ export const ScannerScreen = () => {
           {
             marginTop:
               Platform.OS === 'web'
-                ? ('max(calc(env(safe-area-inset-top, 0px) + 50px), 96px)' as any)
-                : Math.max(insets.top + 50, 96),
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 68px), 80px)' as any)
+                : insets.top + 68,
           },
         ]}
       >
@@ -259,7 +295,7 @@ export const ScannerScreen = () => {
             <Ionicons
               name="search-outline"
               size={15}
-              color={mode === 'inspection' ? '#000000' : colors.textSecondary}
+              color={mode === 'inspection' ? '#FFFFFF' : colors.textSecondary}
               style={{ marginRight: 6 }}
             />
             <Text
@@ -286,7 +322,7 @@ export const ScannerScreen = () => {
             <Ionicons
               name="flash"
               size={15}
-              color={mode === 'burst' ? '#000000' : colors.textSecondary}
+              color={mode === 'burst' ? '#FFFFFF' : colors.textSecondary}
               style={{ marginRight: 6 }}
             />
             <Text
@@ -335,7 +371,7 @@ export const ScannerScreen = () => {
                   <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                 )}
                 {toast.type === 'offline' && (
-                  <Ionicons name="cloud-offline" size={20} color={colors.primaryAmber} />
+                  <Ionicons name="cloud-offline" size={20} color="#60A5FA" />
                 )}
                 {toast.type === 'error' && (
                   <Ionicons name="alert-circle" size={20} color="#EF4444" />
@@ -349,7 +385,7 @@ export const ScannerScreen = () => {
                       styles.toastTitle,
                       toast.type === 'duplicate' && { color: '#F59E0B' },
                       toast.type === 'success' && { color: colors.success },
-                      toast.type === 'offline' && { color: colors.primaryAmber },
+                      toast.type === 'offline' && { color: '#60A5FA' },
                       toast.type === 'error' && { color: '#EF4444' },
                     ]}
                   >
@@ -379,7 +415,7 @@ export const ScannerScreen = () => {
           <View style={styles.scanTargetHole}>
             {isProcessing && (
               <View style={styles.processingCenter}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color="#60A5FA" />
                 <Text style={styles.processingText}>Enrolando...</Text>
               </View>
             )}
@@ -391,7 +427,7 @@ export const ScannerScreen = () => {
           <LiquidGlassView borderRadius={16} style={styles.burstCounterCard}>
             <View style={styles.burstHeaderRow}>
               <View style={styles.burstLoteBadge}>
-                <Ionicons name="cube-outline" size={11} color={colors.primaryAmber} style={{ marginRight: 4 }} />
+                <Ionicons name="cube-outline" size={11} color="#60A5FA" style={{ marginRight: 4 }} />
                 <Text style={styles.burstLoteText}>{currentLote}</Text>
               </View>
               <Text style={styles.burstCounterTitle}>ENROLAMIENTO CONTINUO</Text>
@@ -434,7 +470,7 @@ export const ScannerScreen = () => {
               disabled={isProcessing}
               activeOpacity={0.8}
             >
-              <Ionicons name="sparkles-outline" size={18} color={colors.primaryAmber} style={{ marginRight: 8 }} />
+              <Ionicons name="sparkles-outline" size={18} color="#60A5FA" style={{ marginRight: 8 }} />
               <Text style={styles.simulateButtonText}>
                 {isProcessing ? 'Enrolando...' : 'Simular Nuevo QR'}
               </Text>
@@ -447,7 +483,7 @@ export const ScannerScreen = () => {
                 disabled={isProcessing}
                 activeOpacity={0.8}
               >
-                <Ionicons name="copy-outline" size={16} color="#F59E0B" style={{ marginRight: 6 }} />
+                <Ionicons name="copy-outline" size={16} color="#60A5FA" style={{ marginRight: 6 }} />
                 <Text style={styles.duplicateButtonText}>Probar Duplicado</Text>
               </TouchableOpacity>
             )}
@@ -472,29 +508,56 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   permissionButton: {
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignSelf: 'center',
+    width: '100%',
+    alignItems: 'center',
   },
   permissionButtonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 15,
   },
-  closeButtonRight: {
+  headerContainer: {
     position: 'absolute',
-    right: 18,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 20,
+  },
+  headerButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(20, 23, 28, 0.78)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.35)',
-    zIndex: 20,
+  },
+  headerButtonTorchActive: {
+    backgroundColor: '#2563EB',
+    borderColor: '#3B82F6',
+  },
+  headerInfo: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 12,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 2,
   },
   modeToggleContainer: {
     alignItems: 'center',
@@ -516,7 +579,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   modeButtonActive: {
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
   },
   modeButtonText: {
     color: colors.textSecondary,
@@ -524,8 +587,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   modeButtonTextActive: {
-    color: '#000000',
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   toastAnimatedContainer: {
     width: '100%',
@@ -611,43 +674,43 @@ const styles = StyleSheet.create({
   },
   corner: {
     position: 'absolute',
-    width: 32,
-    height: 32,
-    borderColor: colors.primary,
+    width: 28,
+    height: 28,
+    borderColor: '#3B82F6',
   },
   cornerTopLeft: {
     top: 0,
     left: 0,
     borderTopWidth: 4,
     borderLeftWidth: 4,
-    borderTopLeftRadius: 10,
+    borderTopLeftRadius: 6,
   },
   cornerTopRight: {
     top: 0,
     right: 0,
     borderTopWidth: 4,
     borderRightWidth: 4,
-    borderTopRightRadius: 10,
+    borderTopRightRadius: 6,
   },
   cornerBottomLeft: {
     bottom: 0,
     left: 0,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
-    borderBottomLeftRadius: 10,
+    borderBottomLeftRadius: 6,
   },
   cornerBottomRight: {
     bottom: 0,
     right: 0,
     borderBottomWidth: 4,
     borderRightWidth: 4,
-    borderBottomRightRadius: 10,
+    borderBottomRightRadius: 6,
   },
   scanTargetHole: {
     width: 210,
     height: 210,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
     borderRadius: 14,
     borderStyle: 'dashed',
     alignItems: 'center',
@@ -662,7 +725,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   processingText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 11,
     fontWeight: '700',
     marginTop: 6,
@@ -684,7 +747,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
+    borderColor: 'rgba(59, 130, 246, 0.35)',
     minWidth: 240,
   },
   burstHeaderRow: {
@@ -695,14 +758,14 @@ const styles = StyleSheet.create({
   burstLoteBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
     marginRight: 8,
   },
   burstLoteText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 10,
     fontWeight: '700',
     fontFamily: 'monospace',
@@ -754,6 +817,9 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: 16,
     borderRadius: 12,
+    backgroundColor: 'rgba(37, 99, 235, 0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.4)',
   },
   simulateButtonText: {
     color: '#FFFFFF',
@@ -764,16 +830,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 40,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    height: 48,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
-    borderRadius: 10,
+    borderColor: 'rgba(59, 130, 246, 0.35)',
+    borderRadius: 12,
     marginLeft: 8,
   },
   duplicateButtonText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 12,
     fontWeight: '700',
   },

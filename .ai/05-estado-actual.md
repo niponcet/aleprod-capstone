@@ -7,10 +7,10 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 29 de Octubre de 2026 (Sesión 54 — Corrección de Crash translateZ en Expo Nativo y Calibración Opción 2 de Barra Flotante LiquidGlass).
+- **Fecha de Última Actualización:** 01 de Noviembre de 2026 (Sesión 61 — Erradicación de Alerts Nativos en favor de Toasts y ConfirmModal + Rediseño Corporativo del Escáner Principal).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). `21/21` verificaciones aprobadas en `npx expo-doctor`. Build de Next.js 16 con Turbopack exitoso (`13/13` rutas generadas limpiamente). Skill de `shadcn` configurada y activa con Next.js 16 + Tailwind v4 (`components.json`, `@/components/ui/button.tsx`, `@/lib/utils.ts`).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
 - **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS, triggers alineados de código visible y storage bucket `evidencias-incidencias` activos y verificados.
 
 ---
@@ -115,6 +115,115 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-11-01 (Sesión 60 — Pantallas Completas Edge-to-Edge para Soporte Técnico y Manual de Terreno en Expo Router):**
+  - **Creación de Pantalla `SupportScreen.tsx`:**
+    - Diseñada en `mobile/src/modules/settings-sync/screens/SupportScreen.tsx` con arquitectura inmersiva Edge-to-Edge (`useSafeAreaInsets` inyectado en Header y ScrollView).
+    - Canales de contacto interactivos vía `Linking`: WhatsApp de Mesa de Ayuda (`+56 9 8765 4321`) con badge "En línea", y Correo Electrónico (`soporte@aleprod.cl`).
+    - Protocolo de 3 pasos para emergencias de conectividad en terreno y badge de cobertura 24/7 en días de festival.
+  - **Creación de Pantalla `ManualScreen.tsx`:**
+    - Diseñada en `mobile/src/modules/settings-sync/screens/ManualScreen.tsx` con navegación nativa y diseño Dark Navy.
+    - Contenido operativo estructurado: Regla de los 3 Taps, Aprovisionamiento Masivo en Ráfaga, Gestión de Superficie/Montajes y Operación Offline con SQLite Local.
+  - **Registro en Expo Router:**
+    - Creados los puntos de entrada `mobile/app/soporte.tsx` y `mobile/app/manual.tsx`.
+    - Registradas ambas pantallas en el Stack principal de `mobile/app/_layout.tsx` con `options={{ headerShown: false }}`.
+  - **Refactorización de Navegación en `SettingsScreen.tsx`:**
+    - Eliminado el estado y la invocación de `InfoModal` en el menú de Ajustes.
+    - Conectados los botones a navegación fluida nativa vía `router.push('/manual')` y `router.push('/soporte')`.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación exitosa con bundles `manual` y `soporte` generados limpiamente**.
+
+- **2026-11-01 (Sesión 59 — Creación de InfoModal, Refinamiento de ConfirmModal y Erradicación de Alertas Nativas en Ajustes y Detalle de Activo):**
+  - **Refinamiento de UX en `ConfirmModal.tsx`:**
+    - Botón "Cancelar" mejorado con presencia física de botón real: fondo `#1A1D24`, radio de curvatura `borderRadius: 8`, padding táctil (`paddingVertical: 12`, `paddingHorizontal: 24`) y texto `#94A3B8`.
+    - Botón "Confirmar" alineado con `borderRadius: 8` y padding correspondiente.
+    - Copy de confirmación en `SettingsScreen.tsx` enriquecido: *"Si cierras sesión, deberás volver a ingresar con tu correo y contraseña para acceder al sistema."*
+  - **Creación del Componente Universal `InfoModal.tsx`:**
+    - Diseñado en `mobile/src/core/components/InfoModal.tsx` como modal informativo estándar Dark Navy con overlay translúcido, tarjeta `#121620`, borde sutil `rgba(255, 255, 255, 0.08)`, título `#FFFFFF`, descripción `#94A3B8` y botón único "Entendido" en Azul Corporativo (`#2563EB`).
+  - **Reemplazo de Alertas en `SettingsScreen.tsx`:**
+    - Eliminadas las llamadas nativas `Alert.alert` en "Manual de Usuario" y "Soporte Técnico".
+    - Integrado `InfoModal` para desplegar el "Manual de Terreno" y los canales de contacto de "Soporte Técnico".
+  - **Reemplazo de Alerta de Opciones por Ayuda en `AssetDetailScreen.tsx`:**
+    - El botón de cabecera con tres puntos (`ellipsis-horizontal`) fue reemplazado por un botón de ayuda accesible con ícono `help-circle-outline`.
+    - Eliminado el `Alert.alert` nativo; ahora despliega un `InfoModal` ("Uso del Módulo") explicando la consulta de especificaciones, baja del activo y reporte de fallas.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación estática limpia en 1670ms**.
+
+- **2026-11-01 (Sesión 58 — Creación de ConfirmModal e Inmersión Visual en Cierre de Sesión de SettingsScreen):**
+  - **Creación del Componente Universal `ConfirmModal.tsx`:**
+    - Diseñado en `mobile/src/core/components/ConfirmModal.tsx` utilizando `<Modal transparent animationType="fade">` de React Native.
+    - Overlay inmersivo con `backgroundColor: 'rgba(0, 0, 0, 0.65)'`, centrado absoluto y cobertura Edge-to-Edge (`statusBarTranslucent`).
+    - Tarjeta central oscura con `backgroundColor: '#121620'`, bordes sutiles `rgba(255, 255, 255, 0.08)`, elevación y ancho acotado del 85% (`maxWidth: 340`).
+    - Tipografía oficial: título `#FFFFFF` (18px, bold) y cuerpo `#94A3B8` (15px).
+    - Botonera dual: botón "Cancelar" con fondo transparente y texto gris perla; botón "Confirmar" con soporte para `isDestructive` (rojo coral `#EF4444` o azul corporativo `#2563EB`) y feedback háptico.
+  - **Refactorización del Flujo de Cierre de Sesión en `SettingsScreen.tsx`:**
+    - Se erradicó por completo el bloque condicional de `window.confirm` para Web y `Alert.alert` para Nativo.
+    - Se integró el estado local `isLogoutModalVisible` e instanció el nuevo `<ConfirmModal>`.
+    - Al presionar "Cerrar Sesión", se despliega el diálogo visual inmersivo y, al confirmar, se dispara de forma limpia la función `onSignOut()`.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación estática limpia en 1606ms**.
+
+- **2026-11-01 (Sesión 57 — Erradicación de Doble Padding en Nativo, Anclaje Inset 0 Absoluto PWA y Calibración de LiquidGlassTabBar):**
+  - **Erradicación del Doble Padding en Nativo (`mobile/src/core/hooks/useEdgeInsets.ts`):**
+    - Se eliminó la suma manual redundante de `insets.bottom` en el cálculo nativo de `bottomPadding`. Queda estrictamente `bottomPadding: bottomSpace`.
+    - En iOS nativo, UIKit (`UIScrollView` / `react-native-screens`) ya inyecta de forma automática `safeAreaInsets.bottom` ($34\text{ px}$ en iPhone con Face ID). Al no sumar `insets.bottom` doblemente en JavaScript, el espacio final al final del scroll pasa de un vacío de $142\text{ px}$ a los $108\text{ px}$ exactos de diseño ($34\text{ px}$ UIKit + $74\text{ px}$ clearance), manteniendo $16\text{ px}$ precisos sobre la barra flotante.
+  - **Anclaje de Inset 0 Absoluto en PWA Web (`mobile/public/index.html`):**
+    - Se reincorporaron las directivas `position: absolute; top: 0; left: 0; right: 0; bottom: 0;` a la regla CSS `#root`.
+    - Esto erradica el colapso del Layout Viewport de WebKit en iOS Standalone, garantizando que el contenedor raíz cubra el 100% de la pantalla física y elimine la franja negra inerte bajo la barra.
+  - **Calibración de Posicionamiento Flotante en `LiquidGlassTabBar.tsx` & `useEdgeInsets.ts`:**
+    - Se refactorizó `overlayContainer`: se removió `bottom: 0` del StyleSheet y se eliminó `paddingBottom: bottomOffset`.
+    - La separación de seguridad se aplica ahora directamente como `bottom: bottomOffset` en el contenedor, acotando la altura física del overlay a los $58\text{ px}$ exactos de `contentRow` sin generar falsos paddings inferiores ni zonas muertas inactivas.
+    - Se calibró `tabBarBottomOffset` a `Math.max(insets.bottom - 14, 12)` en Nativo ($\approx 20\text{ px}$ en iPhone con Face ID) y `max(calc(env(safe-area-inset-bottom, 0px) - 14px), 12px)` en Web, descendiendo la cápsula $14\text{ px}$ para que flote a ras del Home Indicator sin sentirse suspendida en exceso.
+  - **Calibración de Despeje Superior Nativo (`nativeTopSpace = 8`):**
+    - Se ajustó `nativeTopSpace` de `0px` a `8px` en `useEdgeInsets.ts`. Esto añade un despeje visual orgánico y sutil a las cabeceras de `HomeScreen`, `EventsScreen` y `SettingsScreen` frente al Notch y la Dynamic Island, alineándose con el estándar de $8\text{ px}$ ya utilizado en las vistas secundarias (`EventDetailScreen`, `ActivityHistoryScreen`, `AssetDetailScreen`).
+  - **Limpieza de CSS Estático Residual en Vistas Principales:**
+    - Se erradicó `paddingBottom: 120` de `styles.scrollContent` en `HomeScreen.tsx`, `EventsScreen.tsx` y `SettingsScreen.tsx`. El padding inferior queda 100% gobernado por el hook reactivo `useEdgeInsets`.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx expo export --platform web`: **Compilación y generación limpia en 1779ms**.
+
+- **2026-11-01 (Sesión 56 — Erradicación del Efecto Sándwich e Inmersión Total Edge-to-Edge en AssetDetailScreen):**
+  - **Erradicación del Envoltorio Restrictivo:**
+    - Se reemplazó el contenedor raíz `<ScreenSafeContainer>` por un `<View style={styles.container}>` con `flex: 1` y fondo base unificado en `colors.background` (`#0B0D10`).
+  - **Absorción de Safe Areas por Componente (Inmersión Edge-to-Edge):**
+    - **Header Superior Inmersivo:** El Header arranca desde el píxel 0 (`y = 0`) absorbiendo el área de la Dynamic Island / Notch mediante `paddingTop` dinámico:
+      `Platform.OS === 'web' ? 'max(calc(env(safe-area-inset-top, 0px) + 8px), 20px)' : insets.top + 8`.
+      Se cambió su color de fondo a `colors.background` para eliminar el salto de color `#0A0A0A`.
+    - **Cuerpo Central Extendido:** `<ScrollView>` configurado con `style={styles.scrollView}` (`flex: 1`, `backgroundColor: colors.background`) garantizando ocupación del 100% del área central.
+    - **Barra de Acciones Inferior Anclada:** `styles.bottomBar` anclada al extremo físico inferior del dispositivo, absorbiendo el espacio del Home Indicator con `paddingBottom` dinámico:
+      `Platform.OS === 'web' ? 'calc(env(safe-area-inset-bottom, 0px) + 16px)' : insets.bottom + 16`.
+      Fondo unificado a `colors.background` eliminando la franja flotante y el hueco negro inferior.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+
+- **2026-11-01 (Sesión 55 — Transición a Paradigma Online-First con Offline-Fallback en Mutaciones Móviles):**
+  - **Refactorización de Acciones Críticas en Terreno:**
+    - Se transformó el modelo de mutaciones de terreno de "Strictly Offline-First con sincronización manual forzada" a un modelo ágil **"Online-First con Offline-Fallback (Catch & Queue)"**.
+    - No se utiliza `NetInfo` para bloquear o acondicionar la llamada; la aplicación lanza de inmediato la petición asíncrona a Supabase (`await supabase...`).
+  - **Mutación "Dar de Baja" (`decommissionPalmeta`):**
+    - Implementada en `mobile/src/core/api/palmetas.ts` y conectada en `AssetDetailScreen.tsx`.
+    - **Try (Online):** Actualiza `palmetas_led` (`estado: 'baja'`, `ubicacion_actual: 'desecho'`) y registra la incidencia en Supabase en tiempo real. Notifica éxito vía Toast sin encolar en SQLite.
+    - **Catch (Fallback):** En caso de corte de red, error `fetch failed` o timeout, encola la incidencia en la base SQLite local (`incidencias_locales` con `sincronizado = 0`), actualiza la UI de forma optimista (`• Dado de Baja`) y notifica al técnico: *"Guardado localmente. Se sincronizará cuando haya conexión."*
+  - **Mutación "Reportar Falla" (`reportIncident`):**
+    - Implementada en `mobile/src/core/api/incidencias.ts` y conectada en `ReportIncidentModal.tsx`.
+    - **Try (Online):** Sube la evidencia a Supabase Storage (`evidencias-incidencias`), resuelve claves foráneas relacionales e inserta directamente en `public.incidencias`. Notifica éxito en tiempo real.
+    - **Catch (Fallback):** Encola la falla con su fotografía local en SQLite (`sincronizado = 0`), cierra el modal y notifica: *"Guardado localmente. Se sincronizará cuando haya conexión."*
+  - **Motor de Sincronización Manual Preservado:**
+    - La vista de Ajustes (`SettingsScreen.tsx`) conserva su botón manual para despachar exclusivamente los registros pendientes acumulados en SQLite durante eventos offline.
+    - Se agregó soporte en `syncPendingIncidencias` (`sync.ts`) para sincronizar el estado `baja` en `palmetas_led` al despachar incidencias de baja offline.
+  - **Sistema Unificado de Notificaciones Toast (`ToastContext.tsx`):**
+    - Creado `mobile/src/core/context/ToastContext.tsx` integrado en `app/_layout.tsx` con soporte de `LiquidGlassView`, Safe Areas de iOS/Android/Web, feedback háptico diferenciado y auto-dismiss.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx expo export --platform web`: **Build y exportación exitosa en 3920ms**.
 
 - **2026-10-29 (Sesión 54 — Corrección de Crash translateZ en Expo Nativo y Calibración Opción 2 de Barra Flotante LiquidGlass):**
   - **Resolución de Invariant Violation Crash en Expo Go / iOS Nativo:**

@@ -4,7 +4,24 @@ import {
   getAllLocalEventos,
   LocalIncidencia,
   LocalEvento,
+  insertLocalIncidencia,
 } from '../db/database';
+import { uploadEvidenceImage, resolveEventoUuid, resolvePalmetaUuid } from './sync';
+
+export interface ReportIncidentParams {
+  qrUuid: string;
+  tipoFalla: string;
+  fotoUri?: string;
+  observaciones?: string;
+  eventoIdOrNombre?: string;
+}
+
+export interface ReportIncidentResult {
+  success: boolean;
+  mode: 'cloud' | 'offline';
+  message: string;
+  incidentId?: string | number;
+}
 
 export interface UnifiedIncident {
   id: string;
@@ -198,4 +215,109 @@ export const fetchFilterEvents = async (): Promise<EventFilterOption[]> => {
 
   const list = Array.from(eventsMap.values());
   return list;
+};
+
+
+/**
+ * Mutación Online-First con Offline-Fallback para "Reportar Falla" de una palmeta.
+ * 1. Intenta realizar el reporte directamente en Supabase (Storage para fotos + Tabla incidencias).
+ * 2. Si la llamada de red falla (fetch failed, Network request failed, timeout o modo offline),
+ *    el bloque catch encola inmediatamente la incidencia en la base de datos local SQLite (incidencias_locales).
+ * 3. No usa NetInfo para bloquear la petición; lanza directamente el fetch a Supabase.
+ */
+export const reportIncident = async (
+  params: ReportIncidentParams
+): Promise<ReportIncidentResult> => {
+  const cleanQr = params.qrUuid.trim();
+  if (!cleanQr) {
+    throw new Error('Código QR de la palmeta requerido');
+  }
+
+  const effectiveEvent = params.eventoIdOrNombre || 'Festival Estadio Nacional';
+  const tipoFalla = params.tipoFalla || 'Escaneo Operativo';
+  const observaciones = params.observaciones?.trim() || null;
+
+  // 1. Intento Online-First directo a Supabase
+  try {
+    let remoteFotoUrl: string | null = null;
+    if (params.fotoUri) {
+      remoteFotoUrl = await uploadEvidenceImage(params.fotoUri);
+    }
+
+    let tecnicoId: string | null = null;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      tecnicoId = userData?.user?.id ?? null;
+    } catch {
+      // Ignorar si no hay sesión
+    }
+
+    const eventoUuid = await resolveEventoUuid(effectiveEvent);
+    const palmetaUuid = await resolvePalmetaUuid(cleanQr);
+
+    const { data: insertedData, error: insertError } = await supabase
+      .from('incidencias')
+      .insert({
+        qr_uuid: cleanQr,
+        palmeta_id: palmetaUuid,
+        evento_id: eventoUuid,
+        tecnico_id: tecnicoId,
+        tipo_falla: tipoFalla,
+        descripcion: observaciones,
+        foto_url: remoteFotoUrl,
+        fecha_ocurrencia: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    // Si la falla reportada es una baja definitiva, actualizar también palmetas_led
+    if (tipoFalla.toLowerCase().includes('baja')) {
+      const updateQuery = supabase
+        .from('palmetas_led')
+        .update({
+          estado: 'baja',
+          ubicacion_actual: 'desecho',
+          updated_at: new Date().toISOString(),
+        });
+      if (palmetaUuid) {
+        await updateQuery.eq('id', palmetaUuid);
+      } else {
+        await updateQuery.or(`codigo_qr.eq.${cleanQr},qr_uuid.eq.${cleanQr}`);
+      }
+    }
+
+    return {
+      success: true,
+      mode: 'cloud',
+      message: 'Falla reportada y sincronizada en tiempo real con Supabase.',
+      incidentId: insertedData?.id,
+    };
+  } catch (networkError: any) {
+    console.warn('[Online-First] Falló reporte a Supabase, aplicando Offline-Fallback:', networkError?.message);
+
+    // 2. Offline-Fallback (Catch & Queue en SQLite)
+    try {
+      const localId = insertLocalIncidencia(
+        cleanQr,
+        tipoFalla,
+        params.fotoUri,
+        observaciones || undefined,
+        effectiveEvent
+      );
+
+      return {
+        success: true,
+        mode: 'offline',
+        message: 'Guardado localmente. Se sincronizará cuando haya conexión.',
+        incidentId: localId,
+      };
+    } catch (localDbError: any) {
+      console.error('Error guardando incidencia en SQLite local:', localDbError);
+      throw new Error('No se pudo guardar la incidencia en el almacenamiento local.');
+    }
+  }
 };

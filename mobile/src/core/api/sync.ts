@@ -259,6 +259,22 @@ export const syncPendingIncidencias = async (): Promise<SyncResult> => {
         continue;
       }
 
+      // Si la incidencia sincronizada corresponde a una baja, asegurar actualización en palmetas_led
+      if (item.tipo_falla && item.tipo_falla.toLowerCase().includes('baja')) {
+        const updatePalmeta = supabase
+          .from('palmetas_led')
+          .update({
+            estado: 'baja',
+            ubicacion_actual: 'desecho',
+            updated_at: new Date().toISOString(),
+          });
+        if (palmetaUuid) {
+          await updatePalmeta.eq('id', palmetaUuid);
+        } else {
+          await updatePalmeta.or(`codigo_qr.eq.${item.qr_uuid},qr_uuid.eq.${item.qr_uuid}`);
+        }
+      }
+
       // 4. Solo si el INSERT remoto fue exitoso, marcar en SQLite como sincronizado
       markIncidenciaAsSynced(item.id, remoteFotoUrl || undefined);
       result.syncedCount++;

@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-  Alert,
   ActivityIndicator,
   RefreshControl,
   Image,
@@ -24,6 +23,8 @@ import {
   updateLocalEventoEstado,
   LocalIncidencia,
 } from '../../../core/db/database';
+import { ConfirmModal } from '../../../core/components/ConfirmModal';
+import { useToast } from '../../../core/context/ToastContext';
 import { ReportIncidentModal } from '../../scanner-incidents/components/ReportIncidentModal';
 import { IncidentScannerModal } from '../../scanner-incidents/components/IncidentScannerModal';
 
@@ -40,6 +41,7 @@ export interface IncidentItem {
 export const EventDetailScreen: React.FC = () => {
   const { insets } = useEdgeInsets();
   const router = useRouter();
+  const { showToast } = useToast();
   const params = useLocalSearchParams<{
     id: string;
     title?: string;
@@ -78,6 +80,7 @@ export const EventDetailScreen: React.FC = () => {
   const [loadingIncidents, setLoadingIncidents] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [closingEvent, setClosingEvent] = useState<boolean>(false);
+  const [isEndEventModalVisible, setEndEventModalVisible] = useState<boolean>(false);
   const [isScannerVisible, setIsScannerVisible] = useState<boolean>(false);
   const [isReportModalVisible, setIsReportModalVisible] = useState<boolean>(false);
   const [scannedQr, setScannedQr] = useState<string | null>(null);
@@ -190,80 +193,75 @@ export const EventDetailScreen: React.FC = () => {
 
   // Cierre del Evento (HU-16): actualiza estado en Supabase y SQLite
   const handleConfirmFinalizeEvent = () => {
-    Alert.alert(
-      '¿Finalizar Evento?',
-      'Esta acción marcará el evento como concluido y pasará al Historial en modo de Solo Lectura. No se podrán añadir nuevas incidencias ni alterar su inventario.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sí, Finalizar Evento',
-          style: 'destructive',
-          onPress: async () => {
-            setClosingEvent(true);
-            triggerHaptic('medium');
+    triggerHaptic('medium');
+    setEndEventModalVisible(true);
+  };
 
-            try {
-              const nowIso = new Date().toISOString();
+  const handleExecuteFinalizeEvent = async () => {
+    setEndEventModalVisible(false);
+    setClosingEvent(true);
+    triggerHaptic('medium');
 
-              // 1. Actualizar en Supabase (por UUID o por Nombre si el ID fue temporal)
-              let updateBuilder = supabase
-                .from('eventos')
-                .update({
-                  estado: 'finalizado',
-                  fecha_termino: nowIso,
-                });
+    try {
+      const nowIso = new Date().toISOString();
 
-              if (eventId && !eventId.startsWith('ev-')) {
-                updateBuilder = updateBuilder.eq('id', eventId);
-              } else {
-                updateBuilder = updateBuilder.eq('nombre', eventData.nombre);
-              }
+      // 1. Actualizar en Supabase (por UUID o por Nombre si el ID fue temporal)
+      let updateBuilder = supabase
+        .from('eventos')
+        .update({
+          estado: 'finalizado',
+          fecha_termino: nowIso,
+        });
 
-              const { data: updatedRows, error } = await updateBuilder.select();
+      if (eventId && !eventId.startsWith('ev-')) {
+        updateBuilder = updateBuilder.eq('id', eventId);
+      } else {
+        updateBuilder = updateBuilder.eq('nombre', eventData.nombre);
+      }
 
-              if (error) {
-                console.warn('Error al finalizar en Supabase:', error.message);
-                throw error;
-              }
+      const { data: updatedRows, error } = await updateBuilder.select();
 
-              // Fallback si por ID no afectó filas remotas
-              if (!updatedRows || updatedRows.length === 0) {
-                await supabase
-                  .from('eventos')
-                  .update({
-                    estado: 'finalizado',
-                    fecha_termino: nowIso,
-                  })
-                  .eq('nombre', eventData.nombre);
-              }
+      if (error) {
+        console.warn('Error al finalizar en Supabase:', error.message);
+        throw error;
+      }
 
-              // 2. Actualizar en base de datos local SQLite (por ID y por Nombre)
-              updateLocalEventoEstado(eventId, 'finalizado');
-              if (eventData.nombre) {
-                updateLocalEventoEstado(eventData.nombre, 'finalizado');
-              }
+      // Fallback si por ID no afectó filas remotas
+      if (!updatedRows || updatedRows.length === 0) {
+        await supabase
+          .from('eventos')
+          .update({
+            estado: 'finalizado',
+            fecha_termino: nowIso,
+          })
+          .eq('nombre', eventData.nombre);
+      }
 
-              setStatus('finalizado');
-              setEventData((prev) => ({ ...prev, fecha_termino: nowIso }));
-              triggerHaptic('success');
+      // 2. Actualizar en base de datos local SQLite (por ID y por Nombre)
+      updateLocalEventoEstado(eventId, 'finalizado');
+      if (eventData.nombre) {
+        updateLocalEventoEstado(eventData.nombre, 'finalizado');
+      }
 
-              Alert.alert(
-                'Evento Finalizado',
-                'El evento ha sido cerrado exitosamente y archivado en el Historial.'
-              );
-            } catch (err: any) {
-              triggerHaptic('warning');
-              Alert.alert(
-                'Error al finalizar',
-                err?.message || 'No fue posible registrar el cierre del evento. Verifica tu conexión.'
-              );
-            } finally {
-              setClosingEvent(false);
-            }
-          },
-        },
-      ]
-    );
+      setStatus('finalizado');
+      setEventData((prev) => ({ ...prev, fecha_termino: nowIso }));
+      triggerHaptic('success');
+
+      showToast({
+        type: 'success',
+        title: 'EVENTO FINALIZADO',
+        message: 'El evento ha sido cerrado exitosamente y archivado en el Historial.',
+      });
+    } catch (err: any) {
+      triggerHaptic('warning');
+      showToast({
+        type: 'error',
+        title: 'ERROR AL FINALIZAR',
+        message: err?.message || 'No fue posible registrar el cierre del evento. Verifica tu conexión.',
+      });
+    } finally {
+      setClosingEvent(false);
+    }
   };
 
   const isReadOnly = status === 'finalizado';
@@ -589,6 +587,19 @@ export const EventDetailScreen: React.FC = () => {
           setScannedQr(null);
           fetchIncidents();
         }}
+      />
+
+      {/* 3. Modal de Confirmación de Cierre de Evento */}
+      <ConfirmModal
+        visible={isEndEventModalVisible}
+        title="Finalizar Evento"
+        message="¿Estás seguro de que deseas dar por finalizado este montaje? Esta acción bloqueará el registro de nuevas incidencias para este evento."
+        confirmText="Finalizar"
+        cancelText="Cancelar"
+        isDestructive={true}
+        confirmLoading={closingEvent}
+        onConfirm={handleExecuteFinalizeEvent}
+        onCancel={() => setEndEventModalVisible(false)}
       />
     </View>
   );
