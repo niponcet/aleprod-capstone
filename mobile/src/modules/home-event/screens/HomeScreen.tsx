@@ -34,7 +34,6 @@ import {
   UnifiedIncident,
 } from '../../../core/api/incidencias';
 import { triggerHaptic } from '../../../core/utils/haptics';
-import { TAB_OFFSET } from '../../../core/constants/navigation';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
@@ -188,7 +187,7 @@ export const HomeScreen: React.FC = () => {
 
 
   return (
-    <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
       {/* Glow ambiental superior suave y continuo */}
@@ -258,12 +257,14 @@ export const HomeScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#3B82F6"
-            colors={['#3B82F6']}
-          />
+          Platform.OS !== 'web' ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          ) : undefined
         }
       >
         {/* Card: Montaje Activo Dinámico (HU-10) */}
@@ -562,7 +563,6 @@ export const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     backgroundColor: '#070B14',
   },
   scrollView: {
@@ -653,7 +653,6 @@ const styles = StyleSheet.create({
     borderColor: '#1E293B',
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

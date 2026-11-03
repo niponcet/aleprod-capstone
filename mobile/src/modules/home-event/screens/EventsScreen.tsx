@@ -16,7 +16,6 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { triggerHaptic } from '../../../core/utils/haptics';
-import { TAB_OFFSET } from '../../../core/constants/navigation';
 import { supabase } from '../../../core/api/supabase';
 import { StartEventBottomSheet } from '../components/StartEventBottomSheet';
 import { useAuth } from '../../../core/context/AuthContext';
@@ -211,7 +210,7 @@ export const EventsScreen: React.FC = () => {
 
 
   return (
-    <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
       {/* Glow ambiental superior suave y continuo */}
@@ -258,12 +257,14 @@ export const EventsScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#3B82F6"
-            colors={['#3B82F6']}
-          />
+          Platform.OS !== 'web' ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          ) : undefined
         }
       >
         {/* Pestañas Principales HU-16: "En Curso" vs "Historial" */}
@@ -548,7 +549,6 @@ export const EventsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     backgroundColor: '#070B14',
   },
   scrollView: {
@@ -622,7 +622,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

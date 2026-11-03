@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -49,6 +50,14 @@ export const LoginScreen: React.FC = () => {
         'Por favor ingresa tu correo electrónico y contraseña corporativa.'
       );
       return;
+    }
+
+    Keyboard.dismiss();
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      window.scrollTo(0, 0);
     }
 
     setLoading(true);

@@ -240,7 +240,6 @@ export const NotificationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     backgroundColor: '#080C14',
   },
   scrollView: {
@@ -355,7 +354,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

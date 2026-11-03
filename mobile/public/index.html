@@ -34,6 +34,8 @@
       html, body {
         width: 100%;
         height: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
         background-color: #070B14 !important;
         margin: 0;
         padding: 0;
@@ -46,8 +48,11 @@
 
       #root {
         display: flex;
+        flex-direction: column;
         width: 100%;
         height: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
         flex: 1;
         background-color: #070B14 !important;
         overflow: hidden;
@@ -78,5 +83,26 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+      // Parche universal iOS WebKit: restauración de viewport tras cierre de teclado en PWA / Safari
+      document.addEventListener('focusout', function(e) {
+        if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(e.target.tagName) !== -1) {
+          setTimeout(function() {
+            window.scrollTo(0, 0);
+            var root = document.getElementById('root');
+            if (root) {
+              root.style.height = '100dvh';
+            }
+          }, 120);
+        }
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() {
+          if (window.visualViewport.height >= window.innerHeight * 0.88) {
+            window.scrollTo(0, 0);
+          }
+        });
+      }
+    </script>
   </body>
 </html>

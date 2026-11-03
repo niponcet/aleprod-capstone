@@ -1,31 +1,29 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { LiquidGlassTabBar } from '../../src/core/components/LiquidGlassTabBar';
 
 export default function TabLayout() {
   return (
-    <View style={{ flex: 1, backgroundColor: '#070B14' }}>
-      <Tabs
-        tabBar={(props) => <LiquidGlassTabBar {...props} />}
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: Platform.OS === 'web' ? 0 : undefined,
-            backgroundColor: 'transparent',
-            borderTopWidth: 0,
-            elevation: 0,
-          },
-          sceneStyle: {
-            backgroundColor: 'transparent',
-            ...(Platform.OS === 'web' ? { height: '100%', flex: 1 } : {}),
-          },
-        }}
-      >
+    <Tabs
+      tabBar={(props) => <LiquidGlassTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: Platform.OS === 'web' ? 0 : undefined,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+        },
+        sceneStyle: {
+          backgroundColor: '#070B14',
+        },
+      }}
+    >
         <Tabs.Screen
           name="index"
           options={{
@@ -45,6 +43,5 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </View>
   );
 }

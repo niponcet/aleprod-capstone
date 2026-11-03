@@ -49,40 +49,30 @@ function RootNavigationLayout() {
   }
 
   return (
-    <View style={styles.rootContainer}>
-      <Stack
-        screenOptions={{
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#070B14' },
+      }}
+    >
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="scanner"
+        options={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#070B14' },
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
         }}
-      >
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="scanner"
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="escanear"
-          options={{
-            headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen name="asset-detail" options={{ headerShown: false }} />
-        <Stack.Screen name="event-detail" options={{ headerShown: false }} />
-        <Stack.Screen name="activity-history" options={{ headerShown: false }} />
-        <Stack.Screen name="notifications" options={{ headerShown: false }} />
-        <Stack.Screen name="soporte" options={{ headerShown: false }} />
-        <Stack.Screen name="manual" options={{ headerShown: false }} />
-      </Stack>
-    </View>
+      />
+      <Stack.Screen name="asset-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="event-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="activity-history" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="soporte" options={{ headerShown: false }} />
+      <Stack.Screen name="manual" options={{ headerShown: false }} />
+    </Stack>
   );
 }
 

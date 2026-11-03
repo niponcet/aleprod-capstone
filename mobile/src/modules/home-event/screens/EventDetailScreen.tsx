@@ -542,12 +542,14 @@ export const EventDetailScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#60A5FA"
-            colors={['#2563EB']}
-          />
+          Platform.OS !== 'web' ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#60A5FA"
+              colors={['#2563EB']}
+            />
+          ) : undefined
         }
       />
 

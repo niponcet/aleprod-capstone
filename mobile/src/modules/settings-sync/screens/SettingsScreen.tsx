@@ -24,7 +24,6 @@ import {
 import { syncAllPendingData } from '../../../core/api/sync';
 import { supabase } from '../../../core/api/supabase';
 import { triggerHaptic } from '../../../core/utils/haptics';
-import { TAB_OFFSET } from '../../../core/constants/navigation';
 import { ConfirmModal } from '../../../core/components/ConfirmModal';
 
 interface SettingsScreenProps {
@@ -152,7 +151,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 
 
   return (
-    <View style={[styles.container, { width: screenWidth, marginLeft: TAB_OFFSET }]}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
       {/* Glow ambiental superior suave y continuo */}
@@ -389,7 +388,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     backgroundColor: '#070B14',
   },
   scrollView: {
@@ -449,7 +447,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

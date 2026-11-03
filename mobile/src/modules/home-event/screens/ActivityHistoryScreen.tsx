@@ -598,14 +598,7 @@ export const ActivityHistoryScreen: React.FC = () => {
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primaryAmber}
-              colors={[colors.primaryAmber]}
-            />
-          }
+          refreshControl={Platform.OS !== 'web' ? (<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryAmber} colors={[colors.primaryAmber]} />) : undefined}
         />
       )}
     </View>

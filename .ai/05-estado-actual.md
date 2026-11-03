@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 03 de Noviembre de 2026 (Sesión 63 — Desbloqueo de Scroll Vertical, Aislamiento GPU Retina y Calibración de Despeje Inferior en Tab Screens PWA / WebKit).
+- **Fecha de Última Actualización:** 03 de Noviembre de 2026 (Sesión 64 — Diagnóstico y Resolución Arquitectónica Integral: Desacople de RefreshControl Web, Eliminación de Rutas Redundantes, Supresión de Wrappers de Navegación y Parche de Viewport iOS WebKit).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
@@ -115,6 +115,23 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-11-03 (Sesión 64 — Diagnóstico y Resolución Arquitectónica Integral: Desacople de RefreshControl Web, Eliminación de Rutas Redundantes, Supresión de Wrappers de Navegación y Parche de Viewport iOS WebKit):**
+  - **Diagnóstico Causa Raíz de "Pantalla Fija / Sin Scroll" y "Franja Inferior":**
+    - En `react-native-web`, el componente `RefreshControl` no es soportado nativamente; en su lugar clona un `<View style={props.style}>` envolviendo al ScrollView con `overflowY: 'auto'`. Al tener overflow cero, en WebKit/iOS Safari captura todos los toques y bloquea el desplazamiento del ScrollView interno ("formato fijo, no hay scroll").
+    - Se aisló `RefreshControl` en todas las pantallas con `Platform.OS !== 'web' ? <RefreshControl ... /> : undefined` (`HomeScreen`, `EventsScreen`, `EventDetailScreen`, `ActivityHistoryScreen`), preservando 100% la funcionalidad nativa intacta.
+    - Se eliminaron las propiedades `height: '100%'` en `container` y `flexGrow: 1` en `scrollContent` que causaban colapso de rango de scroll en Safari.
+    - Se eliminó el wrapper `<View style={{ flex: 1, backgroundColor: '#070B14' }}>` alrededor de `<Tabs>` en `mobile/app/(tabs)/_layout.tsx` y el wrapper `<View style={styles.rootContainer}>` alrededor de `<Stack>` en `mobile/app/_layout.tsx`, permitiendo que Expo Router calcule la jerarquía flex de forma limpia y directa.
+    - Se eliminó la ruta duplicada redundante `mobile/app/escanear.tsx` (que clonaba a `mobile/app/scanner.tsx`) y se desregistró de `_layout.tsx`.
+    - Se eliminaron las dimensiones inline forzadas `{ width: screenWidth, marginLeft: TAB_OFFSET }` y se removieron los imports huérfanos de `TAB_OFFSET`.
+  - **Parche de Contracción de Viewport por Teclado iOS WebKit (PWA y Safari):**
+    - En iOS WebKit, el foco en los campos de entrada de `LoginScreen` comprime el viewport visual. Al pulsar "Ingresar" y navegar, Safari/WebKit no reexpande el viewport a su altura completa, dejando una franja muerta inferior persistente.
+    - Se incorporó desenfoque preventivo de inputs (`document.activeElement.blur()`), `Keyboard.dismiss()` y `window.scrollTo(0, 0)` en `LoginScreen.tsx` previo a la navegación.
+    - Se implementó un script de resiliencia en `mobile/public/index.html` que ante eventos `focusout` y `visualViewport.resize` restaura `window.scrollTo(0, 0)` y refresca la altura `#root.style.height = '100dvh'`.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - `npx tsc --noEmit` en `/web`: **0 errores de compilación**.
+    - `npx expo export --platform web`: **Exportación exitosa con 0 errores**.
 
 - **2026-11-03 (Sesión 63 — Desbloqueo de Scroll Vertical, Aislamiento GPU Retina y Calibración de Despeje Inferior en Tab Screens PWA / WebKit):**
   - **Desbloqueo de Scroll Vertical en Pantallas de Navegación (HomeScreen, EventsScreen, SettingsScreen, NotificationsScreen):**
