@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { LiquidGlassTabBar } from '../../src/core/components/LiquidGlassTabBar';
 
@@ -15,6 +15,7 @@ export default function TabLayout() {
             bottom: 0,
             left: 0,
             right: 0,
+            height: Platform.OS === 'web' ? 0 : undefined,
             backgroundColor: 'transparent',
             borderTopWidth: 0,
             elevation: 0,

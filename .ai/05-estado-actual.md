@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 01 de Noviembre de 2026 (Sesión 61 — Erradicación de Alerts Nativos en favor de Toasts y ConfirmModal + Rediseño Corporativo del Escáner Principal).
+- **Fecha de Última Actualización:** 03 de Noviembre de 2026 (Sesión 62 — Neutralización de Despeje Fantasma en PWA Mobile y Sanación de Viewport WebKit).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
@@ -116,7 +116,17 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
-- **2026-11-01 (Sesión 60 — Pantallas Completas Edge-to-Edge para Soporte Técnico y Manual de Terreno en Expo Router):**
+- **2026-11-03 (Sesión 62 — Neutralización de Despeje Fantasma en PWA Mobile y Sanación de Viewport WebKit):**
+  - **Alineación de `tabBarStyle` en PWA (`mobile/app/(tabs)/_layout.tsx`):**
+    - Se incorporó `height: Platform.OS === 'web' ? 0 : undefined` en las opciones de `tabBarStyle`.
+    - Al ser evaluado por `getTabBarHeight` de React Navigation en Web, se neutraliza la reserva por defecto de 49px + safe area en las pantallas de pestañas, permitiendo que la cápsula flotante `LiquidGlassTabBar` actúe como un overlay absoluto sin empujar el árbol de contenido hacia arriba.
+    - Cero impacto en iOS/Android nativo (`height` permanece `undefined`).
+  - **Sanación del Contenedor Raíz WebKit (`mobile/public/index.html`):**
+    - Se retiraron las directivas `position: absolute; top: 0; bottom: 0; min-height: 100dvh;` sobre `#root` y `html, body`.
+    - Se restituyó el estándar fluido canónico de React Native Web (`display: flex; width: 100%; height: 100%; flex: 1; overflow: hidden;`), eliminando el bug de anclaje negativo que desplazaba el origen visual del viewport hacia arriba en navegadores móviles.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - `npx expo export --platform web`: **Exportación exitosa con 0 errores**.
   - **Creación de Pantalla `SupportScreen.tsx`:**
     - Diseñada en `mobile/src/modules/settings-sync/screens/SupportScreen.tsx` con arquitectura inmersiva Edge-to-Edge (`useSafeAreaInsets` inyectado en Header y ScrollView).
     - Canales de contacto interactivos vía `Linking`: WhatsApp de Mesa de Ayuda (`+56 9 8765 4321`) con badge "En línea", y Correo Electrónico (`soporte@aleprod.cl`).
