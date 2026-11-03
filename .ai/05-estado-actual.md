@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 03 de Noviembre de 2026 (Sesión 62 — Neutralización de Despeje Fantasma en PWA Mobile y Sanación de Viewport WebKit).
+- **Fecha de Última Actualización:** 03 de Noviembre de 2026 (Sesión 63 — Desbloqueo de Scroll Vertical, Aislamiento GPU Retina y Calibración de Despeje Inferior en Tab Screens PWA / WebKit).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
@@ -115,6 +115,21 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-11-03 (Sesión 63 — Desbloqueo de Scroll Vertical, Aislamiento GPU Retina y Calibración de Despeje Inferior en Tab Screens PWA / WebKit):**
+  - **Desbloqueo de Scroll Vertical en Pantallas de Navegación (HomeScreen, EventsScreen, SettingsScreen, NotificationsScreen):**
+    - Se identificó que <ScrollView> carecía de style={styles.scrollView} (flex: 1, width: '100%') y styles.container carecía de height: '100%'.
+    - En WebKit/Safari flexbox, un flex child sin flex: 1 ni height: '100%' se expande a la altura total de su contenido (min-height: auto), lo cual provocaba que el contenedor interno no registrara overflow y la pantalla quedase completamente bloqueada/fija ("no hay scroll") con las tarjetas inferiores cortadas.
+    - Se inyectó style={styles.scrollView} con flex: 1, width: '100%' en todos los ScrollViews de navegación, height: '100%' en sus styles.container, y flexGrow: 1 en scrollContent.
+    - En mobile/app/(tabs)/_layout.tsx, se aseguró sceneStyle: { backgroundColor: 'transparent', ...(Platform.OS === 'web' ? { height: '100%', flex: 1 } : {}) }.
+  - **Aislamiento GPU Retina contra Texto Borroso en Cabecera (topAmbientGlow):**
+    - Se incorporó ...Platform.select({ web: { transform: [{ translateZ: 0 } as any] } }) en topAmbientGlow de HomeScreen, EventsScreen, SettingsScreen y NotificationsScreen.
+    - Esto fuerza a WebKit en iOS Retina a generar una capa de composición acelerada por hardware (GPU layer), preservando el antialiasing subpixel nítido en los textos superiores sobre el degradado ambiental sin afectar plataformas nativas.
+  - **Calibración de Despeje Inferior (useEdgeInsets(88, 12)):**
+    - Se aumentó el despeje inferior base de 74px a 88px en las pantallas de pestañas, garantizando que al scrollear hasta el fondo la última tarjeta quede completamente visible con amplio margen sobre la barra flotante LiquidGlassTabBar.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - `npx expo export --platform web`: **Exportación web limpia con 0 errores**.
 
 - **2026-11-03 (Sesión 62 — Neutralización de Despeje Fantasma en PWA Mobile y Sanación de Viewport WebKit):**
   - **Alineación de `tabBarStyle` en PWA (`mobile/app/(tabs)/_layout.tsx`):**

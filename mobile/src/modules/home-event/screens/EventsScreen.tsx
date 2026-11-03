@@ -37,7 +37,7 @@ export interface EventItem {
 type MainTabType = 'en_curso' | 'historial';
 
 export const EventsScreen: React.FC = () => {
-  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(74, 12);
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(88, 12);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const { canStartEvent, role } = useAuth();
@@ -246,6 +246,7 @@ export const EventsScreen: React.FC = () => {
       </View>
 
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -547,7 +548,12 @@ export const EventsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    height: '100%',
     backgroundColor: '#070B14',
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
   },
   topAmbientGlow: {
     position: 'absolute',
@@ -556,7 +562,11 @@ const styles = StyleSheet.create({
     right: 0,
     height: 320,
     zIndex: -1,
-
+    ...Platform.select({
+      web: {
+        transform: [{ translateZ: 0 } as any],
+      },
+    }),
   },
   headerContainer: {
     flexDirection: 'row',
@@ -612,6 +622,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

@@ -20,7 +20,10 @@ export default function TabLayout() {
             borderTopWidth: 0,
             elevation: 0,
           },
-          sceneStyle: { backgroundColor: 'transparent' },
+          sceneStyle: {
+            backgroundColor: 'transparent',
+            ...(Platform.OS === 'web' ? { height: '100%', flex: 1 } : {}),
+          },
         }}
       >
         <Tabs.Screen

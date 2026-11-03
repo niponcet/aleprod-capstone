@@ -33,7 +33,7 @@ interface SettingsScreenProps {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => {
   const router = useRouter();
-  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(74, 12);
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(88, 12);
   const { width: screenWidth } = useWindowDimensions();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -177,6 +177,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
       </View>
 
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -388,7 +389,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    height: '100%',
     backgroundColor: '#070B14',
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
   },
   topAmbientGlow: {
     position: 'absolute',
@@ -397,7 +403,11 @@ const styles = StyleSheet.create({
     right: 0,
     height: 320,
     zIndex: -1,
-
+    ...Platform.select({
+      web: {
+        transform: [{ translateZ: 0 } as any],
+      },
+    }),
   },
   headerContainer: {
     flexDirection: 'row',
@@ -439,6 +449,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

@@ -180,6 +180,7 @@ export const NotificationsScreen: React.FC = () => {
 
       {/* Lista de Notificaciones */}
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -239,7 +240,12 @@ export const NotificationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    height: '100%',
     backgroundColor: '#080C14',
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
   },
   topAmbientGlow: {
     position: 'absolute',
@@ -247,6 +253,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 280,
+    zIndex: -1,
+    ...Platform.select({
+      web: {
+        transform: [{ translateZ: 0 } as any],
+      },
+    }),
   },
   headerContainer: {
     flexDirection: 'row',
@@ -343,6 +355,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },
