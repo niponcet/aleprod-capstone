@@ -41,6 +41,19 @@ export function Sidebar({
 
   const [nombre, setNombre] = useState(userNombre);
   const [rol, setRol] = useState(userRol);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    if (!showLogoutConfirm) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isLoggingOut) {
+        setShowLogoutConfirm(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showLogoutConfirm, isLoggingOut]);
 
   const fetchLiveCounts = useCallback(async () => {
     try {
@@ -590,42 +603,110 @@ export function Sidebar({
             </span>
             <span style={{ fontSize: "12px", color: "var(--mu)" }}>{rol}</span>
           </div>
-          <form action="/auth/signout" method="POST">
-            <button
-              type="submit"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                border: "1px solid var(--bd)",
-                background: "transparent",
-                color: "var(--mu)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            className="hover:!text-red-500 hover:!border-red-500/30 hover:!bg-red-500/10 active:scale-95"
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              border: "1px solid var(--bd)",
+              background: "transparent",
+              color: "var(--mu)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
-              </svg>
-            </button>
-          </form>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </aside>
+
+    {/* Modal de Confirmación de Cierre de Sesión */}
+    {showLogoutConfirm && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="logout-dialog-title"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+        onClick={() => !isLoggingOut && setShowLogoutConfirm(false)}
+      >
+        <div
+          className="w-full max-w-sm bg-[var(--sf)] border border-[var(--bd)] rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 duration-200 card-shadow"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header Icon + Title */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-2xl">logout</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <h3
+                id="logout-dialog-title"
+                className="font-['Outfit'] text-base font-bold text-[var(--tx)] leading-tight"
+              >
+                ¿Cerrar sesión?
+              </h3>
+              <p className="text-xs text-[var(--mu)] leading-relaxed">
+                Tendrás que volver a ingresar tus credenciales para acceder al Panel Gerencial.
+              </p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[var(--bd)]">
+            <button
+              type="button"
+              disabled={isLoggingOut}
+              onClick={() => setShowLogoutConfirm(false)}
+              className="h-9 px-4 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[var(--border-light)] active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <form
+              action="/auth/signout"
+              method="POST"
+              onSubmit={() => setIsLoggingOut(true)}
+            >
+              <button
+                type="submit"
+                disabled={isLoggingOut}
+                className="h-9 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold active:scale-95 transition-all shadow-sm hover:shadow-md cursor-pointer flex items-center gap-1.5 disabled:opacity-60"
+              >
+                {isLoggingOut ? (
+                  <>
+                    <span className="material-symbols-outlined text-sm animate-spin">
+                      progress_activity
+                    </span>
+                    <span>Cerrando...</span>
+                  </>
+                ) : (
+                  <span>Sí, cerrar sesión</span>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    )}
   </>
 );
 }

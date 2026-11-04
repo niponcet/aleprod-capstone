@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { ThemeToggle } from "./theme-toggle";
+
 
 export interface DashboardViewProps {
   user: {
@@ -48,6 +48,36 @@ export interface DashboardViewProps {
   }>;
 }
 
+/* ─── Date Formatter Helpers ─── */
+function formatEventDate(iso: string | null) {
+  if (!iso) return "Por definir";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("es-CL", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function formatTimeAgo(iso: string) {
+  try {
+    const now = new Date();
+    const past = new Date(iso);
+    const diffMs = now.getTime() - past.getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHrs < 1) return "Hace momentos";
+    if (diffHrs < 24) return `Hace ${diffHrs} h`;
+    const diffDays = Math.floor(diffHrs / 24);
+    return `Hace ${diffDays} d`;
+  } catch {
+    return "Reciente";
+  }
+}
+
 export function DashboardView({
   user,
   perfil,
@@ -60,12 +90,90 @@ export function DashboardView({
 
   /* ─── State ─── */
   const [filter, setFilter] = useState<"all" | "en_curso" | "finalizado">("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [eventos, setEventos] = useState(initialEventos);
   const [palmetas, setPalmetas] = useState(initialPalmetas);
   const [incidencias, setIncidencias] = useState(initialIncidencias);
   const [modalNuevoEvento, setModalNuevoEvento] = useState(false);
   const [guardandoEvento, setGuardandoEvento] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifContainerRef = useRef<HTMLDivElement>(null);
+  const [lastClearedTimestamp, setLastClearedTimestamp] = useState<string | null>(null);
+  const [clearedNotificationIds, setClearedNotificationIds] = useState<string[]>([]);
+
+  // Cargar notificaciones limpiadas persistentes de localStorage
+  useEffect(() => {
+    try {
+      const savedTime = localStorage.getItem("aleprod_notifications_cleared_at");
+      if (savedTime) {
+        setLastClearedTimestamp(savedTime);
+      }
+      const saved = localStorage.getItem("aleprod_cleared_notifications");
+      if (saved) {
+        setClearedNotificationIds(JSON.parse(saved));
+      }
+    } catch {
+      // Ignorar errores en navegadores restrictivos
+    }
+  }, []);
+
+  const saveClearedIds = (ids: string[]) => {
+    setClearedNotificationIds(ids);
+    try {
+      localStorage.setItem("aleprod_cleared_notifications", JSON.stringify(ids));
+    } catch {
+      // Ignorar
+    }
+  };
+
+  const isIncidenciaCleared = (inc: { id: string; created_at?: string; fecha_ocurrencia?: string }) => {
+    // Si fue descartada individualmente
+    if (clearedNotificationIds.includes("inc-" + inc.id)) return true;
+
+    // Si fue creada antes o en el momento en que el usuario pulsó Limpiar
+    if (lastClearedTimestamp) {
+      const incTime = new Date(inc.created_at || inc.fecha_ocurrencia || 0).getTime();
+      const clearedTime = new Date(lastClearedTimestamp).getTime();
+      if (!isNaN(incTime) && !isNaN(clearedTime) && incTime <= clearedTime) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+  const [toastIncidencia, setToastIncidencia] = useState<{
+    id: string;
+    tipo_falla: string;
+    codigo_palmeta?: string;
+    created_at?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!toastIncidencia) return;
+    const timer = setTimeout(() => {
+      setToastIncidencia(null);
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [toastIncidencia]);
+
+  useEffect(() => {
+    if (!showNotifications) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifContainerRef.current && !notifContainerRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showNotifications]);
 
   // Formulario nuevo evento
   const [nuevoNombre, setNuevoNombre] = useState("");
@@ -82,9 +190,31 @@ export function DashboardView({
         const { data } = await supabase.from("palmetas_led").select("id, codigo_visible, qr_uuid, estado, ubicacion_actual");
         if (data) setPalmetas(data);
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "incidencias" }, async () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "incidencias" }, async (payload) => {
         const { data } = await supabase.from("incidencias").select("id, palmeta_id, qr_uuid, tipo_falla, resuelto, created_at, fecha_ocurrencia").order("fecha_ocurrencia", { ascending: false });
         if (data) setIncidencias(data);
+
+        // Si es una nueva incidencia reportada desde terreno
+        if (payload.eventType === "INSERT" && payload.new) {
+          const newInc = payload.new as { id: string; tipo_falla?: string; qr_uuid?: string; created_at?: string };
+          setToastIncidencia({
+            id: newInc.id,
+            tipo_falla: newInc.tipo_falla || "Falla reportada en terreno",
+            codigo_palmeta: newInc.qr_uuid?.slice(0, 8),
+            created_at: newInc.created_at,
+          });
+
+          // Asegurar que esta nueva incidencia aparezca de inmediato y no esté silenciada (en memoria y localStorage)
+          setClearedNotificationIds((prev) => {
+            const filtered = prev.filter((id) => id !== ("inc-" + newInc.id));
+            try {
+              localStorage.setItem("aleprod_cleared_notifications", JSON.stringify(filtered));
+            } catch {
+              // Ignorar
+            }
+            return filtered;
+          });
+        }
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "eventos" }, async () => {
         const { data } = await supabase.from("eventos").select("*").order("fecha_inicio", { ascending: false });
@@ -115,61 +245,117 @@ export function DashboardView({
   const repuestosTotal = initialRepuestos.length;
   const repuestosBajoStock = initialRepuestos.filter((r) => r.stock_actual <= r.stock_minimo).length;
 
+  const listaNotificaciones = useMemo(() => {
+    const items: Array<{
+      id: string;
+      tipo: "incidencia" | "repuesto" | "evento" | "sistema";
+      titulo: string;
+      descripcion: string;
+      tiempo: string;
+      badge: string;
+      link: string;
+      severidad: "danger" | "warning" | "info" | "success";
+    }> = [];
+
+    // 1. Incidencias pendientes que NO hayan sido limpiadas previamente
+    const pendientes = incidencias.filter((i) => !i.resuelto && !isIncidenciaCleared(i));
+    pendientes.slice(0, 8).forEach((inc) => {
+      items.push({
+        id: "inc-" + inc.id,
+        tipo: "incidencia",
+        titulo: "Avería: " + inc.tipo_falla,
+        descripcion: "Palmeta " + (inc.codigo_palmeta || inc.qr_uuid?.slice(0, 8) || "S/C") + " reportada por terreno",
+        tiempo: formatTimeAgo(inc.fecha_ocurrencia || inc.created_at),
+        badge: "Avería Activa",
+        link: "/incidencias",
+        severidad: "danger",
+      });
+    });
+
+    // 2. Repuestos críticos
+    const repuestosCriticos = initialRepuestos.filter((r) => r.stock_actual <= r.stock_minimo);
+    if (repuestosCriticos.length > 0) {
+      items.push({
+        id: "rep-alerta",
+        tipo: "repuesto",
+        titulo: "Alerta de Stock Crítico",
+        descripcion: repuestosCriticos.length + " repuesto(s) alcanzaron o están bajo el stock mínimo.",
+        tiempo: "Atención",
+        badge: "Inventario",
+        link: "/",
+        severidad: "warning",
+      });
+    }
+
+    // 3. Evento en curso activo
+    if (eventoActivo && eventoActivo.estado === "en_curso") {
+      items.push({
+        id: "ev-" + eventoActivo.id,
+        tipo: "evento",
+        titulo: "Montaje Activo: " + eventoActivo.nombre,
+        descripcion: (eventoActivo.locacion || "Locación por definir") + " (" + (eventoActivo.metros_cuadrados || 0) + " m²)",
+        tiempo: formatTimeAgo(eventoActivo.fecha_inicio || new Date().toISOString()),
+        badge: "En Terreno",
+        link: "/eventos",
+        severidad: "info",
+      });
+    }
+
+    // 4. Sincronización en vivo
+    items.push({
+      id: "sync-status",
+      tipo: "sistema",
+      titulo: "Sistemas en tiempo real",
+      descripcion: "Sincronización activa con Supabase Cloud y terreno.",
+      tiempo: "En línea",
+      badge: "Sincronizado",
+      link: "/",
+      severidad: "success",
+    });
+
+    return items;
+  }, [incidencias, initialRepuestos, eventoActivo]);
+
+  const notificacionesVisibles = useMemo(() => {
+    return listaNotificaciones.filter((n) => !clearedNotificationIds.includes(n.id));
+  }, [listaNotificaciones, clearedNotificationIds]);
+
+  const handleLimpiarNotificaciones = () => {
+    const nowIso = new Date().toISOString();
+    setLastClearedTimestamp(nowIso);
+    try {
+      localStorage.setItem("aleprod_notifications_cleared_at", nowIso);
+    } catch {
+      // Ignorar
+    }
+
+    // También descartar alertas fijas actuales (repuestos, eventos, etc.)
+    const currentAlertIds = listaNotificaciones.map((n) => n.id);
+    const updated = Array.from(new Set([...clearedNotificationIds, ...currentAlertIds]));
+    saveClearedIds(updated);
+  };
+
+  const handleDescartarNotificacion = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const updated = Array.from(new Set([...clearedNotificationIds, id]));
+    saveClearedIds(updated);
+  };
+
   /* ─── Filter Events ─── */
   const eventosFiltrados = useMemo(() => {
     return eventos.filter((ev) => {
-      const matchFilter =
-        filter === "all"
-          ? true
-          : filter === "en_curso"
-          ? ev.estado === "en_curso"
-          : ev.estado === "finalizado";
-
-      const q = searchQuery.toLowerCase().trim();
-      const matchQuery =
-        !q ||
-        ev.nombre.toLowerCase().includes(q) ||
-        (ev.locacion || "").toLowerCase().includes(q) ||
-        (ev.tipo_pantalla || "").toLowerCase().includes(q);
-
-      return matchFilter && matchQuery;
+      if (filter === "all") return true;
+      if (filter === "en_curso") return ev.estado === "en_curso";
+      return ev.estado === "finalizado";
     });
-  }, [eventos, filter, searchQuery]);
+  }, [eventos, filter]);
 
   const countAll = eventos.length;
   const countEnCurso = eventos.filter((e) => e.estado === "en_curso").length;
   const countFinalizados = eventos.filter((e) => e.estado === "finalizado").length;
 
-  /* ─── Date Formatter ─── */
-  const formatEventDate = (iso: string | null) => {
-    if (!iso) return "Por definir";
-    try {
-      const d = new Date(iso);
-      return d.toLocaleDateString("es-CL", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    } catch {
-      return iso;
-    }
-  };
 
-  /* ─── Format Time Ago ─── */
-  const formatTimeAgo = (iso: string) => {
-    try {
-      const now = new Date();
-      const past = new Date(iso);
-      const diffMs = now.getTime() - past.getTime();
-      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-      if (diffHrs < 1) return "Hace momentos";
-      if (diffHrs < 24) return `Hace ${diffHrs} h`;
-      const diffDays = Math.floor(diffHrs / 24);
-      return `Hace ${diffDays} d`;
-    } catch {
-      return "Reciente";
-    }
-  };
 
   /* ─── Create Event Handler ─── */
   const handleCrearEvento = async (e: React.FormEvent) => {
@@ -214,86 +400,208 @@ export function DashboardView({
         <header
           className="px-4 py-3 sm:px-8 flex flex-wrap items-center gap-3 border-b border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-md sticky top-0 z-30 transition-colors"
         >
-          {/* Search Input */}
-          <div style={{ position: "relative", flex: "1 1 280px", maxWidth: "520px" }}>
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--pr)"
-              strokeWidth="1.9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              style={{ position: "absolute", left: "14px", top: "13px" }}
-            >
-              <circle cx="11" cy="11" r="7"></circle>
-              <path d="m21 21-4.3-4.3"></path>
-            </svg>
-            <input
-              id="q"
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar evento, palmeta, técnico o repuesto…"
-              className="text-[16px] md:text-sm"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                height: "44px",
-                padding: "0 14px 0 42px",
-                borderRadius: "12px",
-                border: "1px solid var(--bd)",
-                background: "var(--sf2)",
-                color: "var(--tx)",
-                font: "inherit",
-                outline: "none",
-              }}
-            />
+          {/* Section Indicator */}
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-base" style={{ color: "var(--pr)" }}>
+              dashboard
+            </span>
+            <span className="text-sm font-bold text-[var(--tx)]">
+              Panel de Control Central
+            </span>
           </div>
 
           <div style={{ flex: "1 1 0" }}></div>
 
-          {/* Theme Toggle Button */}
-          <ThemeToggle className="!w-11 !h-11" />
 
-          {/* Notifications Button */}
-          <button
-            aria-label="Notificaciones"
-            style={{
-              position: "relative",
-              width: "44px",
-              height: "44px",
-              borderRadius: "12px",
-              border: "1px solid var(--bd)",
-              background: "var(--sf2)",
-              color: "var(--tx)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-              <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"></path>
-            </svg>
-            {incidenciasPendientes > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "10px",
-                  right: "11px",
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "999px",
-                  background: "var(--wa)",
-                  border: "2px solid var(--sf)",
-                }}
-              ></span>
+
+
+          {/* Notifications Dropdown Container */}
+          <div className="relative" ref={notifContainerRef}>
+            <button
+              type="button"
+              onClick={() => setShowNotifications(!showNotifications)}
+              aria-label="Notificaciones"
+              aria-expanded={showNotifications}
+              className={`relative w-11 h-11 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] flex items-center justify-center cursor-pointer transition-all hover:border-[var(--pr)] hover:text-[var(--pr)] active:scale-95 shadow-sm ${
+                showNotifications ? "border-[var(--pr)] text-[var(--pr)] ring-2 ring-[var(--pr)]/20" : ""
+              }`}
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"></path>
+              </svg>
+              {notificacionesVisibles.length > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "11px",
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "999px",
+                    background: "var(--wa)",
+                    border: "2px solid var(--sf)",
+                  }}
+                ></span>
+              )}
+            </button>
+
+            {/* Panel Flotante de Notificaciones */}
+            {showNotifications && (
+              <div
+                className="absolute right-0 top-full mt-2 w-[380px] sm:w-[420px] max-w-[calc(100vw-32px)] bg-[var(--sf)] border border-[var(--bd)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 card-shadow"
+                role="region"
+                aria-label="Bandeja de notificaciones"
+              >
+                {/* Header del Panel */}
+                <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--bd)] bg-[var(--sf2)]/50">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[var(--go)]/15 border border-[var(--pr)]/30 flex items-center justify-center text-[var(--pr)]">
+                      <span className="material-symbols-outlined text-lg">notifications</span>
+                    </div>
+                    <div>
+                      <h4 className="font-['Outfit'] text-sm font-bold text-[var(--tx)] leading-none">
+                        Notificaciones
+                      </h4>
+                      <p className="text-[11px] text-[var(--mu)] mt-0.5">
+                        {notificacionesVisibles.length > 0
+                          ? `${notificacionesVisibles.length} alerta(s) disponible(s)`
+                          : "Todo al día"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {notificacionesVisibles.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleLimpiarNotificaciones}
+                        title="Limpiar todas las notificaciones"
+                        className="text-[11px] font-semibold text-[var(--mu)] hover:text-red-400 hover:bg-red-500/10 px-2.5 py-1 rounded-lg border border-[var(--bd)] hover:border-red-500/20 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete_sweep</span>
+                        <span>Limpiar</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowNotifications(false)}
+                      aria-label="Cerrar notificaciones"
+                      className="w-7 h-7 rounded-lg border border-[var(--bd)] bg-[var(--sf)] text-[var(--mu)] hover:text-[var(--tx)] flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-base">close</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de Notificaciones */}
+                <div className="max-h-[360px] overflow-y-auto divide-y divide-[var(--bd)] overscroll-contain">
+                  {notificacionesVisibles.length === 0 ? (
+                    <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl">task_alt</span>
+                      </div>
+                      <p className="text-xs font-semibold text-[var(--tx)] mt-1">Sin alertas pendientes</p>
+                      <p className="text-[11px] text-[var(--mu)] max-w-[240px] leading-relaxed">
+                        Has limpiado las notificaciones. Cada vez que se reporte una nueva incidencia desde terreno, aparecerá aquí automáticamente.
+                      </p>
+                    </div>
+                  ) : (
+                    notificacionesVisibles.map((n) => (
+                      <div
+                        key={n.id}
+                        className="flex items-start gap-3 p-3.5 hover:bg-[var(--sf2)] transition-colors text-inherit no-underline group relative"
+                      >
+                        {/* Icono de severidad */}
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 ${
+                            n.severidad === "danger"
+                              ? "bg-red-500/10 border-red-500/25 text-red-500"
+                              : n.severidad === "warning"
+                              ? "bg-amber-500/10 border-amber-500/25 text-amber-500"
+                              : n.severidad === "info"
+                              ? "bg-[var(--go)]/15 border-[var(--pr)]/30 text-[var(--pr)]"
+                              : "bg-emerald-500/10 border-emerald-500/25 text-emerald-500"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            {n.severidad === "danger"
+                              ? "warning"
+                              : n.severidad === "warning"
+                              ? "build"
+                              : n.severidad === "info"
+                              ? "theater_comedy"
+                              : "cloud_done"}
+                          </span>
+                        </div>
+
+                        {/* Contenido */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold text-[var(--tx)] truncate">
+                              {n.titulo}
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[10px] text-[var(--mu)] font-medium">
+                                {n.tiempo}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDescartarNotificacion(n.id, e)}
+                                title="Descartar esta alerta"
+                                className="w-5 h-5 rounded flex items-center justify-center text-[var(--mu)] hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-xs">close</span>
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-[var(--mu)] mt-0.5 leading-relaxed line-clamp-2">
+                            {n.descripcion}
+                          </p>
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
+                                n.severidad === "danger"
+                                  ? "bg-red-500/15 text-red-400"
+                                  : n.severidad === "warning"
+                                  ? "bg-amber-500/15 text-amber-400"
+                                  : n.severidad === "info"
+                                  ? "bg-[var(--prs)] text-[var(--pr)]"
+                                  : "bg-emerald-500/15 text-emerald-400"
+                              }`}
+                            >
+                              {n.badge}
+                            </span>
+                            <Link
+                              href={n.link}
+                              onClick={() => setShowNotifications(false)}
+                              className="text-[10.5px] text-[var(--pr)] font-semibold flex items-center gap-0.5 hover:underline"
+                            >
+                              Revisar <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Footer del Panel */}
+                <div className="p-3 bg-[var(--sf2)]/40 border-t border-[var(--bd)] flex items-center justify-between">
+                  <span className="text-[11px] text-[var(--mu)] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Supabase Live Feed
+                  </span>
+                  <Link
+                    href="/incidencias"
+                    onClick={() => setShowNotifications(false)}
+                    className="text-xs font-semibold text-[var(--pr)] hover:underline flex items-center gap-1"
+                  >
+                    Centro de Averías →
+                  </Link>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
 
           {/* "+ Nuevo evento" Button */}
           <button

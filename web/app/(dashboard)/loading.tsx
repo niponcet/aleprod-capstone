@@ -3,9 +3,8 @@ export default function DashboardLoading() {
     <div className="flex-1 min-w-0 flex flex-col w-full animate-pulse">
       {/* Top Header Skeleton */}
       <header className="px-4 py-3 sm:px-8 flex flex-wrap items-center gap-3 border-b border-[var(--bd)] bg-[var(--sf)] sticky top-0 z-30">
-        <div className="h-11 w-full max-w-[520px] rounded-xl bg-[var(--sf2)]" />
+        <div className="h-6 w-48 rounded-lg bg-[var(--sf2)]" />
         <div className="flex-1" />
-        <div className="w-11 h-11 rounded-xl bg-[var(--sf2)]" />
         <div className="w-11 h-11 rounded-xl bg-[var(--sf2)]" />
         <div className="w-36 h-11 rounded-xl bg-[var(--sf2)]" />
       </header>
@@ -48,14 +47,14 @@ export default function DashboardLoading() {
           <div className="h-32 rounded-[18px] bg-[var(--sf)] border border-[var(--bd)] card-shadow" />
         </section>
 
-        {/* Events + Side Column Skeleton */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
-          <div className="w-full lg:flex-1 h-96 rounded-[20px] bg-[var(--sf)] border border-[var(--bd)] card-shadow" />
-          <div className="w-full lg:w-[380px] flex flex-col gap-6">
-            <div className="h-44 rounded-[20px] bg-[var(--sf)] border border-[var(--bd)] card-shadow" />
-            <div className="h-44 rounded-[20px] bg-[var(--sf)] border border-[var(--bd)] card-shadow" />
+        {/* Eventos Table / Section Skeleton */}
+        <section className="bg-[var(--sf)] border border-[var(--bd)] rounded-[20px] p-4 sm:p-6 flex flex-col gap-4 card-shadow">
+          <div className="flex justify-between items-center">
+            <div className="h-7 w-48 rounded-lg bg-[var(--sf2)]" />
+            <div className="h-9 w-32 rounded-xl bg-[var(--sf2)]" />
           </div>
-        </div>
+          <div className="h-64 rounded-xl bg-[var(--sf2)]" />
+        </section>
       </main>
     </div>
   );

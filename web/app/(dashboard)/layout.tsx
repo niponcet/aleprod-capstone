@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Sidebar } from "@/app/components/sidebar";
-import { ThemeToggle } from "@/app/components/theme-toggle";
+
 
 export default function DashboardLayout({
   children,
@@ -37,7 +37,7 @@ export default function DashboardLayout({
           >
             <span className="material-symbols-outlined text-2xl">menu</span>
           </button>
-          <ThemeToggle />
+
         </div>
 
         {/* Brand / Logo (ON THE RIGHT) */}
