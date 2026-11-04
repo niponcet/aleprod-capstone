@@ -909,6 +909,13 @@
   - Documentación técnica actualizada en `.ai/02-arquitectura-stack.md`.
   - Tipado verificado con `npx tsc --noEmit` en `/mobile` (0 errores).
 
+- **2026-11-04 (Sesión 69 — Fusión Visual Orgánica Opción 1 en PWA iOS y Estabilidad de TabBar):**
+  - **Preservación total de la barra inferior:** `LiquidGlassTabBar` se mantiene intacta en `position: fixed` flotando con elegancia y precisión milimétrica sobre la Home Bar del iPhone (`max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`), con la cápsula activa `slidingIndicator` en `position: 'absolute'`.
+  - **Fusión orgánica del encabezado superior:** Para evitar el corte seco contra el bezel negro impuesto por Apple en modo oscuro con `status-bar-style: default`, los degradados ambientales superiores (`topAmbientGlow`) en `HomeScreen`, `EventsScreen`, `SettingsScreen` y `NotificationsScreen` se configuraron con `colors: ['#000000', '#070B14', 'rgba(14, 34, 72, 0.65)', 'rgba(29, 78, 216, 0.32)', 'rgba(15, 23, 42, 0.12)', 'transparent']` y `locations: [0, 0.12, 0.32, 0.58, 0.82, 1]`.
+  - **Resultado visual:** En $y=0$ el color es idéntico al status bar nativo (`#000000`), eliminando cualquier corte o línea horizontal, y floreciendo de forma suave hacia el azul corporativo detrás de los títulos de cabecera. Cero borrosidad (sin el filtro blur forzado de `black-translucent`).
+  - **Configuración de PWA:** `index.html` con `html { background-color: #000000 !important; }`, `theme-color: #000000`, `manifest.json` y `app.json` sincronizados.
+  - **Validación de Tipos:** `npx tsc --noEmit` en `/mobile` verificado con 0 errores.
+
 - **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16 en Móvil):**
   - Conexión de `HomeScreen.tsx` con el evento real activo (`estado = 'en_curso'`).
   - Implementación de `EventDetailScreen.tsx` con modo Read-Only tras cierre.
