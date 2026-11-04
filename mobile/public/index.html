@@ -30,11 +30,26 @@
       .edge-to-edge-pb { padding-bottom: calc(var(--sab) + 70px) !important; }
       .edge-to-edge-pt { padding-top: max(calc(var(--sat) + 12px), 20px) !important; }
 
-      /* Base y reseteo Edge-to-Edge limpio para WebKit */
-      html, body {
+      /* Base y reseteo Edge-to-Edge limpio para WebKit con diagnóstico cromático */
+      html {
+        position: fixed;
+        inset: 0;
         width: 100%;
-        height: 100%;
-        background-color: #070B14 !important;
+        background-color: red !important;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      body {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        background-color: green !important;
         margin: 0;
         padding: 0;
         overflow: hidden;
@@ -46,16 +61,12 @@
 
       #root {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
         width: 100%;
-        height: 100%;
         display: flex;
         flex-direction: column;
         flex: 1;
-        background-color: #070B14 !important;
+        background-color: blue !important;
         overflow: hidden;
       }
 
