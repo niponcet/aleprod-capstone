@@ -622,6 +622,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

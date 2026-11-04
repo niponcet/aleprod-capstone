@@ -66,8 +66,8 @@ export function useEdgeInsets(
   if (Platform.OS === 'web') {
     return {
       topPadding: `max(calc(env(safe-area-inset-top, 0px) + ${webTopSpace}px), 20px)`,
-      bottomPadding: `calc(env(safe-area-inset-bottom, 0px) + ${bottomSpace}px)`,
-      tabBarBottomOffset: `max(calc(env(safe-area-inset-bottom, 0px) - 14px), 12px)`,
+      bottomPadding: `max(calc(env(safe-area-inset-bottom, 0px) + ${Math.max(bottomSpace - 22, 48)}px), ${bottomSpace}px)`,
+      tabBarBottomOffset: `max(calc(env(safe-area-inset-bottom, 0px) - 22px), 10px)`,
       leftPadding: 'env(safe-area-inset-left, 0px)',
       rightPadding: 'env(safe-area-inset-right, 0px)',
       safeAreaStyle: {
@@ -83,7 +83,7 @@ export function useEdgeInsets(
   return {
     topPadding: Math.max(insets.top + nativeTopSpace, 20),
     bottomPadding: bottomSpace,
-    tabBarBottomOffset: Math.max(insets.bottom - 14, 12),
+    tabBarBottomOffset: Math.max(insets.bottom - 22, 10),
     leftPadding: insets.left,
     rightPadding: insets.right,
     safeAreaStyle: {},

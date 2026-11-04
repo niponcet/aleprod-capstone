@@ -653,6 +653,7 @@ const styles = StyleSheet.create({
     borderColor: '#1E293B',
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

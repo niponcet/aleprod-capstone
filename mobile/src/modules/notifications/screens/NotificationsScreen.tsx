@@ -354,6 +354,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },

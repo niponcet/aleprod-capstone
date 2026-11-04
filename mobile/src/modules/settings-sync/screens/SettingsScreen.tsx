@@ -447,6 +447,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },
