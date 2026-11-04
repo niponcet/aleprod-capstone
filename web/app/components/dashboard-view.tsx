@@ -86,7 +86,7 @@ export function DashboardView({
   initialIncidencias,
   initialRepuestos,
 }: DashboardViewProps) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   /* ─── State ─── */
   const [filter, setFilter] = useState<"all" | "en_curso" | "finalizado">("all");
@@ -97,16 +97,11 @@ export function DashboardView({
   const [guardandoEvento, setGuardandoEvento] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const notifContainerRef = useRef<HTMLDivElement>(null);
-  const [lastClearedTimestamp, setLastClearedTimestamp] = useState<string | null>(null);
   const [clearedNotificationIds, setClearedNotificationIds] = useState<string[]>([]);
 
   // Cargar notificaciones limpiadas persistentes de localStorage
   useEffect(() => {
     try {
-      const savedTime = localStorage.getItem("aleprod_notifications_cleared_at");
-      if (savedTime) {
-        setLastClearedTimestamp(savedTime);
-      }
       const saved = localStorage.getItem("aleprod_cleared_notifications");
       if (saved) {
         setClearedNotificationIds(JSON.parse(saved));
@@ -125,20 +120,11 @@ export function DashboardView({
     }
   };
 
-  const isIncidenciaCleared = (inc: { id: string; created_at?: string; fecha_ocurrencia?: string }) => {
-    // Si fue descartada individualmente
-    if (clearedNotificationIds.includes("inc-" + inc.id)) return true;
-
-    // Si fue creada antes o en el momento en que el usuario pulsó Limpiar
-    if (lastClearedTimestamp) {
-      const incTime = new Date(inc.created_at || inc.fecha_ocurrencia || 0).getTime();
-      const clearedTime = new Date(lastClearedTimestamp).getTime();
-      if (!isNaN(incTime) && !isNaN(clearedTime) && incTime <= clearedTime) {
-        return true;
-      }
-    }
-
-    return false;
+  const isIncidenciaCleared = (inc: { id: string }) => {
+    return (
+      clearedNotificationIds.includes(inc.id) ||
+      clearedNotificationIds.includes("inc-" + inc.id)
+    );
   };
   const [toastIncidencia, setToastIncidencia] = useState<{
     id: string;
@@ -182,47 +168,103 @@ export function DashboardView({
   const [nuevoTipo, setNuevoTipo] = useState("Pista de Baile LED");
   const [nuevaFecha, setNuevaFecha] = useState(new Date().toISOString().split("T")[0]);
 
-  /* ─── Realtime Subscriptions ─── */
+  /* ─── Realtime Subscriptions & Auto-Sync ─── */
   useEffect(() => {
+    // 1. Canal WebSocket en Tiempo Real de Supabase
     const channel = supabase
-      .channel("dashboard-realtime")
+      .channel("dashboard-realtime-sync")
       .on("postgres_changes", { event: "*", schema: "public", table: "palmetas_led" }, async () => {
         const { data } = await supabase.from("palmetas_led").select("id, codigo_visible, qr_uuid, estado, ubicacion_actual");
         if (data) setPalmetas(data);
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "incidencias" }, async (payload) => {
-        const { data } = await supabase.from("incidencias").select("id, palmeta_id, qr_uuid, tipo_falla, resuelto, created_at, fecha_ocurrencia").order("fecha_ocurrencia", { ascending: false });
-        if (data) setIncidencias(data);
-
-        // Si es una nueva incidencia reportada desde terreno
+      .on("postgres_changes", { event: "*", schema: "public", table: "incidencias" }, async (payload: any) => {
         if (payload.eventType === "INSERT" && payload.new) {
-          const newInc = payload.new as { id: string; tipo_falla?: string; qr_uuid?: string; created_at?: string };
-          setToastIncidencia({
-            id: newInc.id,
-            tipo_falla: newInc.tipo_falla || "Falla reportada en terreno",
-            codigo_palmeta: newInc.qr_uuid?.slice(0, 8),
-            created_at: newInc.created_at,
+          const newInc = payload.new as { id: string; tipo_falla?: string; qr_uuid?: string; created_at?: string; resuelto?: boolean };
+
+          // Actualización instantánea reactiva en memoria
+          setIncidencias((prev) => {
+            const exists = prev.some((i) => i.id === newInc.id);
+            if (exists) return prev;
+            return [newInc as any, ...prev];
           });
 
-          // Asegurar que esta nueva incidencia aparezca de inmediato y no esté silenciada (en memoria y localStorage)
-          setClearedNotificationIds((prev) => {
-            const filtered = prev.filter((id) => id !== ("inc-" + newInc.id));
-            try {
-              localStorage.setItem("aleprod_cleared_notifications", JSON.stringify(filtered));
-            } catch {
-              // Ignorar
-            }
-            return filtered;
-          });
+          // Si es avería activa, levantar toast emergente y asegurar que no esté silenciada
+          if (!newInc.resuelto) {
+            setToastIncidencia({
+              id: newInc.id,
+              tipo_falla: newInc.tipo_falla || "Falla técnica reportada",
+              codigo_palmeta: newInc.qr_uuid?.slice(0, 8),
+              created_at: newInc.created_at,
+            });
+
+            setClearedNotificationIds((prev) => {
+              const filtered = prev.filter((id) => id !== newInc.id && id !== ("inc-" + newInc.id));
+              try {
+                localStorage.setItem("aleprod_cleared_notifications", JSON.stringify(filtered));
+              } catch {
+                // Ignorar
+              }
+              return filtered;
+            });
+          }
+        } else if (payload.eventType === "UPDATE" && payload.new) {
+          const updatedInc = payload.new as any;
+          setIncidencias((prev) =>
+            prev.map((i) => (i.id === updatedInc.id ? { ...i, ...updatedInc } : i))
+          );
+        } else if (payload.eventType === "DELETE" && payload.old) {
+          const oldInc = payload.old as any;
+          setIncidencias((prev) => prev.filter((i) => i.id !== oldInc.id));
         }
+
+        // Refetch completo asíncrono para asegurar orden y consistencia total
+        const { data } = await supabase
+          .from("incidencias")
+          .select("id, palmeta_id, qr_uuid, tipo_falla, resuelto, created_at, fecha_ocurrencia")
+          .order("fecha_ocurrencia", { ascending: false });
+        if (data) setIncidencias(data);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "eventos" }, async () => {
         const { data } = await supabase.from("eventos").select("*").order("fecha_inicio", { ascending: false });
         if (data) setEventos(data);
       })
-      .subscribe();
+      .subscribe((status: string, err?: any) => {
+        if (err) {
+          console.error("[Realtime Subscription Error]:", err);
+        }
+      });
+
+    // 2. Polling de sincronización periódica de respaldo (cada 8 segundos)
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from("incidencias")
+          .select("id, palmeta_id, qr_uuid, tipo_falla, resuelto, created_at, fecha_ocurrencia")
+          .order("fecha_ocurrencia", { ascending: false });
+        if (data) {
+          setIncidencias((prev) => {
+            // Verificar si hay alguna incidencia nueva respecto al estado anterior
+            const prevIds = new Set(prev.map((i) => i.id));
+            const newOnes = data.filter((d: any) => !prevIds.has(d.id) && !d.resuelto);
+            if (newOnes.length > 0) {
+              const newest = newOnes[0];
+              setToastIncidencia({
+                id: newest.id,
+                tipo_falla: newest.tipo_falla || "Falla técnica reportada",
+                codigo_palmeta: newest.qr_uuid?.slice(0, 8),
+                created_at: newest.created_at,
+              });
+            }
+            return data;
+          });
+        }
+      } catch {
+        // Ignorar errores transitorios de red
+      }
+    }, 8000);
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [supabase]);
@@ -321,17 +363,10 @@ export function DashboardView({
   }, [listaNotificaciones, clearedNotificationIds]);
 
   const handleLimpiarNotificaciones = () => {
-    const nowIso = new Date().toISOString();
-    setLastClearedTimestamp(nowIso);
-    try {
-      localStorage.setItem("aleprod_notifications_cleared_at", nowIso);
-    } catch {
-      // Ignorar
-    }
-
-    // También descartar alertas fijas actuales (repuestos, eventos, etc.)
-    const currentAlertIds = listaNotificaciones.map((n) => n.id);
-    const updated = Array.from(new Set([...clearedNotificationIds, ...currentAlertIds]));
+    // Al limpiar, registrar todos los IDs de incidencias existentes actualmente
+    const allIncIds = incidencias.map((i) => i.id);
+    const allItemIds = listaNotificaciones.map((n) => n.id);
+    const updated = Array.from(new Set([...clearedNotificationIds, ...allIncIds, ...allItemIds]));
     saveClearedIds(updated);
   };
 
