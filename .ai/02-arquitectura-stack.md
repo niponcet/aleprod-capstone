@@ -63,19 +63,38 @@ El monorepo está dividido funcionalmente en dos aplicaciones complementarias y 
   - Configuración del escaneo: Usar `barcodeScannerSettings={{ barcodeTypes: ['qr'] }}` y enlazar el evento con `onBarcodeScanned`.
   - El manejo de permisos debe ser defensivo y reactivo: chequear `!permission.granted` y proveer botón interactivo para invocar `requestPermission()`.
 
-### Regla Estricta: PWA Móvil en iOS Safari (Status Bar y Viewport Edge-to-Edge)
-> **PROHIBICIÓN TOTAL:** Está terminantemente **PROHIBIDO** configurar `apple-mobile-web-app-status-bar-style` como `"black-translucent"` tanto en `mobile/public/index.html` como en `mobile/app.json`.
+### Regla Estricta: PWA Móvil en iOS Safari (Edge-to-Edge Total Arriba y Abajo)
+> **ARQUITECTURA MANDATORIA:** Para preservar el diseño corporativo OLED de alta gama, la PWA en iOS debe ser **Edge-to-Edge completa**: el degradado ambiental superior debe pintar detrás del Notch / Dynamic Island ($y=0$), y la navegación inferior debe llegar hasta el borde del cristal ($y=844\text{px}$) sin franjas muertas.
 
-* **Causa Raíz Verificada Empíricamente:**
-  - En WebKit iOS (modo standalone / pantalla de inicio), `black-translucent` sitúa el origen de la vista web en $y=0$ (detrás del Notch / Dynamic Island), pero WebKit calcula `window.innerHeight` restando erróneamente los 47px de la barra de estado superior ($844\text{px} - 47\text{px} = 797\text{px}$).
-  - En consecuencia, `#root` con `position: fixed; inset: 0` se ancla al fondo del viewport en $y=797\text{px}$, dejando un espacio muerto de 47px en el borde inferior físico de la pantalla (la "franja inferior"), empujando hacia arriba la barra flotante (`LiquidGlassTabBar`) y descalibrando el scroll.
-* **Patrón Obligatorio:**
-  - Configurar obligatoriamente **`"apple-mobile-web-app-status-bar-style": "default"`** en `mobile/public/index.html` y `"barStyle": "default"` en `mobile/app.json`.
-  - Con `default`, iOS gestiona nativamente la barra de estado de 47px con fondo oscuro corporativo (sin solapamiento ni texto borroso), e inicia el viewport web exactamente en $y=47\text{px}$.
-  - El viewport web cubre de $47\text{px}$ a $844\text{px}$ ($47 + 797 = 844\text{px}$), alcanzando de forma natural el borde físico inferior de la pantalla.
-  - En `mobile/src/core/hooks/useEdgeInsets.ts`:
-    - `tabBarBottomOffset`: `max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`. No restar gaps artificiales.
-    - `bottomPadding`: `calc(70px + ${barOffset})` para despejar el contenido detrás de la barra flotante.
+* **La Mecánica de WebKit iOS (Modo Standalone PWA):**
+  - Con `apple-mobile-web-app-status-bar-style: black-translucent`, iOS inicia la vista web en $y=0$ (detrás de la hora y batería).
+  - Sin embargo, WebKit resta los 47px de la barra de estado superior al calcular `window.innerHeight` ($844 - 47 = 797\text{px}$).
+  - Si `#root` usa `position: fixed; inset: 0`, se corta en $y=797\text{px}$, dejando una franja inferior de 47px.
+  - Con `status-bar-style: default`, iOS añade una barra sólida negra de 47px arriba, perdiendo el degradado corporativo.
+* **Solución Edge-to-Edge Definitiva:**
+  1. **Configuración de Metas:** Usar `"apple-mobile-web-app-status-bar-style": "black-translucent"` en `mobile/public/index.html` y `"barStyle": "black-translucent"` en `mobile/app.json`.
+  2. **Extensión en CSS (`mobile/public/index.html`):**
+     ```css
+     #root {
+       position: fixed;
+       top: 0;
+       left: 0;
+       right: 0;
+       bottom: calc(-1 * env(safe-area-inset-top, 0px));
+       width: 100%;
+       display: flex;
+       flex-direction: column;
+       flex: 1;
+       background-color: #070B14 !important;
+       overflow: hidden;
+     }
+     ```
+     `bottom: calc(-1 * env(safe-area-inset-top))` extiende `#root` exactamente los 47px que WebKit restó ($797 + 47 = 844\text{px}$), cubriendo el 100% de la pantalla sin cortes.
+  3. **Barra de Navegación Flotante (`LiquidGlassTabBar.tsx`):**
+     - `overlayContainer` debe usar `position: 'absolute'` (no `'fixed'`). Al ser absoluta dentro de `#root` (que mide 844px), su posición se ancla al borde inferior real sobre el Home Indicator.
+  4. **Hooks de Espaciado (`useEdgeInsets.ts`):**
+     - `topPadding`: `max(calc(env(safe-area-inset-top, 0px) + ${webTopSpace}px), 20px)`. Con `black-translucent`, `env(safe-area-inset-top)` es 47px en iPhones con notch, protegiendo los títulos mientras el fondo fluye libremente.
+     - `tabBarBottomOffset`: `max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`.
 
 ### Variables de Entorno Móvil
 * **Prefijo Mandatorio:** Toda variable accesible en el código cliente de Expo debe comenzar obligatoriamente con el prefijo **`EXPO_PUBLIC_`**.

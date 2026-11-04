@@ -898,14 +898,16 @@
   - Carga de imágenes locales a Supabase Storage bucket `evidencias-incidencias`.
   - Batch INSERT en la tabla `incidencias` de Supabase con resolución resiliente de claves foráneas.
 
-- **2026-11-04 (Sesión 69 — Resolución Definitiva Bug PWA iOS Viewport / Franja Inferior):**
+- **2026-11-04 (Sesión 69 — Resolución Definitiva Edge-to-Edge Total PWA iOS Viewport):**
   - Diagnóstico empírico mediante sondas HUD visuales (`innerH`, `screenH`, `bar bottom`) en standalone PWA en iPhone.
-  - Demostración visual de la causa raíz: en WebKit iOS con `apple-mobile-web-app-status-bar-style: black-translucent`, el layout se sitúa en $y=0$ pero WebKit resta 47px de status bar a `window.innerHeight` ($844 - 47 = 797\text{px}$), provocando que `#root` con `position: fixed; inset: 0` se corte 47px antes del borde físico de la pantalla, dejando una franja inferior muerta y empujando la `LiquidGlassTabBar` hacia arriba.
-  - Resolución nativa comprobada: migración a `apple-mobile-web-app-status-bar-style: default` y `"barStyle": "default"` en `mobile/public/index.html` y `mobile/app.json`.
-  - Con `default`, iOS reserva los 47px superiores de forma nativa para la barra de estado con fondo oscuro corporativo y sitúa el viewport web de $y=47\text{px}$ a $y=844\text{px}$ ($47 + 797 = 844\text{px}$), alcanzando el 100% del fondo físico sin franja ni hacks CSS.
-  - Reversión y simplificación de `mobile/src/core/hooks/useEdgeInsets.ts`: `tabBarBottomOffset` queda directamente en `barOffset` (`max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`), eliminando variables `--gap` y funciones dinámicas `updateGap`.
+  - Causa raíz demostrada: en WebKit iOS con `apple-mobile-web-app-status-bar-style: black-translucent`, el layout se sitúa en $y=0$ pero WebKit resta 47px de status bar a `window.innerHeight` ($844 - 47 = 797\text{px}$), provocando que `#root` con `position: fixed; inset: 0` se corte 47px antes del borde físico de la pantalla.
+  - Pruebas comparativas con `status-bar-style: default` confirmaron que cerraba el gap inferior pero agregaba una barra negra opaca en la cabecera, bloqueando el degradado corporativo superior.
+  - Implementación de la solución Edge-to-Edge total:
+    1. `apple-mobile-web-app-status-bar-style: black-translucent` para flujo continuo del degradado superior detrás del notch/Dynamic Island ($y=0$).
+    2. `#root` con `position: fixed; top: 0; left: 0; right: 0; bottom: calc(-1 * env(safe-area-inset-top, 0px))` para extender los 47px faltantes hasta el pixel 844 del borde físico inferior.
+    3. `LiquidGlassTabBar.tsx` con `position: 'absolute'` dentro de `#root` para anclarse limpiamente sobre el Home Indicator.
   - Eliminación de archivos temporales de diagnóstico `mobile/public/diag-*.html`.
-  - Documentación obligatoria agregada a `.ai/02-arquitectura-stack.md` para prohibir `black-translucent` en futuras sesiones.
+  - Documentación obligatoria actualizada en `.ai/02-arquitectura-stack.md`.
   - Tipado verificado con `npx tsc --noEmit` en `/mobile` (0 errores).
 
 - **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16 en Móvil):**

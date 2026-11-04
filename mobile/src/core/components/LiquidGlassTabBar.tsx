@@ -410,7 +410,7 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
 
 const styles = StyleSheet.create({
   overlayContainer: {
-    position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any,
+    position: 'absolute',
     backgroundColor: 'transparent',
     left: 0,
     right: 0,
