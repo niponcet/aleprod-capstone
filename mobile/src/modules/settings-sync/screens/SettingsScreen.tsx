@@ -32,7 +32,7 @@ interface SettingsScreenProps {
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => {
   const router = useRouter();
-  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(88, 12);
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(70, 12);
   const { width: screenWidth } = useWindowDimensions();
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [syncing, setSyncing] = useState<boolean>(false);

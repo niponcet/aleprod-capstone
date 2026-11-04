@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 03 de Noviembre de 2026 (Sesión 64 — Diagnóstico y Resolución Arquitectónica Integral: Desacople de RefreshControl Web, Eliminación de Rutas Redundantes, Supresión de Wrappers de Navegación y Parche de Viewport iOS WebKit).
+- **Fecha de Última Actualización:** 04 de Noviembre de 2026 (Sesión 65 — Diagnóstico y Resolución Arquitectónica Integral: Desacople de RefreshControl Web, Eliminación de Rutas Redundantes, Supresión de Wrappers de Navegación y Parche de Viewport iOS WebKit).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
@@ -115,6 +115,17 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-11-04 (Sesión 65 — Erradicación Definitiva de Franja Inferior PWA WebKit, Anclaje Inset 0 Absoluto y Calibración de Clearance Inferior en Pestañas):**
+  - **Diagnóstico y Resolución Causa Raíz de la Franja Inferior PWA:**
+    - Se identificó que las reglas `height: 100dvh; min-height: 100dvh;` en `html, body` y `#root` provocaban que WebKit en iOS PWA Standalone dimensionara el contenedor según el layout viewport interno (excluyendo los 34px del Home Indicator), dejando una franja negra inerte bajo la barra y empujando las tarjetas hacia arriba.
+    - Se restituyó el anclaje perimetral absoluto `position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%;` sobre `#root` en `mobile/public/index.html`, forzando al contenedor raíz a cubrir el 100% de la pantalla física Edge-to-Edge.
+    - En el script de resiliencia ante desenfoque de teclado, se unificó la restauración a `root.style.height = '100%'` y `root.style.bottom = '0px'` para impedir cualquier contracción de altura en WebKit.
+  - **Calibración Geométrica de Clearance Inferior en Pestañas (70px):**
+    - Se calibró el despeje base `bottomSpace` de 88px a 70px en `HomeScreen.tsx`, `EventsScreen.tsx`, `SettingsScreen.tsx` y `useEdgeInsets.ts` (así como la clase utilitaria `.edge-to-edge-pb` en `index.html`).
+    - Con este ajuste, al llegar al fondo del scroll se garantizan exactamente 12px de respiración visual sobre la cápsula de 58px de `LiquidGlassTabBar`, erradicando el colchón desmedido de 122px que empujaba el contenido hacia arriba.
+  - **Validación Técnica:**
+    - `tsc --noEmit` en `/mobile`: **0 errores de compilación**.
 
 - **2026-11-03 (Sesión 64 — Diagnóstico y Resolución Arquitectónica Integral: Desacople de RefreshControl Web, Eliminación de Rutas Redundantes, Supresión de Wrappers de Navegación y Parche de Viewport iOS WebKit):**
   - **Diagnóstico Causa Raíz de "Pantalla Fija / Sin Scroll" y "Franja Inferior":**

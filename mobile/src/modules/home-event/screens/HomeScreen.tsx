@@ -37,7 +37,7 @@ import { triggerHaptic } from '../../../core/utils/haptics';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
-  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(88, 12);
+  const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(70, 12);
   const { width: screenWidth } = useWindowDimensions();
   const [activeEvent, setActiveEvent] = useState<LocalEvento | null>(null);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);

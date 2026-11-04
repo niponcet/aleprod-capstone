@@ -57,7 +57,7 @@ export interface EdgeInsetsResult {
  * @param nativeTopSpace Margen adicional superior para Headers en Nativo (por defecto 8px para respiración visual frente a la Dynamic Island/Notch).
  */
 export function useEdgeInsets(
-  bottomSpace: number = 74,
+  bottomSpace: number = 70,
   webTopSpace: number = 12,
   nativeTopSpace: number = 8
 ): EdgeInsetsResult {
