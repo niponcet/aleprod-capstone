@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.glassBackground,
   },
   slidingIndicator: {
-    position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any,
+    position: 'absolute',
     top: (CAPSULE_HEIGHT - INDICATOR_HEIGHT) / 2,
     height: INDICATOR_HEIGHT,
     borderRadius: INDICATOR_HEIGHT / 2,

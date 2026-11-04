@@ -10,6 +10,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0E2248" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0E2248" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0E2248" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
@@ -24,12 +27,12 @@
       .edge-to-edge-pb { padding-bottom: calc(var(--sab) + 70px) !important; }
       .edge-to-edge-pt { padding-top: max(calc(var(--sat) + 12px), 20px) !important; }
 
-      /* Base y reseteo Edge-to-Edge limpio para WebKit */
+      /* Base y reseteo Edge-to-Edge limpio para WebKit con muestreo cromático de status bar */
       html {
         position: fixed;
         inset: 0;
         width: 100%;
-        background-color: #070B14 !important;
+        background-color: #0E2248 !important;
         margin: 0;
         padding: 0;
         overflow: hidden;
