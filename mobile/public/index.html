@@ -45,7 +45,7 @@
       }
 
       #root {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
@@ -85,23 +85,26 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
-      // Parche universal iOS WebKit: restauración de viewport tras cierre de teclado en PWA / Safari
+      // Parche universal iOS WebKit: restauración síncrona de viewport tras cierre de teclado en PWA / Safari
+      function resetWebKitViewport() {
+        window.scrollTo(0, 0);
+        var root = document.getElementById('root');
+        if (root) {
+          root.style.display = 'none';
+          root.offsetHeight; // Forzar reflow síncrono para eliminar la compresión de WebKit
+          root.style.display = 'flex';
+        }
+      }
+
       document.addEventListener('focusout', function(e) {
         if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(e.target.tagName) !== -1) {
-          setTimeout(function() {
-            window.scrollTo(0, 0);
-            var root = document.getElementById('root');
-            if (root) {
-              root.style.height = '100%';
-              root.style.bottom = '0px';
-            }
-          }, 120);
+          setTimeout(resetWebKitViewport, 100);
         }
       });
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function() {
-          if (window.visualViewport.height >= window.innerHeight * 0.88) {
-            window.scrollTo(0, 0);
+          if (window.visualViewport.height >= window.innerHeight * 0.85) {
+            resetWebKitViewport();
           }
         });
       }

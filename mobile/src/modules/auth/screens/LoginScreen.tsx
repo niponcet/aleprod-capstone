@@ -94,6 +94,22 @@ export const LoginScreen: React.FC = () => {
         } else {
           await AsyncStorage.removeItem('@aleprod_saved_email');
         }
+
+        // En Web/PWA: asegurar repliegue total del teclado virtual y reflow antes de montar vistas principales
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          window.scrollTo(0, 0);
+          const root = document.getElementById('root');
+          if (root) {
+            root.style.display = 'none';
+            root.offsetHeight; // Forzar reflow en WebKit
+            root.style.display = 'flex';
+          }
+          await new Promise((r) => setTimeout(r, 120));
+        }
+
         // Redirección cliente estricta con Expo Router (cero escape a Safari)
         router.replace('/');
       }
