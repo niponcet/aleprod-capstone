@@ -19,6 +19,7 @@
       :root {
         --sat: env(safe-area-inset-top, 0px);
         --sab: env(safe-area-inset-bottom, 0px);
+        --gap: 0px;
       }
       /* Parche WebKit iOS para el glitch de 0px al navegar */
       @supports (-webkit-touch-callout: none) {
@@ -120,6 +121,24 @@
           }
         });
       }
+
+      // Compensación dinámica del gap de viewport en iOS PWA (standalone)
+      function updateGap() {
+        var standalone = window.matchMedia('(display-mode: standalone)').matches
+          || window.navigator.standalone === true;
+        if (!standalone) { document.documentElement.style.setProperty('--gap', '0px'); return; }
+        // No recalcular con el teclado abierto: innerHeight también baja ahí.
+        var ae = document.activeElement;
+        var typing = ae && ['INPUT','TEXTAREA','SELECT'].indexOf(ae.tagName) !== -1;
+        if (typing) return;
+        var gap = Math.max(0, Math.round(screen.height - window.innerHeight));
+        // Límite de seguridad: ignorar valores absurdos.
+        if (gap > 80) gap = 0;
+        document.documentElement.style.setProperty('--gap', gap + 'px');
+      }
+      window.addEventListener('load', updateGap);
+      window.addEventListener('orientationchange', function(){ setTimeout(updateGap, 300); });
+      document.addEventListener('focusout', function(){ setTimeout(updateGap, 400); });
     </script>
   </body>
 </html>
