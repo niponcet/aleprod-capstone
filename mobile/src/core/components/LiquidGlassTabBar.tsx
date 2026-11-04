@@ -410,7 +410,7 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
 
 const styles = StyleSheet.create({
   overlayContainer: {
-    position: 'absolute',
+    position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any,
     backgroundColor: 'transparent',
     left: 0,
     right: 0,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.glassBackground,
   },
   slidingIndicator: {
-    position: 'absolute',
+    position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any,
     top: (CAPSULE_HEIGHT - INDICATOR_HEIGHT) / 2,
     height: INDICATOR_HEIGHT,
     borderRadius: INDICATOR_HEIGHT / 2,

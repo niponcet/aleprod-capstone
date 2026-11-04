@@ -898,16 +898,15 @@
   - Carga de imágenes locales a Supabase Storage bucket `evidencias-incidencias`.
   - Batch INSERT en la tabla `incidencias` de Supabase con resolución resiliente de claves foráneas.
 
-- **2026-11-04 (Sesión 69 — Resolución Definitiva Edge-to-Edge Total PWA iOS Viewport):**
+- **2026-11-04 (Sesión 69 — Resolución Definitiva PWA iOS Viewport y Tinte de Barra de Estado):**
   - Diagnóstico empírico mediante sondas HUD visuales (`innerH`, `screenH`, `bar bottom`) en standalone PWA en iPhone.
-  - Causa raíz demostrada: en WebKit iOS con `apple-mobile-web-app-status-bar-style: black-translucent`, el layout se sitúa en $y=0$ pero WebKit resta 47px de status bar a `window.innerHeight` ($844 - 47 = 797\text{px}$), provocando que `#root` con `position: fixed; inset: 0` se corte 47px antes del borde físico de la pantalla.
-  - Pruebas comparativas con `status-bar-style: default` confirmaron que cerraba el gap inferior pero agregaba una barra negra opaca en la cabecera, bloqueando el degradado corporativo superior.
-  - Implementación de la solución Edge-to-Edge total:
-    1. `apple-mobile-web-app-status-bar-style: black-translucent` para flujo continuo del degradado superior detrás del notch/Dynamic Island ($y=0$).
-    2. `#root` con `position: fixed; top: 0; left: 0; right: 0; bottom: calc(-1 * env(safe-area-inset-top, 0px))` para extender los 47px faltantes hasta el pixel 844 del borde físico inferior.
-    3. `LiquidGlassTabBar.tsx` con `position: 'absolute'` dentro de `#root` para anclarse limpiamente sobre el Home Indicator.
+  - Causa raíz demostrada: en WebKit iOS con `apple-mobile-web-app-status-bar-style: black-translucent`, el layout se sitúa en $y=0$ pero WebKit resta 47px a `window.innerHeight` ($844 - 47 = 797\text{px}$), provocando que reaparezca la franja inferior y aplicando además un desenfoque nativo (*frosted glass blur*) sobre la cabecera.
+  - Solución definitiva comprobada:
+    1. `apple-mobile-web-app-status-bar-style: default` y `"barStyle": "default"` para eliminar de raíz la franja inferior (el viewport web llega naturalmente hasta el pixel 844 sin recortes).
+    2. Sincronización cromática con `<meta name="theme-color" content="#0E2248">` y `"themeColor": "#0E2248"` en `mobile/app.json`: la barra de estado superior de iOS se tiñe del azul noche corporativo exacto de la cabecera, logrando continuidad visual sin bandas negras aisladas ni desenfoques borrosos.
+    3. `LiquidGlassTabBar.tsx` con `position: 'fixed'` y `barOffset` (`max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`): navegación flotante nítida a 12px del borde inferior, exactamente sobre el Home Indicator.
   - Eliminación de archivos temporales de diagnóstico `mobile/public/diag-*.html`.
-  - Documentación obligatoria actualizada en `.ai/02-arquitectura-stack.md`.
+  - Documentación técnica actualizada en `.ai/02-arquitectura-stack.md`.
   - Tipado verificado con `npx tsc --noEmit` en `/mobile` (0 errores).
 
 - **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16 en Móvil):**
