@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 04 de Noviembre de 2026 (Sesión 69 — Resolución empírica y definitiva del bug de viewport / franja inferior en PWA iOS: estandarización de `apple-mobile-web-app-status-bar-style: default` y calibración de `useEdgeInsets`).
+- **Fecha de Última Actualización:** 04 de Noviembre de 2026 (Sesión 69 — Resolución empírica en PWA iOS y Arquitectura Realtime Supabase de alta disponibilidad: Singleton client, REPLICA IDENTITY FULL, RLS para WebSocket, reactividad inmediata y polling de respaldo cada 8s).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.

@@ -72,7 +72,7 @@ export function Sidebar({
       ]);
 
       const totalP = palmetasData?.length || 0;
-      const mantP = palmetasData?.filter((p) => p.estado === "mantencion").length || 0;
+      const mantP = palmetasData?.filter((p: { estado: string }) => p.estado === "mantencion").length || 0;
 
       setCounts({
         eventos: totalEv || 0,
