@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 04 de Noviembre de 2026 (Sesión 68 — Notificaciones persistentes con limpieza temporal, modal de confirmación de logout en Sidebar, centralización de tema y eliminación de barra de búsqueda en Inicio).
+- **Fecha de Última Actualización:** 04 de Noviembre de 2026 (Sesión 69 — Resolución empírica y definitiva del bug de viewport / franja inferior en PWA iOS: estandarización de `apple-mobile-web-app-status-bar-style: default` y calibración de `useEdgeInsets`).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
@@ -897,6 +897,16 @@
   - Implementación del servicio de sincronización por lote `mobile/src/core/api/sync.ts` (`syncPendingIncidencias`).
   - Carga de imágenes locales a Supabase Storage bucket `evidencias-incidencias`.
   - Batch INSERT en la tabla `incidencias` de Supabase con resolución resiliente de claves foráneas.
+
+- **2026-11-04 (Sesión 69 — Resolución Definitiva Bug PWA iOS Viewport / Franja Inferior):**
+  - Diagnóstico empírico mediante sondas HUD visuales (`innerH`, `screenH`, `bar bottom`) en standalone PWA en iPhone.
+  - Demostración visual de la causa raíz: en WebKit iOS con `apple-mobile-web-app-status-bar-style: black-translucent`, el layout se sitúa en $y=0$ pero WebKit resta 47px de status bar a `window.innerHeight` ($844 - 47 = 797\text{px}$), provocando que `#root` con `position: fixed; inset: 0` se corte 47px antes del borde físico de la pantalla, dejando una franja inferior muerta y empujando la `LiquidGlassTabBar` hacia arriba.
+  - Resolución nativa comprobada: migración a `apple-mobile-web-app-status-bar-style: default` y `"barStyle": "default"` en `mobile/public/index.html` y `mobile/app.json`.
+  - Con `default`, iOS reserva los 47px superiores de forma nativa para la barra de estado con fondo oscuro corporativo y sitúa el viewport web de $y=47\text{px}$ a $y=844\text{px}$ ($47 + 797 = 844\text{px}$), alcanzando el 100% del fondo físico sin franja ni hacks CSS.
+  - Reversión y simplificación de `mobile/src/core/hooks/useEdgeInsets.ts`: `tabBarBottomOffset` queda directamente en `barOffset` (`max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`), eliminando variables `--gap` y funciones dinámicas `updateGap`.
+  - Eliminación de archivos temporales de diagnóstico `mobile/public/diag-*.html`.
+  - Documentación obligatoria agregada a `.ai/02-arquitectura-stack.md` para prohibir `black-translucent` en futuras sesiones.
+  - Tipado verificado con `npx tsc --noEmit` en `/mobile` (0 errores).
 
 - **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16 en Móvil):**
   - Conexión de `HomeScreen.tsx` con el evento real activo (`estado = 'en_curso'`).

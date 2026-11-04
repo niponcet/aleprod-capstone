@@ -63,6 +63,20 @@ El monorepo está dividido funcionalmente en dos aplicaciones complementarias y 
   - Configuración del escaneo: Usar `barcodeScannerSettings={{ barcodeTypes: ['qr'] }}` y enlazar el evento con `onBarcodeScanned`.
   - El manejo de permisos debe ser defensivo y reactivo: chequear `!permission.granted` y proveer botón interactivo para invocar `requestPermission()`.
 
+### Regla Estricta: PWA Móvil en iOS Safari (Status Bar y Viewport Edge-to-Edge)
+> **PROHIBICIÓN TOTAL:** Está terminantemente **PROHIBIDO** configurar `apple-mobile-web-app-status-bar-style` como `"black-translucent"` tanto en `mobile/public/index.html` como en `mobile/app.json`.
+
+* **Causa Raíz Verificada Empíricamente:**
+  - En WebKit iOS (modo standalone / pantalla de inicio), `black-translucent` sitúa el origen de la vista web en $y=0$ (detrás del Notch / Dynamic Island), pero WebKit calcula `window.innerHeight` restando erróneamente los 47px de la barra de estado superior ($844\text{px} - 47\text{px} = 797\text{px}$).
+  - En consecuencia, `#root` con `position: fixed; inset: 0` se ancla al fondo del viewport en $y=797\text{px}$, dejando un espacio muerto de 47px en el borde inferior físico de la pantalla (la "franja inferior"), empujando hacia arriba la barra flotante (`LiquidGlassTabBar`) y descalibrando el scroll.
+* **Patrón Obligatorio:**
+  - Configurar obligatoriamente **`"apple-mobile-web-app-status-bar-style": "default"`** en `mobile/public/index.html` y `"barStyle": "default"` en `mobile/app.json`.
+  - Con `default`, iOS gestiona nativamente la barra de estado de 47px con fondo oscuro corporativo (sin solapamiento ni texto borroso), e inicia el viewport web exactamente en $y=47\text{px}$.
+  - El viewport web cubre de $47\text{px}$ a $844\text{px}$ ($47 + 797 = 844\text{px}$), alcanzando de forma natural el borde físico inferior de la pantalla.
+  - En `mobile/src/core/hooks/useEdgeInsets.ts`:
+    - `tabBarBottomOffset`: `max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`. No restar gaps artificiales.
+    - `bottomPadding`: `calc(70px + ${barOffset})` para despejar el contenido detrás de la barra flotante.
+
 ### Variables de Entorno Móvil
 * **Prefijo Mandatorio:** Toda variable accesible en el código cliente de Expo debe comenzar obligatoriamente con el prefijo **`EXPO_PUBLIC_`**.
 * Ejemplo de archivo `.env`:

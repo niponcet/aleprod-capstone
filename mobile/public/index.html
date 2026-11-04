@@ -9,7 +9,7 @@
     <!-- PWA iOS Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="theme-color" content="#070B14" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
@@ -19,13 +19,6 @@
       :root {
         --sat: env(safe-area-inset-top, 0px);
         --sab: env(safe-area-inset-bottom, 0px);
-        --gap: 0px;
-      }
-      /* Parche WebKit iOS para el glitch de 0px al navegar */
-      @supports (-webkit-touch-callout: none) {
-        :root {
-          --sat: max(env(safe-area-inset-top), 47px);
-        }
       }
       /* Utilidades inyectables */
       .edge-to-edge-pb { padding-bottom: calc(var(--sab) + 70px) !important; }
@@ -121,24 +114,6 @@
           }
         });
       }
-
-      // Compensación dinámica del gap de viewport en iOS PWA (standalone)
-      function updateGap() {
-        var standalone = window.matchMedia('(display-mode: standalone)').matches
-          || window.navigator.standalone === true;
-        if (!standalone) { document.documentElement.style.setProperty('--gap', '0px'); return; }
-        // No recalcular con el teclado abierto: innerHeight también baja ahí.
-        var ae = document.activeElement;
-        var typing = ae && ['INPUT','TEXTAREA','SELECT'].indexOf(ae.tagName) !== -1;
-        if (typing) return;
-        var gap = Math.max(0, Math.round(screen.height - window.innerHeight));
-        // Límite de seguridad: ignorar valores absurdos.
-        if (gap > 80) gap = 0;
-        document.documentElement.style.setProperty('--gap', gap + 'px');
-      }
-      window.addEventListener('load', updateGap);
-      window.addEventListener('orientationchange', function(){ setTimeout(updateGap, 300); });
-      document.addEventListener('focusout', function(){ setTimeout(updateGap, 400); });
     </script>
   </body>
 </html>

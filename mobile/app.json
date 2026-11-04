@@ -25,13 +25,13 @@
       "backgroundColor": "#070B14",
       "themeColor": "#070B14",
       "display": "standalone",
-      "barStyle": "black-translucent",
+      "barStyle": "default",
       "startUrl": "/",
       "scope": "/",
       "meta": {
         "viewport": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
         "apple-mobile-web-app-capable": "yes",
-        "apple-mobile-web-app-status-bar-style": "black-translucent",
+        "apple-mobile-web-app-status-bar-style": "default",
         "theme-color": "#070B14"
       }
     },

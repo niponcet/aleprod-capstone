@@ -66,11 +66,10 @@ export function useEdgeInsets(
   if (Platform.OS === 'web') {
     const barHeight = 58;
     const barOffset = `max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`;
-    const tabOffset = `calc(${barOffset} - var(--gap, 0px))`;
     return {
       topPadding: `max(calc(env(safe-area-inset-top, 0px) + ${webTopSpace}px), 20px)`,
       bottomPadding: `calc(${barHeight + 12}px + ${barOffset})`,
-      tabBarBottomOffset: tabOffset,
+      tabBarBottomOffset: barOffset,
       leftPadding: 'env(safe-area-inset-left, 0px)',
       rightPadding: 'env(safe-area-inset-right, 0px)',
       safeAreaStyle: {
