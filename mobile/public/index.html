@@ -46,7 +46,7 @@
         position: fixed;
         inset: 0;
         width: 100%;
-        background-color: #070B14 !important;
+        background-color: #000000 !important;
         margin: 0;
         padding: 0;
         overflow: hidden;
@@ -63,7 +63,7 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        background-color: #070B14 !important;
+        background-color: #000000 !important;
         overflow: hidden;
       }
 
@@ -91,6 +91,8 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- Capa protectora que garantiza la barra de estado superior 100% negra en iOS PWA -->
+    <div id="ios-status-bar-fill" style="position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background-color: #000000; z-index: 99999; pointer-events: none;"></div>
     <div id="root"></div>
     <script>
       // Parche universal iOS WebKit: restauración síncrona de viewport tras cierre de teclado en PWA / Safari

@@ -156,8 +156,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient
-        colors={['#000000', 'rgba(29, 78, 216, 0.32)', 'rgba(37, 99, 235, 0.20)', 'rgba(7, 11, 20, 0.05)', 'transparent']}
-        locations={[0, 0.28, 0.55, 0.82, 1]}
+        colors={['#000000', '#000000', 'rgba(29, 78, 216, 0.35)', 'rgba(37, 99, 235, 0.18)', 'transparent']}
+        locations={[0, 0.22, 0.50, 0.78, 1]}
         style={styles.topAmbientGlow}
         pointerEvents="none"
       />
@@ -388,7 +388,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onSignOut }) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#070B14',
+    backgroundColor: '#000000',
   },
   scrollView: {
     flex: 1,
