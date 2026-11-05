@@ -77,12 +77,21 @@
       input:-webkit-autofill:hover, 
       input:-webkit-autofill:focus, 
       input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 1000px #14171C inset !important;
-        box-shadow: 0 0 0 1000px #14171C inset !important;
-        -webkit-text-fill-color: #FFFFFF !important;
-        caret-color: #FFFFFF !important;
-        border-radius: 8px !important;
+        -webkit-box-shadow: 0 0 0 1000px #0C101A inset !important;
+        box-shadow: 0 0 0 1000px #0C101A inset !important;
+        -webkit-text-fill-color: #F2F4FA !important;
+        caret-color: #F2F4FA !important;
+        border-radius: 12px !important;
         transition: background-color 50000s ease-in-out 0s;
+      }
+
+      /* Reseteo limpio de inputs en WebKit */
+      input {
+        border: none !important;
+        outline: none !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        background-color: transparent !important;
       }
 
       /* Eliminar el contorno/outline por defecto del navegador al hacer focus */

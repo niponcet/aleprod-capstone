@@ -9,6 +9,7 @@ import {
   RefreshControl,
   useWindowDimensions,
   Platform,
+  Image,
 } from 'react-native';
 import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -202,7 +203,11 @@ export const HomeScreen: React.FC = () => {
       <View style={[styles.headerContainer, { paddingTop: headerTopPadding }]}>
         <View style={styles.headerProfile}>
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>AP</Text>
+            <Image
+              source={require('../../../../assets/icon.png')}
+              style={styles.avatarImage}
+              resizeMode="contain"
+            />
           </View>
           <View style={styles.headerTexts}>
             <Text style={styles.headerOrgText}>Aleprod Terreno</Text>
@@ -598,18 +603,18 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#0A0D14',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    overflow: 'hidden',
   },
-  avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 16,
-    letterSpacing: 0.5,
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   headerTexts: {
     justifyContent: 'center',

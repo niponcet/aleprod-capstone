@@ -442,12 +442,8 @@ const styles = StyleSheet.create({
   },
   inputWrapperFocused: {
     borderColor: '#4C6FFF',
+    borderWidth: 1.5,
     backgroundColor: '#0E1322',
-    shadowColor: '#4C6FFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
   },
   inputIcon: {
     marginRight: 10,
@@ -455,9 +451,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: '#F2F4FA',
-    fontSize: 16,
+    fontSize: 15,
     height: '100%',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     backgroundColor: 'transparent',
+    borderWidth: 0,
     outlineStyle: 'none',
   } as any,
   eyeButton: {
