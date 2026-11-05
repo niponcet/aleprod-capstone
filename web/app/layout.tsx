@@ -19,13 +19,15 @@ export const metadata: Metadata = {
     "Sistema de gestión operativa e inventario de palmetas LED para eventos de alto estándar.",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.svg?v=aleprod3", type: "image/svg+xml" },
+      { url: "/favicon-32.png?v=aleprod3", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png?v=aleprod3", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.ico?v=aleprod3" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-touch-icon.png?v=aleprod3", sizes: "180x180", type: "image/png" },
     ],
+    shortcut: "/favicon.ico?v=aleprod3",
   },
 };
 
@@ -59,10 +61,22 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        {/* Preload de fuente local de iconos para renderizado instantáneo sin red externa */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-          rel="stylesheet"
+          rel="preload"
+          href="/fonts/material-symbols.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
         />
+        {/* Preload de imagen del logotipo de marca */}
+        <link rel="preload" href="/icons/icon-192.png" as="image" />
+        {/* Favicons con versión para refresco inmediato de caché en navegador */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=aleprod3" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=aleprod3" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=aleprod3" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=aleprod3" />
+        <link rel="shortcut icon" href="/favicon.ico?v=aleprod3" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
         <ThemeProvider>

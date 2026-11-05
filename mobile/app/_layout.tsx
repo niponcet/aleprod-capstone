@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from '../src/core/context/AuthContext';
 import { ToastProvider } from '../src/core/context/ToastContext';
 import { colors } from '../src/core/theme/colors';
 import { setupAlertPolyfill } from '../src/core/utils/alertPolyfill';
+import { useFonts } from 'expo-font';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 // Habilitar soporte universal de Alert.alert en PWA / WebKit
 setupAlertPolyfill();
@@ -24,6 +26,7 @@ const customDarkTheme = {
 };
 
 function RootNavigationLayout() {
+  const [fontsLoaded] = useFonts(Ionicons.font);
   const { isAuthenticated, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -40,10 +43,10 @@ function RootNavigationLayout() {
     }
   }, [isAuthenticated, loading, segments, router]);
 
-  if (loading) {
+  if (loading || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primaryAmber} />
+        <ActivityIndicator size="large" color="#4A74FF" />
       </View>
     );
   }

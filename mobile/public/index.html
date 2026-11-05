@@ -14,13 +14,23 @@
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#000000" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=aleprod3" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=aleprod3" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=aleprod3" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=aleprod3" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=aleprod3" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="preload" href="/fonts/Ionicons.ttf" as="font" type="font/ttf" crossorigin="anonymous" />
+    <link rel="preload" href="/icons/icon-192.png" as="image" />
 
     <style id="expo-reset">
+      /* Carga anticipada de fuentes vectoriales para evitar parpadeos (Zero FOIT) */
+      @font-face {
+        font-family: 'Ionicons';
+        src: url('/fonts/Ionicons.ttf') format('truetype');
+        font-display: block;
+      }
+
       :root {
         --sat: env(safe-area-inset-top, 0px);
         --sab: env(safe-area-inset-bottom, 0px);
