@@ -15,6 +15,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,16 @@ import {
   EventFilterOption,
 } from '../../../core/api/incidencias';
 import { triggerHaptic } from '../../../core/utils/haptics';
+
+interface PalmetaGroup {
+  qr_uuid: string;
+  codigo_visible?: string;
+  latestIncident: UnifiedIncident;
+  incidents: UnifiedIncident[];
+  mostSevereStatus: 'baja' | 'mantencion' | 'operativa';
+}
+
+type ViewMode = 'grouped' | 'timeline';
 
 export const ActivityHistoryScreen: React.FC = () => {
   const router = useRouter();
@@ -39,6 +50,11 @@ export const ActivityHistoryScreen: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  // Modo de visualización: 'grouped' (por palmeta) para evitar scroll infinito, o 'timeline' (cronológico)
+  const [viewMode, setViewMode] = useState<ViewMode>('grouped');
+  // Estado de acordeón para desplegar historial interno de palmetas con múltiples incidencias
+  const [expandedPalmetas, setExpandedPalmetas] = useState<Record<string, boolean>>({});
 
   // Carga inicial y recarga combinada
   const loadData = useCallback(async (isRefresh = false) => {
@@ -94,11 +110,10 @@ export const ActivityHistoryScreen: React.FC = () => {
     return found ? found.nombre : selectedEventId;
   }, [selectedEventId, events]);
 
-  // Filtrado reactivo en memoria: por evento y término de búsqueda
+  // 1. Filtrado reactivo en memoria: por evento y búsqueda
   const filteredIncidents = useMemo(() => {
     let list = incidents;
 
-    // 1. Filtrar por evento seleccionado en el dropdown
     if (selectedEventId !== 'all') {
       const target = selectedEventId.toLowerCase();
       list = list.filter((item) => {
@@ -109,7 +124,6 @@ export const ActivityHistoryScreen: React.FC = () => {
       });
     }
 
-    // 2. Filtrar por término de búsqueda (QR, código visible, falla o descripción)
     if (searchQuery.trim().length > 0) {
       const query = searchQuery.trim().toLowerCase();
       list = list.filter((item) => {
@@ -125,6 +139,59 @@ export const ActivityHistoryScreen: React.FC = () => {
     return list;
   }, [incidents, selectedEventId, searchQuery]);
 
+  // 2. Agrupación por Palmeta para optimizar el scroll excesivo
+  const groupedPalmetas = useMemo(() => {
+    const map = new Map<string, UnifiedIncident[]>();
+    filteredIncidents.forEach((item) => {
+      const key = item.qr_uuid;
+      const existing = map.get(key) || [];
+      existing.push(item);
+      map.set(key, existing);
+    });
+
+    const groups: PalmetaGroup[] = [];
+    map.forEach((items, key) => {
+      // Ordenar incidencias de la palmeta cronológicamente descendente
+      const sorted = [...items].sort(
+        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+      );
+      const latest = sorted[0];
+
+      // Determinar la severidad más crítica registrada
+      let severity: 'baja' | 'mantencion' | 'operativa' = 'operativa';
+      for (const inc of sorted) {
+        const f = inc.tipo_falla.toLowerCase();
+        if (f.includes('baja') || f.includes('crítica')) {
+          severity = 'baja';
+          break;
+        }
+        if (
+          f.includes('manten') ||
+          f.includes('apagado') ||
+          f.includes('dañado') ||
+          f.includes('falla') ||
+          f.includes('fuente')
+        ) {
+          severity = 'mantencion';
+        }
+      }
+
+      groups.push({
+        qr_uuid: key,
+        codigo_visible: latest.codigo_visible,
+        latestIncident: latest,
+        incidents: sorted,
+        mostSevereStatus: severity,
+      });
+    });
+
+    // Ordenar los grupos por la fecha del último incidente
+    return groups.sort(
+      (a, b) =>
+        new Date(b.latestIncident.fecha).getTime() - new Date(a.latestIncident.fecha).getTime()
+    );
+  }, [filteredIncidents]);
+
   const handleSelectEvent = (id: string) => {
     triggerHaptic('selection');
     setSelectedEventId(id);
@@ -136,34 +203,29 @@ export const ActivityHistoryScreen: React.FC = () => {
     setSearchQuery('');
   };
 
-  const handlePalmetaPress = (item: UnifiedIncident) => {
+  const togglePalmetaExpand = (uuid: string) => {
+    triggerHaptic('selection');
+    setExpandedPalmetas((prev) => ({
+      ...prev,
+      [uuid]: !prev[uuid],
+    }));
+  };
+
+  const handlePalmetaPress = (qr_uuid: string, shortCode: string, severity: string) => {
     triggerHaptic('light');
-    const shortCode =
-      item.codigo_visible ||
-      (item.qr_uuid.length > 8 ? item.qr_uuid.slice(-4).toUpperCase() : item.qr_uuid);
-
-    const isBaja =
-      item.tipo_falla.toLowerCase().includes('baja') ||
-      item.tipo_falla.toLowerCase().includes('crítica');
-    const isMant =
-      item.tipo_falla.toLowerCase().includes('manten') ||
-      item.tipo_falla.toLowerCase().includes('apagado') ||
-      item.tipo_falla.toLowerCase().includes('dañado') ||
-      item.tipo_falla.toLowerCase().includes('fuente') ||
-      item.tipo_falla.toLowerCase().includes('falla');
-
-    const status = isBaja
-      ? '• Dado de Baja'
-      : isMant
-        ? '• En Mantención'
-        : '• Operativo';
+    const statusText =
+      severity === 'baja'
+        ? '• Dado de Baja'
+        : severity === 'mantencion'
+          ? '• En Mantención'
+          : '• Operativo';
 
     router.push({
       pathname: '/asset-detail',
       params: {
-        uuid: item.qr_uuid,
+        uuid: qr_uuid,
         title: `Palmeta #${shortCode}`,
-        status,
+        status: statusText,
       },
     });
   };
@@ -196,7 +258,213 @@ export const ActivityHistoryScreen: React.FC = () => {
     }
   };
 
-  const renderIncidentCard = ({ item }: { item: UnifiedIncident }) => {
+  // Renderizador para Modo Agrupado (Master Card con Accordion)
+  const renderGroupedPalmetaCard = ({ item }: { item: PalmetaGroup }) => {
+    const shortCode =
+      item.codigo_visible ||
+      (item.qr_uuid.length > 8 ? item.qr_uuid.slice(-4).toUpperCase() : item.qr_uuid);
+
+    const isBaja = item.mostSevereStatus === 'baja';
+    const isMant = item.mostSevereStatus === 'mantencion';
+
+    const iconColor = isBaja ? colors.danger : isMant ? colors.warning : colors.success;
+    const iconBg = isBaja
+      ? 'rgba(239, 68, 68, 0.12)'
+      : isMant
+        ? 'rgba(245, 158, 11, 0.12)'
+        : 'rgba(16, 185, 129, 0.12)';
+
+    const iconName: keyof typeof Ionicons.glyphMap = isBaja
+      ? 'close-circle-outline'
+      : isMant
+        ? 'warning-outline'
+        : 'checkmark-circle-outline';
+
+    const statusPillText = isBaja ? 'Baja' : isMant ? 'Mantención' : 'Operativa';
+    const statusPillBg = isBaja
+      ? 'rgba(239, 68, 68, 0.14)'
+      : isMant
+        ? 'rgba(245, 158, 11, 0.14)'
+        : 'rgba(16, 185, 129, 0.14)';
+
+    const isExpanded = !!expandedPalmetas[item.qr_uuid];
+    const latest = item.latestIncident;
+    const previousIncidents = item.incidents.slice(1);
+
+    return (
+      <View style={styles.groupedCard}>
+        {/* Cabecera de la Palmeta */}
+        <TouchableOpacity
+          style={styles.groupedHeaderRow}
+          onPress={() => handlePalmetaPress(item.qr_uuid, shortCode, item.mostSevereStatus)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.palmetaIconBox, { backgroundColor: iconBg }]}>
+            <Ionicons name={iconName} size={20} color={iconColor} />
+          </View>
+
+          <View style={styles.palmetaHeaderInfo}>
+            <View style={styles.palmetaTopTitleRow}>
+              <Text style={styles.palmetaMainCode}>Palmeta #{shortCode}</Text>
+              <View style={[styles.statusPill, { backgroundColor: statusPillBg }]}>
+                <Text style={[styles.statusPillText, { color: iconColor }]}>{statusPillText}</Text>
+              </View>
+            </View>
+
+            <View style={styles.palmetaMetaRow}>
+              <Text style={styles.palmetaLastSeenText}>
+                {formatTimeAgo(latest.fecha)} · {formatFullDate(latest.fecha)}
+              </Text>
+              <View style={styles.countBadgePill}>
+                <Text style={styles.countBadgePillText}>
+                  {item.incidents.length}{' '}
+                  {item.incidents.length === 1 ? 'incidencia' : 'incidencias'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Caja de la Última Incidencia */}
+        <View style={styles.latestIncidentBox}>
+          <View style={styles.latestTagRow}>
+            <View style={styles.latestTagPill}>
+              <Text style={styles.latestTagPillText}>ÚLTIMO REPORTE</Text>
+            </View>
+            <View style={styles.syncMetaRight}>
+              {latest.foto_url ? (
+                <View style={styles.photoIndicatorPill}>
+                  <Ionicons name="camera-outline" size={11} color="#60A5FA" style={{ marginRight: 3 }} />
+                  <Text style={styles.photoIndicatorText}>Foto</Text>
+                </View>
+              ) : null}
+
+              <View
+                style={[
+                  styles.syncBadge,
+                  latest.sincronizado ? styles.syncBadgeCloud : styles.syncBadgeLocal,
+                ]}
+              >
+                <Ionicons
+                  name={latest.sincronizado ? 'cloud-done-outline' : 'phone-portrait-outline'}
+                  size={11}
+                  color={latest.sincronizado ? colors.success : colors.warning}
+                  style={{ marginRight: 3 }}
+                />
+                <Text
+                  style={[
+                    styles.syncBadgeText,
+                    { color: latest.sincronizado ? colors.success : colors.warning },
+                  ]}
+                >
+                  {latest.sincronizado ? 'Cloud' : 'Local'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <Text style={styles.fallaMainTitle}>{latest.tipo_falla}</Text>
+          {latest.descripcion ? (
+            <Text style={styles.fallaDescriptionText} numberOfLines={2}>
+              {latest.descripcion}
+            </Text>
+          ) : null}
+
+          <View style={styles.eventFooterRow}>
+            <Ionicons name="location-sharp" size={12} color="#60A5FA" style={{ marginRight: 4 }} />
+            <Text style={styles.eventNameFooterText} numberOfLines={1}>
+              {latest.evento_nombre || 'Evento en terreno'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Sección Acordeón: Desplegable si hay más de 1 incidencia */}
+        {previousIncidents.length > 0 ? (
+          <View style={styles.accordionSection}>
+            <TouchableOpacity
+              style={styles.accordionToggleButton}
+              onPress={() => togglePalmetaExpand(item.qr_uuid)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isExpanded ? 'chevron-up-circle-outline' : 'chevron-down-circle-outline'}
+                size={16}
+                color="#60A5FA"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.accordionToggleText}>
+                {isExpanded
+                  ? 'Ocultar historial anterior'
+                  : `Ver ${previousIncidents.length} ${
+                      previousIncidents.length === 1 ? 'incidencia anterior' : 'incidencias anteriores'
+                    }`}
+              </Text>
+            </TouchableOpacity>
+
+            {isExpanded ? (
+              <View style={styles.subTimelineContainer}>
+                {previousIncidents.map((prevInc, idx) => {
+                  const isPrevBaja =
+                    prevInc.tipo_falla.toLowerCase().includes('baja') ||
+                    prevInc.tipo_falla.toLowerCase().includes('crítica');
+                  const isPrevMant =
+                    prevInc.tipo_falla.toLowerCase().includes('manten') ||
+                    prevInc.tipo_falla.toLowerCase().includes('apagado') ||
+                    prevInc.tipo_falla.toLowerCase().includes('falla');
+                  const dotColor = isPrevBaja
+                    ? colors.danger
+                    : isPrevMant
+                      ? colors.warning
+                      : colors.success;
+
+                  return (
+                    <View key={`prev-${prevInc.id}`} style={styles.timelineItemRow}>
+                      <View style={styles.timelineTrackerCol}>
+                        <View style={[styles.timelineDot, { backgroundColor: dotColor }]} />
+                        {idx < previousIncidents.length - 1 ? (
+                          <View style={styles.timelineVerticalLine} />
+                        ) : null}
+                      </View>
+
+                      <View style={styles.timelineContentBox}>
+                        <View style={styles.timelineTitleRow}>
+                          <Text style={styles.timelineFallaText}>{prevInc.tipo_falla}</Text>
+                          <Text style={styles.timelineDateText}>
+                            {formatTimeAgo(prevInc.fecha)}
+                          </Text>
+                        </View>
+                        {prevInc.descripcion ? (
+                          <Text style={styles.timelineDescText} numberOfLines={1}>
+                            {prevInc.descripcion}
+                          </Text>
+                        ) : null}
+                        <Text style={styles.timelineEventText} numberOfLines={1}>
+                          {prevInc.evento_nombre || 'Evento en curso'}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Enlace rápido a Ficha Técnica */}
+        <TouchableOpacity
+          style={styles.cardFooterAction}
+          onPress={() => handlePalmetaPress(item.qr_uuid, shortCode, item.mostSevereStatus)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.cardFooterActionText}>Ver ficha técnica de palmeta</Text>
+          <Ionicons name="arrow-forward" size={14} color="#60A5FA" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  // Renderizador para Modo Cronológico Lineal (Timeline clásica)
+  const renderTimelineCard = ({ item }: { item: UnifiedIncident }) => {
     const shortCode =
       item.codigo_visible ||
       (item.qr_uuid.length > 8 ? item.qr_uuid.slice(-4).toUpperCase() : item.qr_uuid);
@@ -219,10 +487,10 @@ export const ActivityHistoryScreen: React.FC = () => {
 
     const iconColor = isBaja ? colors.danger : isMant ? colors.warning : colors.success;
     const iconBg = isBaja
-      ? 'rgba(239, 68, 68, 0.15)'
+      ? 'rgba(239, 68, 68, 0.12)'
       : isMant
-        ? 'rgba(245, 158, 11, 0.15)'
-        : 'rgba(16, 185, 129, 0.15)';
+        ? 'rgba(245, 158, 11, 0.12)'
+        : 'rgba(16, 185, 129, 0.12)';
 
     const statusPillText = isBaja ? 'Baja' : isMant ? 'Mantención' : 'Operativa';
     const statusPillBg = isBaja
@@ -233,71 +501,74 @@ export const ActivityHistoryScreen: React.FC = () => {
 
     return (
       <TouchableOpacity
-        style={styles.cardContainer}
-        onPress={() => handlePalmetaPress(item)}
+        style={styles.groupedCard}
+        onPress={() =>
+          handlePalmetaPress(item.qr_uuid, shortCode, isBaja ? 'baja' : isMant ? 'mantencion' : 'operativa')
+        }
         activeOpacity={0.82}
       >
-        <View style={styles.cardHeaderRow}>
-          <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
+        <View style={styles.groupedHeaderRow}>
+          <View style={[styles.palmetaIconBox, { backgroundColor: iconBg }]}>
             <Ionicons name={iconName} size={18} color={iconColor} />
           </View>
 
-          <View style={styles.headerInfoCol}>
-            <View style={styles.titleTopRow}>
-              <Text style={styles.palmetaTitle}>Palmeta #{shortCode}</Text>
+          <View style={styles.palmetaHeaderInfo}>
+            <View style={styles.palmetaTopTitleRow}>
+              <Text style={styles.palmetaMainCode}>Palmeta #{shortCode}</Text>
               <View style={[styles.statusPill, { backgroundColor: statusPillBg }]}>
                 <Text style={[styles.statusPillText, { color: iconColor }]}>{statusPillText}</Text>
               </View>
             </View>
-            <Text style={styles.timeText}>
+            <Text style={styles.palmetaLastSeenText}>
               {formatTimeAgo(item.fecha)} · {formatFullDate(item.fecha)}
             </Text>
           </View>
         </View>
 
-        {/* Falla Técnica */}
-        <View style={styles.fallaBox}>
-          <Text style={styles.fallaTitle}>{item.tipo_falla}</Text>
+        <View style={styles.latestIncidentBox}>
+          <Text style={styles.fallaMainTitle}>{item.tipo_falla}</Text>
           {item.descripcion ? (
-            <Text style={styles.fallaDescription} numberOfLines={2}>
+            <Text style={styles.fallaDescriptionText} numberOfLines={2}>
               {item.descripcion}
             </Text>
           ) : null}
-        </View>
 
-        {/* Footer Meta: Evento y Sincronización */}
-        <View style={styles.cardFooterRow}>
-          <View style={styles.eventPill}>
-            <Ionicons name="location-sharp" size={12} color={colors.primaryAmber} style={{ marginRight: 4 }} />
-            <Text style={styles.eventPillText} numberOfLines={1}>
+          <View style={styles.eventFooterRow}>
+            <Ionicons name="location-sharp" size={12} color="#60A5FA" style={{ marginRight: 4 }} />
+            <Text style={styles.eventNameFooterText} numberOfLines={1}>
               {item.evento_nombre || 'Evento en terreno'}
             </Text>
           </View>
+        </View>
 
-          <View style={styles.footerRightBadges}>
-            {item.foto_url ? (
-              <View style={styles.photoIndicator}>
-                <Ionicons name="camera-outline" size={13} color={colors.primaryLight} style={{ marginRight: 3 }} />
-                <Text style={styles.photoIndicatorText}>Foto</Text>
-              </View>
-            ) : null}
-
-            <View style={[styles.syncBadge, item.sincronizado ? styles.syncBadgeCloud : styles.syncBadgeLocal]}>
-              <Ionicons
-                name={item.sincronizado ? 'cloud-done-outline' : 'phone-portrait-outline'}
-                size={11}
-                color={item.sincronizado ? colors.success : colors.warning}
-                style={{ marginRight: 3 }}
-              />
-              <Text
-                style={[
-                  styles.syncBadgeText,
-                  { color: item.sincronizado ? colors.success : colors.warning },
-                ]}
-              >
-                {item.sincronizado ? 'Cloud' : 'Local'}
-              </Text>
+        <View style={styles.timelineFooterBadgesRow}>
+          {item.foto_url ? (
+            <View style={styles.photoIndicatorPill}>
+              <Ionicons name="camera-outline" size={11} color="#60A5FA" style={{ marginRight: 3 }} />
+              <Text style={styles.photoIndicatorText}>Foto</Text>
             </View>
+          ) : null}
+
+          <View
+            style={[
+              styles.syncBadge,
+              item.sincronizado ? styles.syncBadgeCloud : styles.syncBadgeLocal,
+            ]}
+          >
+            <Ionicons
+              name={item.sincronizado ? 'cloud-done-outline' : 'phone-portrait-outline'}
+              size={11}
+              color={item.sincronizado ? colors.success : colors.warning}
+              style={{ marginRight: 3 }}
+            />
+            <Text
+              style={[
+                styles.syncBadgeText,
+                { color: item.sincronizado ? colors.success : colors.warning },
+              ]}
+            >
+              {item.sincronizado ? 'Cloud' : 'Local'}
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -314,7 +585,7 @@ export const ActivityHistoryScreen: React.FC = () => {
           <Ionicons
             name={isSearching ? 'search-outline' : 'shield-checkmark-outline'}
             size={36}
-            color={colors.primaryAmber}
+            color="#60A5FA"
           />
         </View>
         <Text style={styles.emptyTitle}>
@@ -334,7 +605,7 @@ export const ActivityHistoryScreen: React.FC = () => {
             onPress={handleClearSearch}
             activeOpacity={0.8}
           >
-            <Ionicons name="close-circle-outline" size={15} color={colors.textInverse} style={{ marginRight: 6 }} />
+            <Ionicons name="close-circle-outline" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
             <Text style={styles.resetFilterButtonText}>Limpiar búsqueda</Text>
           </TouchableOpacity>
         ) : isFiltered ? (
@@ -343,7 +614,7 @@ export const ActivityHistoryScreen: React.FC = () => {
             onPress={() => handleSelectEvent('all')}
             activeOpacity={0.8}
           >
-            <Ionicons name="apps-outline" size={15} color={colors.textInverse} style={{ marginRight: 6 }} />
+            <Ionicons name="apps-outline" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
             <Text style={styles.resetFilterButtonText}>Ver todos los eventos</Text>
           </TouchableOpacity>
         ) : null}
@@ -354,6 +625,13 @@ export const ActivityHistoryScreen: React.FC = () => {
   return (
     <View style={[styles.container, { width: screenWidth }]}>
       <StatusBar barStyle="light-content" />
+
+      {/* Halo ambiental superior suave idéntico a Notificaciones y Detalle de Activo */}
+      <LinearGradient
+        colors={['rgba(29, 78, 216, 0.35)', 'rgba(29, 78, 216, 0.08)', 'transparent']}
+        style={styles.topAmbientGlow}
+        pointerEvents="none"
+      />
 
       {/* Header Fijo Superior */}
       <View
@@ -376,12 +654,12 @@ export const ActivityHistoryScreen: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
           </TouchableOpacity>
 
           <View style={styles.headerTitleBox}>
+            <Text style={styles.screenSubtitle}>ALEPROD TERRENO</Text>
             <Text style={styles.screenTitle}>Historial de Incidencias</Text>
-            <Text style={styles.screenSubtitle}>Trazabilidad técnica por montaje</Text>
           </View>
 
           <View style={styles.countBadge}>
@@ -389,13 +667,13 @@ export const ActivityHistoryScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 1. Barra de Búsqueda */}
+        {/* 1. Barra de Búsqueda Moderna */}
         <View style={styles.searchBarContainer}>
-          <Ionicons name="search-outline" size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
+          <Ionicons name="search-outline" size={18} color="#60A5FA" style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar por QR, código visible o falla..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor="#64748B"
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCapitalize="none"
@@ -404,14 +682,14 @@ export const ActivityHistoryScreen: React.FC = () => {
           />
           {searchQuery.length > 0 ? (
             <TouchableOpacity onPress={handleClearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+              <Ionicons name="close-circle" size={18} color="#94A3B8" />
             </TouchableOpacity>
           ) : null}
         </View>
 
-        {/* 2. Selector Dropdown de Eventos */}
-        <View style={styles.dropdownSection}>
-          <Text style={styles.dropdownLabel}>EVENTO SELECCIONADO</Text>
+        {/* 2. Barra de Filtro de Evento y Conmutador de Modo */}
+        <View style={styles.filterControlsRow}>
+          {/* Botón Selector de Evento */}
           <TouchableOpacity
             style={[
               styles.dropdownButton,
@@ -423,41 +701,83 @@ export const ActivityHistoryScreen: React.FC = () => {
             }}
             activeOpacity={0.8}
           >
-            <View style={styles.dropdownButtonLeft}>
+            <Ionicons
+              name="calendar-outline"
+              size={15}
+              color={selectedEventId !== 'all' ? '#60A5FA' : '#94A3B8'}
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={[
+                styles.dropdownButtonText,
+                selectedEventId !== 'all' && styles.dropdownButtonTextActive,
+              ]}
+              numberOfLines={1}
+            >
+              {selectedEventName}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={14}
+              color={selectedEventId !== 'all' ? '#60A5FA' : '#64748B'}
+              style={{ marginLeft: 6 }}
+            />
+          </TouchableOpacity>
+
+          {/* Segmented Switch: Por Palmeta (Agrupado) vs Línea de Tiempo */}
+          <View style={styles.segmentedContainer}>
+            <TouchableOpacity
+              style={[styles.segmentTab, viewMode === 'grouped' && styles.segmentTabActive]}
+              onPress={() => {
+                triggerHaptic('selection');
+                setViewMode('grouped');
+              }}
+              activeOpacity={0.7}
+            >
               <Ionicons
-                name="calendar-outline"
-                size={16}
-                color={selectedEventId !== 'all' ? colors.primaryAmber : colors.textSecondary}
-                style={{ marginRight: 8 }}
+                name="grid-outline"
+                size={13}
+                color={viewMode === 'grouped' ? '#FFFFFF' : '#94A3B8'}
+                style={{ marginRight: 4 }}
               />
               <Text
                 style={[
-                  styles.dropdownButtonText,
-                  selectedEventId !== 'all' && styles.dropdownButtonTextActive,
+                  styles.segmentTabText,
+                  viewMode === 'grouped' && styles.segmentTabTextActive,
                 ]}
-                numberOfLines={1}
               >
-                {selectedEventName}
+                Por Palmeta
               </Text>
-            </View>
+            </TouchableOpacity>
 
-            <View style={styles.dropdownButtonRight}>
-              <View style={styles.dropdownCountPill}>
-                <Text style={styles.dropdownCountText}>
-                  {eventCounts[selectedEventId] ?? filteredIncidents.length}
-                </Text>
-              </View>
+            <TouchableOpacity
+              style={[styles.segmentTab, viewMode === 'timeline' && styles.segmentTabActive]}
+              onPress={() => {
+                triggerHaptic('selection');
+                setViewMode('timeline');
+              }}
+              activeOpacity={0.7}
+            >
               <Ionicons
-                name="chevron-down"
-                size={16}
-                color={selectedEventId !== 'all' ? colors.primaryAmber : colors.textSecondary}
+                name="time-outline"
+                size={13}
+                color={viewMode === 'timeline' ? '#FFFFFF' : '#94A3B8'}
+                style={{ marginRight: 4 }}
               />
-            </View>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.segmentTabText,
+                  viewMode === 'timeline' && styles.segmentTabTextActive,
+                ]}
+              >
+                Cronológico
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      {/* Modal Bottom Sheet: Dropdown de Selección de Evento */}
+      {/* Modal Bottom Sheet: Selector de Evento */}
       <Modal
         visible={isDropdownOpen}
         transparent
@@ -478,7 +798,6 @@ export const ActivityHistoryScreen: React.FC = () => {
                   },
                 ]}
               >
-                {/* Indicador de agarre superior */}
                 <View style={styles.sheetHandle} />
 
                 <View style={styles.modalHeader}>
@@ -490,12 +809,12 @@ export const ActivityHistoryScreen: React.FC = () => {
                     style={styles.modalCloseButton}
                     onPress={() => setIsDropdownOpen(false)}
                   >
-                    <Ionicons name="close" size={20} color={colors.textSecondary} />
+                    <Ionicons name="close" size={20} color="#94A3B8" />
                   </TouchableOpacity>
                 </View>
 
                 <ScrollView style={styles.modalOptionsList} showsVerticalScrollIndicator={false}>
-                  {/* Opción 1: Todos los eventos */}
+                  {/* Opción: Todos los eventos */}
                   <TouchableOpacity
                     style={[
                       styles.modalOptionItem,
@@ -579,14 +898,14 @@ export const ActivityHistoryScreen: React.FC = () => {
       {/* Lista Principal de Incidencias */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primaryAmber} />
+          <ActivityIndicator size="large" color="#2563EB" />
           <Text style={styles.loadingText}>Cargando trazabilidad técnica...</Text>
         </View>
-      ) : (
+      ) : viewMode === 'grouped' ? (
         <FlatList
-          data={filteredIncidents}
-          keyExtractor={(item) => item.id}
-          renderItem={renderIncidentCard}
+          data={groupedPalmetas}
+          keyExtractor={(item) => `palmeta-${item.qr_uuid}`}
+          renderItem={renderGroupedPalmetaCard}
           contentContainerStyle={[
             styles.listContent,
             {
@@ -598,7 +917,33 @@ export const ActivityHistoryScreen: React.FC = () => {
           ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
-          refreshControl={Platform.OS !== 'web' ? (<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryAmber} colors={[colors.primaryAmber]} />) : undefined}
+          refreshControl={
+            Platform.OS !== 'web' ? (
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#60A5FA" colors={['#2563EB']} />
+            ) : undefined
+          }
+        />
+      ) : (
+        <FlatList
+          data={filteredIncidents}
+          keyExtractor={(item) => `timeline-${item.id}`}
+          renderItem={renderTimelineCard}
+          contentContainerStyle={[
+            styles.listContent,
+            {
+              paddingBottom:
+                Platform.OS === 'web'
+                  ? ('calc(env(safe-area-inset-bottom, 0px) + 30px)' as any)
+                  : insets.bottom + 30,
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            Platform.OS !== 'web' ? (
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#60A5FA" colors={['#2563EB']} />
+            ) : undefined
+          }
         />
       )}
     </View>
@@ -608,14 +953,23 @@ export const ActivityHistoryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#080C14',
+  },
+  topAmbientGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 280,
+    zIndex: 0,
   },
   headerContainer: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#080C14',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255, 255, 255, 0.07)',
     paddingHorizontal: 16,
     paddingBottom: 14,
+    zIndex: 1,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -627,9 +981,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -637,36 +991,38 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
   },
-  screenTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
   screenSubtitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+  },
+  screenTitle: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '800',
+    letterSpacing: 0.2,
     marginTop: 1,
   },
   countBadge: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 12,
   },
   countBadgeText: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 13,
     fontWeight: '800',
   },
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -674,64 +1030,66 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: colors.textPrimary,
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 14.5,
     padding: 0,
   },
-  dropdownSection: {
-    marginTop: 2,
-  },
-  dropdownLabel: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-    marginBottom: 6,
+  filterControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   dropdownButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
   },
   dropdownButtonActive: {
-    borderColor: 'rgba(229, 152, 25, 0.45)',
-    backgroundColor: 'rgba(229, 152, 25, 0.08)',
-  },
-  dropdownButtonLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 8,
+    borderColor: 'rgba(59, 130, 246, 0.4)',
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
   },
   dropdownButtonText: {
-    color: colors.textSecondary,
-    fontSize: 13,
+    color: '#94A3B8',
+    fontSize: 12,
     fontWeight: '600',
+    flex: 1,
   },
   dropdownButtonTextActive: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontWeight: '700',
   },
-  dropdownButtonRight: {
+  segmentedContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#121620',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 10,
+    padding: 3,
+  },
+  segmentTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 7,
   },
-  dropdownCountPill: {
-    backgroundColor: colors.border,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
+  segmentTabActive: {
+    backgroundColor: '#2563EB',
   },
-  dropdownCountText: {
-    color: colors.textSecondary,
+  segmentTabText: {
+    color: '#94A3B8',
     fontSize: 11,
+    fontWeight: '600',
+  },
+  segmentTabTextActive: {
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   listContent: {
@@ -744,140 +1102,259 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
     marginTop: 12,
   },
-  cardContainer: {
-    backgroundColor: colors.surface,
+  groupedCard: {
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
   },
-  cardHeaderRow: {
+  groupedHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 10,
   },
-  iconCircle: {
+  palmetaIconBox: {
     width: 38,
     height: 38,
-    borderRadius: 19,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
-  headerInfoCol: {
+  palmetaHeaderInfo: {
     flex: 1,
   },
-  titleTopRow: {
+  palmetaTopTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  palmetaTitle: {
-    color: colors.textPrimary,
+  palmetaMainCode: {
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
   },
   statusPill: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 5,
   },
   statusPillText: {
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
-  timeText: {
-    color: colors.textMuted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  fallaBox: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: 'rgba(38, 42, 52, 0.6)',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    marginBottom: 12,
-  },
-  fallaTitle: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  fallaDescription: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 3,
-    lineHeight: 16,
-  },
-  cardFooterRow: {
+  palmetaMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 2,
   },
-  eventPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 12,
-    maxWidth: 200,
-  },
-  eventPillText: {
-    color: colors.textSecondary,
+  palmetaLastSeenText: {
+    color: '#64748B',
     fontSize: 11,
-    fontWeight: '500',
   },
-  footerRightBadges: {
+  countBadgePill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  countBadgePillText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  latestIncidentBox: {
+    backgroundColor: '#141A28',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  latestTagRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  latestTagPill: {
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  latestTagPillText: {
+    color: '#60A5FA',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  syncMetaRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  photoIndicator: {
+  photoIndicatorPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(243, 179, 61, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(243, 179, 61, 0.3)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 8,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
   },
   photoIndicatorText: {
-    color: colors.primaryLight,
+    color: '#60A5FA',
     fontSize: 10,
     fontWeight: '700',
   },
   syncBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
   },
   syncBadgeCloud: {
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
   },
   syncBadgeLocal: {
     backgroundColor: 'rgba(245, 158, 11, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: 'rgba(245, 158, 11, 0.25)',
   },
   syncBadgeText: {
     fontSize: 10,
     fontWeight: '700',
+  },
+  fallaMainTitle: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '700',
+  },
+  fallaDescriptionText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginTop: 3,
+    lineHeight: 16,
+  },
+  eventFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  eventNameFooterText: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  accordionSection: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    paddingTop: 8,
+    marginTop: 4,
+  },
+  accordionToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+  },
+  accordionToggleText: {
+    color: '#60A5FA',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  subTimelineContainer: {
+    paddingLeft: 8,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
+  timelineItemRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  timelineTrackerCol: {
+    alignItems: 'center',
+    width: 14,
+    marginRight: 10,
+    paddingTop: 4,
+  },
+  timelineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  timelineVerticalLine: {
+    width: 1,
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 2,
+  },
+  timelineContentBox: {
+    flex: 1,
+  },
+  timelineTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timelineFallaText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  timelineDateText: {
+    color: '#64748B',
+    fontSize: 10,
+  },
+  timelineDescText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    marginTop: 1,
+  },
+  timelineEventText: {
+    color: '#64748B',
+    fontSize: 10.5,
+    marginTop: 1,
+  },
+  cardFooterAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    paddingTop: 8,
+    marginTop: 4,
+    gap: 4,
+  },
+  cardFooterActionText: {
+    color: '#60A5FA',
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  timelineFooterBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+    marginTop: 2,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -886,25 +1363,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(229, 152, 25, 0.12)',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(229, 152, 25, 0.25)',
+    borderColor: 'rgba(59, 130, 246, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
   emptyTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '700',
     marginBottom: 6,
     textAlign: 'center',
   },
   emptySubtitle: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
@@ -913,27 +1390,27 @@ const styles = StyleSheet.create({
   resetFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
   },
   resetFilterButtonText: {
-    color: colors.textInverse,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.78)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingHorizontal: 20,
     paddingTop: 12,
     maxHeight: '75%',
@@ -942,7 +1419,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.borderLight,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignSelf: 'center',
     marginBottom: 14,
   },
@@ -953,12 +1430,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '700',
   },
   modalSubtitle: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
     marginTop: 2,
   },
@@ -966,7 +1443,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -977,17 +1454,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#141A28',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     paddingHorizontal: 14,
     paddingVertical: 13,
     borderRadius: 12,
     marginBottom: 8,
   },
   modalOptionItemActive: {
-    borderColor: colors.primaryAmber,
-    backgroundColor: 'rgba(229, 152, 25, 0.12)',
+    borderColor: '#2563EB',
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
   },
   modalOptionLeft: {
     flexDirection: 'row',
@@ -1000,38 +1477,38 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: colors.textSecondary,
+    borderColor: '#64748B',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   modalRadioCircleActive: {
-    borderColor: colors.primaryAmber,
+    borderColor: '#2563EB',
   },
   modalRadioInnerDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#2563EB',
   },
   modalOptionText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 14,
     fontWeight: '600',
     flex: 1,
   },
   modalOptionTextActive: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   modalOptionBadge: {
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
   modalOptionBadgeText: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '700',
   },

@@ -116,6 +116,25 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-11-05 (Sesión 74 — Rediseño de Historial con Agrupación Inteligente por Palmeta, Prevención de Scroll Infinito y Rol Terreno Activo):**
+  - **Rediseño Completo de Pantalla de Historial (`ActivityHistoryScreen.tsx`):**
+    - **Alineación Visual Dark Navy Glassmorphism:** Fondo OLED profundo `#080C14`, halo ambiental superior con `<LinearGradient>` en azul cobalto (`rgba(29, 78, 216, 0.35)`), botón de retorno glassmorphic (`rgba(255, 255, 255, 0.05)` con borde `0.08`), tipografía jerárquica con subtítulo institucional `ALEPROD TERRENO` y título `Historial de Incidencias` con badge numérico en pill azul `#60A5FA`.
+    - **Buscador y Filtro de Eventos Renovados:** Input de búsqueda con superficies `#121620`, borde fino translúcido, borrado rápido con hápticos. Selector de eventos en modal sheet oscuro con radio buttons interactivos y dot azul cobalto `#2563EB`.
+    - **Solución al Scroll Excesivo (Agrupación por Palmeta con Acordeón):**
+      - Se implementó agrupación reactiva por `qr_uuid` (`groupedPalmetas`), eliminando la repetición interminable de tarjetas verticales cuando una misma palmeta tiene múltiples averías registradas.
+      - Cada palmeta muestra su código (`Palmeta #XXXX`), semáforo de severidad consolidado (`Baja`, `Mantención`, `Operativa`), conteo de incidencias y la **última falla técnica** reportada.
+      - **Acordeón Desplegable Inline:** Si una palmeta tiene más de 1 reporte, un botón interactivo compacto (`Ver X incidencias anteriores`) permite expandir/contraer una mini línea de tiempo interna sin alargar la pantalla.
+      - **Conmutador de Vista (Segmented Switch):** Pestañas en cabecera para alternar instantáneamente entre `Por Palmeta` (Agrupado, por defecto) y `Cronológico` (Línea de tiempo plana).
+  - **Optimización de Historial Rápido en Detalle de Activo (`AssetDetailScreen.tsx`):**
+    - Se agregó paginación/colapso con `showAllIncidents`: si la palmeta tiene más de 2 incidencias, muestra solo las 2 más recientes con un botón toggle (`Ver X incidencias anteriores ▼` / `Mostrar menos ▲`), blindando la pantalla para que las especificaciones y acciones permanezcan al alcance sin scroll infinito.
+  - **Activación de Cuenta Terreno en Supabase Cloud:**
+    - Se actualizó el rol de `tecnico@aleprod.cl` en `public.perfiles` de `coordinador` a **`tecnico`** (`rol = 'tecnico'`), validando su inicio de sesión con clave `Aleprod2026!`.
+    - Esta cuenta es el objetivo directo del emisor push (`notify-event-start`), permitiendo probar de inmediato en terreno o PWA la recepción de notificaciones cuando el Coordinador (`gerencia@aleprod.cl`) inicie un montaje.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx expo export --platform web`: **Bundle de producción exportado exitosamente con 0 errores**.
+
 - **2026-11-05 (Sesión 73 — Backend & Cloud Architecture: Edge Function notify-event-start y Database Webhook Trigger):**
   - **Edge Function en Deno (`supabase/functions/notify-event-start/index.ts`):**
     - Creada función serverless en Deno con `@supabase/supabase-js` v2.

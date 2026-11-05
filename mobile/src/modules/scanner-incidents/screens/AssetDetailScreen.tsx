@@ -40,6 +40,7 @@ export const AssetDetailScreen: React.FC = () => {
   const [helpModalVisible, setHelpModalVisible] = useState<boolean>(false);
   const [isDecommissionModalVisible, setDecommissionModalVisible] = useState<boolean>(false);
   const [incidents, setIncidents] = useState<UnifiedIncident[]>([]);
+  const [showAllIncidents, setShowAllIncidents] = useState<boolean>(false);
   const [assetMeta, setAssetMeta] = useState<{
     codigo_visible?: string;
     lote_ingreso?: string;
@@ -304,35 +305,60 @@ export const AssetDetailScreen: React.FC = () => {
           </View>
 
           {incidents.length > 0 ? (
-            incidents.map((h) => {
-              const isItemBaja = h.tipo_falla.toLowerCase().includes('baja') || h.tipo_falla.toLowerCase().includes('crítica');
-              const isItemMant = h.tipo_falla.toLowerCase().includes('manten') || h.tipo_falla.toLowerCase().includes('apagado') || h.tipo_falla.toLowerCase().includes('falla');
-              const iconColor = isItemBaja ? colors.danger : isItemMant ? colors.warning : colors.success;
-              const iconName: keyof typeof Ionicons.glyphMap = isItemBaja
-                ? 'close-circle-outline'
-                : isItemMant
-                ? 'warning-outline'
-                : 'checkmark-circle-outline';
+            <>
+              {(showAllIncidents ? incidents : incidents.slice(0, 2)).map((h) => {
+                const isItemBaja = h.tipo_falla.toLowerCase().includes('baja') || h.tipo_falla.toLowerCase().includes('crítica');
+                const isItemMant = h.tipo_falla.toLowerCase().includes('manten') || h.tipo_falla.toLowerCase().includes('apagado') || h.tipo_falla.toLowerCase().includes('falla');
+                const iconColor = isItemBaja ? colors.danger : isItemMant ? colors.warning : colors.success;
+                const iconName: keyof typeof Ionicons.glyphMap = isItemBaja
+                  ? 'close-circle-outline'
+                  : isItemMant
+                  ? 'warning-outline'
+                  : 'checkmark-circle-outline';
 
-              return (
-                <View key={`hist-${h.id}`} style={styles.historySubCard}>
-                  <View style={[styles.historyIconBox, { backgroundColor: isItemBaja ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)' }]}>
-                    <Ionicons name={iconName} size={18} color={iconColor} />
-                  </View>
-                  <View style={styles.historyContent}>
-                    <View style={styles.historyTitleRow}>
-                      <Text style={styles.historyTitle}>{h.tipo_falla}</Text>
-                      <View style={styles.sourceTag}>
-                        <Text style={styles.sourceTagText}>{h.is_local ? 'Local' : 'Cloud'}</Text>
-                      </View>
+                return (
+                  <View key={`hist-${h.id}`} style={styles.historySubCard}>
+                    <View style={[styles.historyIconBox, { backgroundColor: isItemBaja ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)' }]}>
+                      <Ionicons name={iconName} size={18} color={iconColor} />
                     </View>
-                    <Text style={styles.historySubtitle} numberOfLines={1}>
-                      {h.descripcion || 'Incidencia en terreno'} · {h.evento_nombre || 'Evento en curso'}
-                    </Text>
+                    <View style={styles.historyContent}>
+                      <View style={styles.historyTitleRow}>
+                        <Text style={styles.historyTitle}>{h.tipo_falla}</Text>
+                        <View style={styles.sourceTag}>
+                          <Text style={styles.sourceTagText}>{h.is_local ? 'Local' : 'Cloud'}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.historySubtitle} numberOfLines={1}>
+                        {h.descripcion || 'Incidencia en terreno'} · {h.evento_nombre || 'Evento en curso'}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              );
-            })
+                );
+              })}
+
+              {incidents.length > 2 && (
+                <TouchableOpacity
+                  style={styles.toggleMoreButton}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    setShowAllIncidents((prev) => !prev);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={showAllIncidents ? 'chevron-up' : 'chevron-down'}
+                    size={14}
+                    color="#60A5FA"
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.toggleMoreText}>
+                    {showAllIncidents
+                      ? 'Mostrar menos incidencias'
+                      : `Ver ${incidents.length - 2} incidencias anteriores`}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
           ) : (
             <View style={styles.emptyHistoryBox}>
               <View style={styles.emptyHistoryIconCircle}>
@@ -757,6 +783,23 @@ const styles = StyleSheet.create({
   fullHistoryLink: {
     alignSelf: 'flex-end',
     marginTop: 6,
+  },
+  toggleMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: 4,
+    marginBottom: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.20)',
+  },
+  toggleMoreText: {
+    color: '#60A5FA',
+    fontSize: 12,
+    fontWeight: '600',
   },
   fullHistoryLinkText: {
     color: '#60A5FA',
