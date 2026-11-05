@@ -909,7 +909,12 @@
   - Documentación técnica actualizada en `.ai/02-arquitectura-stack.md`.
   - Tipado verificado con `npx tsc --noEmit` en `/mobile` (0 errores).
 
-- **2026-11-04 (Sesión 69 — Fusión Visual Orgánica Opción 1 en PWA iOS y Estabilidad de TabBar):**
+- **2026-11-04 (Sesión 69 — Fusión Visual Orgánica en PWA iOS, Login Redesign y Distribución Maestra de Marca):**
+  - **Distribución de Identidad de Marca y Recursos Oficiales (`assets/brand/`):**
+    - Se organizó el kit oficial entregado en `assets/brand/alejandra_producciones_assets/`.
+    - **Móvil PWA (`mobile/public/`):** `apple-touch-icon.png` (180x180), `favicon.ico`, `favicon-16.png`, `favicon-32.png`, `favicon.png`, `logo-completo.png`, `logo-horizontal.png`, `logo.svg`, `logo-horizontal.svg`. Creación de carpeta `icons/` con `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`. `manifest.json` y `index.html` sincronizados con todas las variantes.
+    - **Móvil Nativo (`mobile/assets/`):** `icon.png` (512x512), `android-icon-foreground.png` (512x512 maskable), `splash-icon.png`, `favicon.png`, `logo-horizontal.png`, `logo-completo.png`.
+    - **Web Next.js (`web/public/`):** Íconos PWA y favicons (`favicon.ico`, `favicon-16.png`, `favicon-32.png`, `apple-touch-icon.png`), subdirectorio `icons/` y logos vectoriales. Conectado en `web/app/layout.tsx` a través de `metadata.icons`.
   - **Preservación total de la barra inferior:** `LiquidGlassTabBar` se mantiene intacta en `position: fixed` flotando con elegancia y precisión milimétrica sobre la Home Bar del iPhone (`max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`), con la cápsula activa `slidingIndicator` en `position: 'absolute'`.
   - **Rediseño Completo de Pantalla de Login (`LoginScreen.tsx`):** Implementación fiel al 100% de la maqueta `mobile/public/Login Aleprod.html`. Incluye:
     - Cabecera con badge circular "AP" de 76px con degradado azul (`#4A74FF` a `#2446C8`), subtítulo `ALEJANDRA PRODUCCIONES` en tracking ancho y título principal "Hola, qué bueno verte de nuevo".

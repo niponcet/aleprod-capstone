@@ -17,6 +17,16 @@ export const metadata: Metadata = {
   title: "Alejandra Producciones — Panel Administrativo",
   description:
     "Sistema de gestión operativa e inventario de palmetas LED para eventos de alto estándar.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
