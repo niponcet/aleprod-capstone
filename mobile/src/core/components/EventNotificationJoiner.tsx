@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Platform, DeviceEventEmitter } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { supabase } from '../api/supabase';
 import { useToast } from '../context/ToastContext';
@@ -133,9 +134,55 @@ export const EventNotificationJoiner: React.FC = () => {
       }
     });
 
+    // 4. Suscripción en Tiempo Real (Supabase Realtime WebSocket) para Primer Plano (PWA / Nativo)
+    // Permite que la app abierta reaccione instantáneamente (<100ms) cuando el Coordinador pasa un evento a 'en_curso',
+    // sin depender exclusivamente de que el sistema operativo entregue un banner de push.
+    const realtimeChannel = supabase
+      .channel('realtime_eventos_joiner')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'eventos',
+        },
+        (payload) => {
+          console.log('[EventJoiner] Cambio en eventos detectado vía Realtime WebSocket:', payload);
+          const newRecord = payload.new as any;
+          const oldRecord = payload.old as any;
+          if (newRecord?.estado === 'en_curso' && oldRecord?.estado !== 'en_curso') {
+            processEventPayload(
+              {
+                evento_id: newRecord.id,
+                nombre_evento: newRecord.nombre,
+              },
+              false
+            );
+
+            // Si está en navegador web y los permisos están otorgados, mostrar notificación nativa
+            if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
+              if (Notification.permission === 'granted') {
+                try {
+                  new Notification('¡Montaje Iniciado!', {
+                    body: `El Coordinador ha iniciado: ${newRecord.nombre}`,
+                    icon: '/icons/icon-192.png',
+                  });
+                } catch {
+                  // Fallback silencioso
+                }
+              }
+            }
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[EventJoiner] Canal Realtime eventos status:', status);
+      });
+
     return () => {
       receivedSubscription.remove();
       responseSubscription.remove();
+      supabase.removeChannel(realtimeChannel);
     };
   }, [processEventPayload]);
 
@@ -185,6 +232,7 @@ export const EventNotificationJoiner: React.FC = () => {
       };
 
       setActiveLocalEvento(localToSave);
+      DeviceEventEmitter.emit('aleprod_event_changed', localToSave);
 
       setConfirmLoading(false);
       setModalVisible(false);

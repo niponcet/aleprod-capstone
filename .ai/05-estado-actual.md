@@ -29,7 +29,7 @@
 - ✅ **HU-05: Login y Sesión (Web/App)** `[Completada en Web y Móvil]`
   - Móvil: `LoginScreen.tsx` y `AuthContext.tsx` 100% conectados a `supabase.auth.signInWithPassword`, `getSession` y `onAuthStateChange`. Manejo de errores nativo y sesión probada con usuario semilla (`tecnico@aleprod.cl`).
   - Web: `web/app/login/page.tsx` conectada a Supabase Auth y validada con usuario de Gerencia (`gerencia@aleprod.cl`).
-  - Usuarios Auth activos: `gerencia@aleprod.cl` (Admin) y `tecnico@aleprod.cl` (Técnico).
+  - Usuarios Auth activos: `gerencia@aleprod.cl` (Admin), `tecnico@aleprod.cl` (Coordinador / Nicolas Ponce) y `terreno@aleprod.cl` (Técnico Terreno).
 
 #### Épica 2: Plataforma Web
 - ✅ **HU-06: Control de Acceso (RBAC)** `[Completada en Base de Datos y Web]`
@@ -115,6 +115,26 @@
 ---
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
+
+- **2026-11-05 (Sesión 75 — Arquitectura Híbrida Realtime + Web Push Service Worker para Detección Inmediata de Montajes en PWA):**
+  - **Diagnóstico Causa Raíz de Falta de Alerta en PWA:**
+    1. En PWA Web, el hook `usePushNotifications` omitía la generación del token al no contar con VAPID key ni Service Worker registrado en `index.html`, dejando `push_token = null` en `perfiles`.
+    2. La Edge Function `notify-event-start` busca exclusivamente técnicos con `push_token IS NOT NULL`, resultando en 0 destinatarios despachados por Expo Push.
+    3. Cuando la PWA estaba abierta en primer plano (foreground), `EventNotificationJoiner` dependía únicamente de listeners de SO (`expo-notifications`), y `HomeScreen` no contaba con canal Realtime sobre la tabla `eventos`, obligando a reiniciar la app para ver el montaje activo.
+  - **Canal Dual Realtime WebSocket (<100ms) en `EventNotificationJoiner.tsx`:**
+    - Se integró un canal persistente a Supabase Realtime (`postgres_changes` en tabla `eventos` con filtro `estado = 'en_curso'`).
+    - Al iniciar un montaje en el panel web, la app abierta en PWA/móvil detecta el evento en menos de 100ms y despliega inmediatamente el `<ConfirmModal>` de unión, emite vibración háptica y lanza una notificación nativa del navegador (`new Notification(...)`) si cuenta con permisos.
+    - Se conectó `DeviceEventEmitter.emit('aleprod_event_changed')` tras confirmar la unión en SQLite local.
+  - **Reactividad en Vivo en `HomeScreen.tsx`:**
+    - Se incorporó escucha dual vía `DeviceEventEmitter` y canal Supabase Realtime en `eventos`.
+    - La tarjeta superior pasa de "Sin Montaje Activo" a "Montaje Activo" en tiempo real sin requerir recargar ni reiniciar la PWA.
+  - **Infraestructura Web Push y Service Worker (`mobile/public/sw.js`):**
+    - Se implementó `sw.js` con handlers de `push` y `notificationclick`.
+    - Se registró el Service Worker en `index.html`.
+    - Se generó y configuró la clave VAPID pública (`EXPO_PUBLIC_VAPID_KEY`) en `mobile/.env`.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación exitosa con Service Worker y bundle actualizado**.
 
 - **2026-11-05 (Sesión 74 — Rediseño de Historial con Agrupación Inteligente por Palmeta, Prevención de Scroll Infinito y Rol Terreno Activo):**
   - **Rediseño Completo de Pantalla de Historial (`ActivityHistoryScreen.tsx`):**

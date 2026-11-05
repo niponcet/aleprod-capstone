@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   Platform,
   Image,
+  DeviceEventEmitter,
 } from 'react-native';
 import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -122,6 +123,35 @@ export const HomeScreen: React.FC = () => {
       }
     }, [fetchActiveEvent, loadDynamicData])
   );
+
+  // Sincronización Realtime instantánea de eventos (<100ms) sin recargar la pantalla
+  useEffect(() => {
+    // 1. Escuchar cuando el usuario se une desde el modal global EventNotificationJoiner
+    const localSub = DeviceEventEmitter.addListener('aleprod_event_changed', () => {
+      fetchActiveEvent();
+    });
+
+    // 2. Escuchar cambios de estado en la tabla eventos desde Supabase Cloud
+    const realtimeChannel = supabase
+      .channel('home_realtime_eventos')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'eventos',
+        },
+        () => {
+          fetchActiveEvent();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      localSub.remove();
+      supabase.removeChannel(realtimeChannel);
+    };
+  }, [fetchActiveEvent]);
 
   const onRefresh = useCallback(() => {
     triggerHaptic('medium');

@@ -25,6 +25,16 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
   try {
     // 1. Manejo seguro para Web (PWA)
     if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'default') {
+          try {
+            await Notification.requestPermission();
+          } catch (e) {
+            console.warn('[PushNotifications] Error al solicitar permisos de notificación en navegador:', e);
+          }
+        }
+      }
+
       const vapidKey = process.env.EXPO_PUBLIC_VAPID_KEY;
       if (
         !vapidKey ||
