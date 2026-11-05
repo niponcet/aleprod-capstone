@@ -12,13 +12,13 @@ import { setupAlertPolyfill } from '../src/core/utils/alertPolyfill';
 // Habilitar soporte universal de Alert.alert en PWA / WebKit
 setupAlertPolyfill();
 
-// Tema oscuro corporativo con fondo #070B14 estricto para evitar letterboxing
+// Tema oscuro corporativo con fondo #000000 estricto para evitar letterboxing
 const customDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    background: '#070B14',
-    card: '#070B14',
+    background: '#000000',
+    card: '#000000',
     border: 'rgba(255, 255, 255, 0.08)',
   },
 };
@@ -52,7 +52,7 @@ function RootNavigationLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#070B14' },
+        contentStyle: { backgroundColor: '#000000' },
       }}
     >
       <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -99,15 +99,15 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   safeAreaProvider: {
     flex: 1,
-    backgroundColor: '#070B14',
+    backgroundColor: '#000000',
   },
   rootContainer: {
     flex: 1,
-    backgroundColor: '#070B14',
+    backgroundColor: '#000000',
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#070B14',
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
   },

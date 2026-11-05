@@ -20,7 +20,7 @@ export default function TabLayout() {
           elevation: 0,
         },
         sceneStyle: {
-          backgroundColor: '#070B14',
+          backgroundColor: '#000000',
         },
       }}
     >
