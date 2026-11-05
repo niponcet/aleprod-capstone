@@ -215,8 +215,8 @@ export const EventsScreen: React.FC = () => {
 
       {/* Glow ambiental superior suave y continuo */}
       <LinearGradient
-        colors={['#000000', '#070B14', 'rgba(14, 34, 72, 0.65)', 'rgba(29, 78, 216, 0.32)', 'rgba(15, 23, 42, 0.12)', 'transparent']}
-        locations={[0, 0.12, 0.32, 0.58, 0.82, 1]}
+        colors={['#000000', 'rgba(29, 78, 216, 0.32)', 'rgba(37, 99, 235, 0.20)', 'rgba(7, 11, 20, 0.05)', 'transparent']}
+        locations={[0, 0.28, 0.55, 0.82, 1]}
         style={styles.topAmbientGlow}
         pointerEvents="none"
       />
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 320,
+    height: 220,
     zIndex: -1,
     ...Platform.select({
       web: {
