@@ -130,8 +130,8 @@ export const LoginScreen: React.FC = () => {
       <StatusBar style="light" />
       {/* Glow ambiental superior dorado corporativo */}
       <LinearGradient
-        colors={['rgba(212, 175, 55, 0.14)', 'rgba(7, 11, 20, 0.4)', 'transparent']}
-        locations={[0, 0.45, 1]}
+        colors={['#000000', '#000000', 'rgba(212, 175, 55, 0.18)', 'rgba(212, 175, 55, 0.08)', 'transparent']}
+        locations={[0, 0.20, 0.45, 0.75, 1]}
         style={styles.topAmbientGlow}
         pointerEvents="none"
       />
@@ -307,11 +307,11 @@ export const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#070B14',
+    backgroundColor: '#000000',
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#070B14',
+    backgroundColor: '#000000',
   },
   topAmbientGlow: {
     position: 'absolute',
