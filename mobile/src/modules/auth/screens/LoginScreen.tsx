@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ScreenSafeContainer } from '../../../core/components/ScreenSafeContainer';
@@ -126,16 +127,16 @@ export const LoginScreen: React.FC = () => {
     <View style={styles.rootContainer}>
       <StatusBar style="light" />
 
-      {/* Glow ambiental superior con fusión pura a la status bar negra */}
+      {/* Glow ambiental superior con fusión pura a la status bar negra (sin halos azules invasivos) */}
       <LinearGradient
         colors={[
           '#000000',
           '#000000',
-          'rgba(47, 85, 224, 0.42)',
-          'rgba(47, 85, 224, 0.16)',
+          'rgba(25, 40, 80, 0.16)',
+          'rgba(15, 25, 50, 0.06)',
           'transparent',
         ]}
-        locations={[0, 0.18, 0.44, 0.72, 1]}
+        locations={[0, 0.25, 0.55, 0.8, 1]}
         style={styles.topAmbientGlow}
         pointerEvents="none"
       />
@@ -150,16 +151,15 @@ export const LoginScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Header Superior Corporativo */}
+            {/* Header Superior Corporativo con Logo Oficial de Marca */}
             <View style={styles.headerRow}>
-              <LinearGradient
-                colors={['#4A74FF', '#2446C8']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.apBadge}
-              >
-                <Text style={styles.apBadgeText}>AP</Text>
-              </LinearGradient>
+              <View style={styles.logoBadgeContainer}>
+                <Image
+                  source={require('../../../../assets/icon.png')}
+                  style={styles.logoBadge}
+                  resizeMode="contain"
+                />
+              </View>
 
               <View style={styles.headerTexts}>
                 <Text style={styles.brandSubtitle}>ALEJANDRA PRODUCCIONES</Text>
@@ -344,25 +344,27 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'web' ? 20 : 12,
     marginBottom: 26,
   },
-  apBadge: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+  logoBadgeContainer: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#0A0D14',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    shadowColor: '#2F55E0',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.55,
-    shadowRadius: 24,
-    elevation: 8,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    overflow: 'hidden',
+    // Cero glow azul: sombra oscura sobria
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  apBadgeText: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: 1,
-    color: '#FFFFFF',
+  logoBadge: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
   },
   headerTexts: {
     flex: 1,
@@ -501,16 +503,16 @@ const styles = StyleSheet.create({
     color: '#8FA8FF',
   },
 
-  /* Botón Principal */
+  /* Botón Principal (sin glow azul) */
   submitButtonTouchable: {
     width: '100%',
     borderRadius: 18,
     overflow: 'hidden',
-    shadowColor: '#2F55E0',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-    elevation: 7,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitButtonGradient: {
     height: 54,

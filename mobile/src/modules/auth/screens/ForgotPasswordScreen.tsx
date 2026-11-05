@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { ScreenSafeContainer } from '../../../core/components/ScreenSafeContainer';
 import { useRouter } from 'expo-router';
@@ -102,7 +103,11 @@ export const ForgotPasswordScreen: React.FC = () => {
           {/* Logo Superior Corporativo */}
           <View style={styles.logoSection}>
             <View style={styles.logoCircle}>
-              <Text style={styles.logoInitials}>AP</Text>
+              <Image
+                source={require('../../../../assets/icon.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
             </View>
             <Text style={styles.logoBrandName}>ALEJANDRA PRODUCCIONES</Text>
           </View>
@@ -266,6 +271,11 @@ const styles = StyleSheet.create({
   logoSection: {
     alignItems: 'center',
     marginBottom: 28,
+  },
+  logoImage: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
   },
   logoCircle: {
     width: 68,

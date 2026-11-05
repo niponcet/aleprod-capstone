@@ -81,7 +81,7 @@ export default function RecuperarPasswordPage() {
                   <img
                     alt="Alejandra Producciones Logo"
                     className="h-9 w-auto object-contain brightness-110"
-                    src="/logo.webp"
+                    src="/icons/icon-192.png"
                   />
                 </div>
                 <div className="flex flex-col">

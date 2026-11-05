@@ -55,7 +55,7 @@ export default function DashboardLayout({
             </span>
           </div>
           <Image
-            src="/logo.webp"
+            src="/icons/icon-192.png"
             alt="Aleprod"
             width={36}
             height={36}

@@ -320,7 +320,7 @@ export default function LoginPage() {
         <div className="login-rise flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Image
-              src="/logo.webp"
+              src="/icons/icon-192.png"
               alt="Aleprod"
               width={40}
               height={40}

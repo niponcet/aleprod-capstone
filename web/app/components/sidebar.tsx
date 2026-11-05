@@ -291,7 +291,7 @@ export function Sidebar({
             }}
           >
             <Image
-              src="/logo.webp"
+              src="/icons/icon-192.png"
               alt="Aleprod"
               width={40}
               height={40}
