@@ -116,6 +116,24 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-11-05 (Sesión 70 — Erradicación de Fondo Blanco en Iconos PWA, Unificación a Negro Profundo #000000 y Calibración Safe-Zone en Móvil/Web):**
+  - **Diagnóstico Causa Raíz de Fondo Blanco en PWA:**
+    - Al añadir la aplicación a la pantalla de inicio en iOS (Safari `apple-touch-icon`) y Android (Chrome Adaptive Icons), cualquier archivo PNG con canal alfa transparente (`Alpha = 0`) es rellenado forzosamente por el sistema operativo con un lienzo/platillo **blanco sólido (`#FFFFFF`)**, dado que ni iOS ni Android permiten transparencias en los accesos directos de pantalla de inicio.
+    - Se constató que `apple-touch-icon.png`, `icons/icon-192.png`, `icons/icon-512.png` y `android-icon-background.png` poseían transparencia o fondo claro residual (`#E6F4FE`).
+  - **Regeneración de Activos con Fondo Negro Puro (`#000000`):**
+    - Se compusieron y generaron todos los iconos del ecosistema con fondo sólido negro `#000000` (`Alpha = 255`) y renderizado de alta fidelidad bicúbica del isotipo dorado centralizado con margen seguro (~15% safe area) para evitar que los squircles/recortes redondeados de iOS y Android corten el emblema:
+      - `mobile/public/apple-touch-icon.png` (180×180 px con 15px de padding).
+      - `mobile/public/icons/icon-192.png` y `icon-512.png`.
+      - `mobile/public/icon.png` y `mobile/assets/icon.png`.
+      - `mobile/assets/android-icon-background.png` (512×512 negro puro).
+      - Replicado en `web/public/` y `assets/brand/alejandra_producciones_assets/`.
+  - **Busting de Caché y Exportación:**
+    - Se actualizó el parámetro de versión de caché a `?v=aleprod4` en `mobile/public/index.html` y `web/app/layout.tsx`.
+    - Se regeneró el build de exportación estática de la PWA móvil con `npx expo export --platform web`, actualizando `mobile/dist/`.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
+    - `npx tsc --noEmit` en `/web`: **0 errores de compilación**.
+
 - **2026-11-04 (Sesión 65 — Erradicación Definitiva de Franja Inferior PWA WebKit, Anclaje Inset 0 Absoluto y Calibración de Clearance Inferior en Pestañas):**
   - **Diagnóstico y Resolución Causa Raíz de la Franja Inferior PWA:**
     - Se identificó que las reglas `height: 100dvh; min-height: 100dvh;` en `html, body` y `#root` provocaban que WebKit en iOS PWA Standalone dimensionara el contenedor según el layout viewport interno (excluyendo los 34px del Home Indicator), dejando una franja negra inerte bajo la barra y empujando las tarjetas hacia arriba.
