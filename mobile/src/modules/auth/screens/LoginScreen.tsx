@@ -163,7 +163,7 @@ export const LoginScreen: React.FC = () => {
 
               <View style={styles.headerTexts}>
                 <Text style={styles.brandSubtitle}>ALEJANDRA PRODUCCIONES</Text>
-                <Text style={styles.greetingTitle}>Hola, qué bueno verte de nuevo</Text>
+                <Text style={styles.greetingTitle}>Hola, qué bueno verte{"\n"}de nuevo</Text>
               </View>
             </View>
 

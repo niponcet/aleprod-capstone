@@ -116,7 +116,7 @@ export const ForgotPasswordScreen: React.FC = () => {
             /* Vista de Éxito */
             <View style={styles.successCard}>
               <View style={styles.successIconCircle}>
-                <Ionicons name="mail-open-outline" size={32} color="#D4AF37" />
+                <Ionicons name="mail-open-outline" size={32} color="#8FA8FF" />
               </View>
               <Text style={styles.successTitle}>Correo Enviado</Text>
               <Text style={styles.successMessage}>
@@ -133,7 +133,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                 style={styles.buttonWrapper}
               >
                 <LinearGradient
-                  colors={['#C87A08', '#F5C242']}
+                  colors={['#4A74FF', '#2F55E0']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.primaryButton}
@@ -160,7 +160,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   <Ionicons
                     name="mail-outline"
                     size={20}
-                    color={isEmailFocused ? colors.primaryAmber : '#64748B'}
+                    color={isEmailFocused ? '#8FA8FF' : '#8A93A8'}
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -169,7 +169,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                       Platform.OS === 'web' && ({ outlineStyle: 'none' } as any),
                     ]}
                     placeholder="tecnico@aleprod.cl"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#8A93A8"
                     value={email}
                     onChangeText={setEmail}
                     onFocus={() => setIsEmailFocused(true)}
@@ -180,7 +180,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                     autoComplete="email"
                     textContentType="emailAddress"
                     editable={!loading}
-                    selectionColor={colors.primaryAmber}
+                    selectionColor="#4C6FFF"
                   />
                 </View>
               </View>
@@ -193,14 +193,14 @@ export const ForgotPasswordScreen: React.FC = () => {
                 style={[styles.buttonWrapper, loading && styles.buttonDisabled]}
               >
                 <LinearGradient
-                  colors={loading ? ['#6E4506', '#9B7B2B'] : ['#C87A08', '#F5C242']}
+                  colors={loading ? ['#243B8A', '#1F2F6B'] : ['#4A74FF', '#2F55E0']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.primaryButton}
                 >
                   {loading ? (
                     <View style={styles.loadingRow}>
-                      <ActivityIndicator size="small" color="#0B0D10" />
+                      <ActivityIndicator size="small" color="#FFFFFF" />
                       <Text style={[styles.primaryButtonText, styles.loadingText]}>
                         Enviando enlace...
                       </Text>
@@ -210,7 +210,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                       <Ionicons
                         name="paper-plane-outline"
                         size={18}
-                        color="#0B0D10"
+                        color="#FFFFFF"
                         style={{ marginRight: 8 }}
                       />
                       <Text style={styles.primaryButtonText}>Enviar Instrucciones</Text>
@@ -281,9 +281,9 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#1E1B10',
-    borderWidth: 2,
-    borderColor: colors.primaryAmber,
+    backgroundColor: '#0A0D14',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -301,11 +301,11 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   formContainer: {
-    backgroundColor: '#121620',
-    borderRadius: 20,
+    backgroundColor: 'rgba(17, 22, 34, 0.94)',
+    borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.22)',
+    borderColor: '#1F2638',
   },
   headerSection: {
     marginBottom: 20,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   titleAccentBar: {
     width: 36,
     height: 3,
-    backgroundColor: colors.primaryAmber,
+    backgroundColor: '#4A74FF',
     borderRadius: 2,
     marginTop: 6,
     marginBottom: 8,
@@ -342,17 +342,17 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#14171C',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 12,
+    backgroundColor: '#0C101A',
+    borderWidth: 1,
+    borderColor: '#232B3F',
+    borderRadius: 16,
     paddingHorizontal: 14,
-    height: 52,
+    height: 54,
   },
   inputWrapperFocused: {
-    borderColor: colors.primaryAmber,
-    backgroundColor: '#181C26',
-    shadowColor: colors.primaryAmber,
+    borderColor: '#4C6FFF',
+    backgroundColor: '#0E1322',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -367,9 +367,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonWrapper: {
-    borderRadius: 12,
+    borderRadius: 18,
     overflow: 'hidden',
     marginTop: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
     opacity: 0.65,
@@ -385,8 +390,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#0B0D10',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
@@ -401,12 +406,13 @@ const styles = StyleSheet.create({
   helpBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: '#0E1320',
     borderRadius: 10,
     padding: 12,
     marginTop: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: '#1A2132',
+    
   },
   helpText: {
     flex: 1,
@@ -416,25 +422,25 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   helpLink: {
-    color: colors.primaryAmber,
+    color: '#8FA8FF',
     fontWeight: '600',
   },
   // Tarjeta de Éxito
   successCard: {
-    backgroundColor: '#121620',
-    borderRadius: 20,
+    backgroundColor: 'rgba(17, 22, 34, 0.94)',
+    borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.35)',
+    borderColor: '#1F2638',
     alignItems: 'center',
   },
   successIconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(212, 175, 55, 0.12)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
+    backgroundColor: 'rgba(74, 116, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(74, 116, 255, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -454,7 +460,7 @@ const styles = StyleSheet.create({
   successEmailHighlight: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primaryAmber,
+    color: '#8FA8FF',
     marginBottom: 12,
   },
   successInstructions: {
