@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import type { Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../api/supabase';
+import { registerAndSyncPushToken } from '../hooks/usePushNotifications';
 
 export type UserRole = 'admin' | 'coordinador' | 'tecnico';
 
@@ -140,6 +141,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(remote);
       setRole(remote.rol);
     }
+
+    // 3. Registrar y sincronizar token de notificaciones push para el técnico
+    registerAndSyncPushToken(currentSession.user.id).catch((pushErr) => {
+      console.warn('[AuthContext] Advertencia al registrar push token:', pushErr?.message);
+    });
   }, [fetchProfile]);
 
   useEffect(() => {

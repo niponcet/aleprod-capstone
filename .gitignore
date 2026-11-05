@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js & Expo Builds
+.next/
+out/
+build/
+dist/
+.expo/
+web-build/
+
+# Supabase CLI Local State
+supabase/.temp/
+
+# Environment Variables
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# SQLite Databases
+*.db
+*.sqlite
+*.sqlite3
+aleprod_local.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+

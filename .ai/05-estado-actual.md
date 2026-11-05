@@ -116,6 +116,59 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-11-05 (Sesión 73 — Backend & Cloud Architecture: Edge Function notify-event-start y Database Webhook Trigger):**
+  - **Edge Function en Deno (`supabase/functions/notify-event-start/index.ts`):**
+    - Creada función serverless en Deno con `@supabase/supabase-js` v2.
+    - Soporte CORS completo e interceptor de payloads de Database Webhooks (`record`, `old_record`).
+    - Validación de condición de activación (`record.estado === 'en_curso'`).
+    - Consulta autenticada vía Service Role a `public.perfiles` para técnicos (`rol = 'tecnico'`) con `push_token IS NOT NULL`.
+    - Validación de tokens Expo y despacho en lotes (`chunkSize = 100`) hacia `https://exp.host/--/api/v2/push/send`.
+    - Payload con canal prioritario `eventos_montaje` y data: `{ evento_id: record.id, nombre_evento: record.nombre }`.
+  - **Migración SQL y Trigger Webhook (`supabase/migrations/20261105162000_webhook_notify_event.sql`):**
+    - `ALTER TABLE public.perfiles ADD COLUMN IF NOT EXISTS push_token text;` con índice optimizado.
+    - Habilitación de extensión `pg_net`.
+    - Función `tr_notify_event_start()` y Trigger `tr_eventos_notify_start` `AFTER UPDATE OF estado ON public.eventos` disparado únicamente ante transición `OLD.estado IS DISTINCT FROM NEW.estado AND NEW.estado = 'en_curso'`.
+  - **Documentación de Despliegue (`supabase/README_WEBHOOK_SETUP.md`):**
+    - Guía de despliegue con CLI (`npx supabase functions deploy notify-event-start --no-verify-jwt`).
+    - Instrucciones paso a paso para configurar el Webhook nativo desde el Dashboard UI de Supabase Studio.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+
+- **2026-11-05 (Sesión 72 — Arquitectura Push Notifications & Event Driven UX: usePushNotifications, EventNotificationJoiner y Sincronización SQLite):**
+  - **Instalación y Configuración Universal:**
+    - Instalado `expo-notifications` (`~58.1.8`) y registrado en `mobile/app.json`.
+  - **Hook `usePushNotifications` (`mobile/src/core/hooks/usePushNotifications.ts`):**
+    - Configurado `setNotificationHandler` en primer plano (`shouldShowAlert: false`, `shouldPlaySound: false`, `shouldShowBanner: false`, `shouldShowList: false`) para suprimir banners del SO y delegar la experiencia al modal de unión.
+    - Soporte híbrido Nativo/Web PWA (`process.env.EXPO_PUBLIC_VAPID_KEY` o degradación segura sin romper runtime).
+    - Canal de alta prioridad `eventos_montaje` en Android.
+    - Persistencia de `push_token` en `public.perfiles` conectada de forma automática al flujo de login en `AuthContext.tsx`.
+  - **Interceptor y Modal de Unión (`EventNotificationJoiner.tsx`):**
+    - Montado globalmente en `mobile/app/_layout.tsx` dentro de `ToastProvider`.
+    - Captura listeners de Foreground (`addNotificationReceivedListener`) y Background/Tap (`addNotificationResponseReceivedListener`), además de Cold Boot (`getLastNotificationResponseAsync`).
+    - Detección de payload `{ evento_id, nombre_evento }`.
+    - Detección de conflicto contra `eventos_locales` (SQLite) adaptando dinámicamente el mensaje de `<ConfirmModal>`.
+    - Validación Realtime rápida contra Supabase Cloud (`estado === 'en_curso'`) previo a cualquier mutación.
+    - Guardado local en SQLite (`setActiveLocalEvento`) y amarre automático de `insertIncidencia`.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación exitosa con 0 errores**.
+
+- **2026-11-05 (Sesión 71 — Rediseño Estético de AssetDetailScreen hacia Dark Navy & Glassmorphism Alineado con Notificaciones):**
+  - **Erradicación del Gris-Marrón Heredado:**
+    - Se identificó que `AssetDetailScreen.tsx` aún conservaba la paleta de tokens antiguos (`#0B0D10` de fondo, `#14171C` en superficies y bordes gruesos `#262A34`), lo que producía un tono parduzco/gris-marrón desentonado frente al resto de la aplicación.
+  - **Alineación Exacta con `NotificationsScreen.tsx`:**
+    - **Fondo Base y Resplandor:** Fondo unificado a Deep Dark Navy (`#080C14`) e inyección de `topAmbientGlow` mediante `<LinearGradient>` con resplandor superior azul cobalto sutil (`#1D4ED8`).
+    - **Header Superior Limpio:** Erradicación del borde inferior sólido; incorporación de jerarquía dual con subtítulo institucional "Aleprod Terreno" (`#64748B`) y título principal "Detalle de Activo" (`#FFFFFF`, 22px, bold), junto a botones de retorno y ayuda con diseño glassmorphic (`rgba(255, 255, 255, 0.05)`, borde `rgba(255, 255, 255, 0.08)`).
+    - **Tarjetas y Superficies:** Tarjetas de datos en `#121620` con bordes finos translúcidos `rgba(255, 255, 255, 0.07)`, badges de UUID estilizados, sub-tarjetas de historial en `#141A28` con tags `Local`/`Cloud`, e íconos en círculos con tinte azul (`rgba(37, 99, 235, 0.12)`).
+    - **Barra de Acciones Inferior:** Barra fija en `#080C14` con borde translúcido, botón "Dar de Baja" en coral translúcido y botón principal "Reportar Falla" en Azul Corporativo (`#2563EB`).
+    - **Inyección de Insets:** Migrado a `useEdgeInsets` garantizando clearance uniforme en WebKit (PWA) y Nativo.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación exitosa con bundle `asset-detail` regenerado limpiamente**.
+
 - **2026-11-05 (Sesión 70 — Erradicación de Fondo Blanco en Iconos PWA, Unificación a Negro Profundo #000000 y Calibración Safe-Zone en Móvil/Web):**
   - **Diagnóstico Causa Raíz de Fondo Blanco en PWA:**
     - Al añadir la aplicación a la pantalla de inicio en iOS (Safari `apple-touch-icon`) y Android (Chrome Adaptive Icons), cualquier archivo PNG con canal alfa transparente (`Alpha = 0`) es rellenado forzosamente por el sistema operativo con un lienzo/platillo **blanco sólido (`#FFFFFF`)**, dado que ni iOS ni Android permiten transparencias en los accesos directos de pantalla de inicio.

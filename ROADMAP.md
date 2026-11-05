@@ -59,6 +59,8 @@
 
 - **HU-16: Ciclo de Vida e Historial de Eventos** `[Completada]`
   - **Descripción:** Gestión de estados (`en_curso` y `finalizado`) en Supabase y SQLite. Segmentación en `EventsScreen.tsx` con pestañas interactivas "En Curso" e "Historial" bajo el nuevo lenguaje visual Dark Navy con halo ambiental suave, logo de calendario en cabecera, campana de notificaciones limpia y micro-badges. Nueva pantalla `EventDetailScreen.tsx` con métricas del montaje ($m^2$, recintos, equipamiento) y trazabilidad de incidencias (consulta híbrida SQLite/Supabase). Mecanismo de cierre ("Finalizar Evento") y modo estricto de Solo Lectura (Read-Only) para eventos archivados.
+- **HU-16B: Notificaciones Push Universales y Unión a Montajes (Event Joiner)** `[Completada]`
+  - **Descripción:** Notificaciones Push en tiempo real (Nativo y PWA Web Push) ante el inicio de un montaje (`en_curso`). Emisor serverless mediante Edge Function (`notify-event-start`) y Database Webhook en Supabase PostgreSQL. Receptor global con `usePushNotifications`, `EventNotificationJoiner`, validación en tiempo real de estado, detección de conflictos en SQLite (`eventos_locales`) y amarre dinámico de incidencias.
 
 ### Épica 4: Persistencia y Sincronización
 - **HU-14: Motor de Sincronización a Supabase** `[Completada]`

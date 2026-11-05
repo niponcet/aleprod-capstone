@@ -39,7 +39,8 @@
       "expo-sqlite",
       "expo-router",
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-notifications"
     ],
     "extra": {
       "router": {},

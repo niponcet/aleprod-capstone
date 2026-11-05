@@ -175,13 +175,19 @@ export const insertIncidencia = (
   tipoFalla: string = 'Escaneo Operativo',
   fotoUri?: string,
   observaciones?: string,
-  eventoId: string = 'Festival Estadio Nacional'
+  eventoId?: string
 ) => {
   try {
     const fecha = new Date().toISOString();
+    const activeLocal = getActiveLocalEvento();
+    const resolvedEvento =
+      eventoId && eventoId !== 'Festival Estadio Nacional'
+        ? eventoId
+        : activeLocal?.nombre || activeLocal?.id || 'Festival Estadio Nacional';
+
     const result = db.runSync(
       'INSERT INTO incidencias_locales (qr_uuid, fecha, tipo_falla, foto_uri, observaciones, evento_id, sincronizado) VALUES (?, ?, ?, ?, ?, ?, 0)',
-      [qrUuid, fecha, tipoFalla, fotoUri ?? null, observaciones ?? null, eventoId]
+      [qrUuid, fecha, tipoFalla, fotoUri ?? null, observaciones ?? null, resolvedEvento]
     );
     console.log("Registro guardado con éxito. ID:", result.lastInsertRowId);
     return result.lastInsertRowId;
@@ -347,6 +353,20 @@ export const upsertLocalEvento = (evento: LocalEvento): void => {
     );
   } catch (error) {
     console.warn("Error guardando evento local:", error);
+  }
+};
+
+/**
+ * HU-EventJoin: Activa un evento local en SQLite desactivando cualquier otro que estuviera 'en_curso'.
+ * Garantiza que solo un evento permanezca activo a nivel local para vincular incidencias.
+ */
+export const setActiveLocalEvento = (evento: LocalEvento): void => {
+  try {
+    db.runSync("UPDATE eventos_locales SET estado = 'planificado' WHERE estado = 'en_curso' AND id != ?", [evento.id]);
+    upsertLocalEvento(evento);
+    console.log(`[SQLite] Evento local activo fijado a: ${evento.nombre} (${evento.id})`);
+  } catch (error) {
+    console.warn("Error fijando evento activo local en SQLite:", error);
   }
 };
 

@@ -139,6 +139,7 @@ CREATE TABLE public.perfiles (
   rol TEXT NOT NULL CHECK (rol IN ('tecnico', 'coordinador', 'admin')),
   telefono TEXT,
   activo BOOLEAN NOT NULL DEFAULT true,
+  push_token TEXT, -- Expo Push Token para notificaciones push universales
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 ```

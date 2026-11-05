@@ -10,8 +10,9 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../../core/theme/colors';
 import { triggerHaptic } from '../../../core/utils/haptics';
@@ -26,7 +27,7 @@ import { fetchHybridIncidents, UnifiedIncident } from '../../../core/api/inciden
 
 export const AssetDetailScreen: React.FC = () => {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const { insets } = useEdgeInsets();
   const params = useLocalSearchParams<{ uuid?: string; title?: string; status?: string }>();
 
   const rawUuid = params.uuid || 'TEST-QR-001';
@@ -145,34 +146,49 @@ export const AssetDetailScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header Superior Inmersivo (Edge-to-Edge) */}
+      {/* Halo ambiental superior suave idéntico a Notificaciones */}
+      <LinearGradient
+        colors={['#000000', '#000000', 'rgba(29, 78, 216, 0.35)', 'rgba(37, 99, 235, 0.18)', 'transparent']}
+        locations={[0, 0.22, 0.50, 0.78, 1]}
+        style={styles.topAmbientGlow}
+        pointerEvents="none"
+      />
+
+      {/* Header Superior Nativo */}
       <View
         style={[
-          styles.header,
+          styles.headerContainer,
           {
             paddingTop:
               Platform.OS === 'web'
-                ? ('max(calc(env(safe-area-inset-top, 0px) + 8px), 20px)' as any)
-                : insets.top + 8,
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 12px), 20px)' as any)
+                : insets.top + 12,
           },
         ]}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-        </TouchableOpacity>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Detalle de Activo</Text>
+          <View style={styles.headerTexts}>
+            <Text style={styles.headerOrgText}>Aleprod Terreno</Text>
+            <Text style={styles.headerTitle}>Detalle de Activo</Text>
+          </View>
+        </View>
 
         <TouchableOpacity
-          style={styles.moreButton}
+          style={styles.helpButton}
           onPress={() => setHelpModalVisible(true)}
           activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          <Ionicons name="help-circle-outline" size={20} color="#94A3B8" />
         </TouchableOpacity>
       </View>
 
@@ -181,8 +197,8 @@ export const AssetDetailScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Encabezado del Activo */}
-        <View style={styles.assetHeader}>
+        {/* Encabezado del Activo (Hero Card) */}
+        <View style={styles.assetHeroCard}>
           <View style={styles.assetTypeRow}>
             <Text style={styles.assetTypeMono}>MÓDULO LED P3.9</Text>
             <View
@@ -212,8 +228,8 @@ export const AssetDetailScreen: React.FC = () => {
 
           <Text style={styles.assetTitle}>{displayTitle}</Text>
 
-          <View style={styles.uuidRow}>
-            <Ionicons name="qr-code-outline" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
+          <View style={styles.uuidBadge}>
+            <Ionicons name="qr-code-outline" size={13} color="#60A5FA" style={{ marginRight: 6 }} />
             <Text style={styles.uuidText}>UUID: {rawUuid}</Text>
           </View>
         </View>
@@ -222,7 +238,9 @@ export const AssetDetailScreen: React.FC = () => {
         <View style={styles.specsCard}>
           <View style={styles.specsHeaderRow}>
             <Text style={styles.specsHeaderTitle}>ESPECIFICACIONES DEL ACTIVO</Text>
-            <Text style={styles.loteText}>Lote: {assetMeta?.lote_ingreso || 'LOTE-102026'}</Text>
+            <View style={styles.loteBadge}>
+              <Text style={styles.loteText}>Lote: {assetMeta?.lote_ingreso || 'LOTE-102026'}</Text>
+            </View>
           </View>
 
           <View style={styles.specsGrid}>
@@ -231,16 +249,20 @@ export const AssetDetailScreen: React.FC = () => {
               <View style={styles.specsColumn}>
                 <Text style={styles.specsLabel}>Resolución / Pitch</Text>
                 <View style={styles.specsValueRow}>
-                  <Ionicons name="hardware-chip-outline" size={16} color="#8E95A2" style={{ marginRight: 6 }} />
-                  <Text style={styles.specsValue}>P3.9 Indoor/Outdoor</Text>
+                  <View style={styles.specsIconCircle}>
+                    <Ionicons name="hardware-chip-outline" size={15} color="#60A5FA" />
+                  </View>
+                  <Text style={styles.specsValue}>P3.9 In/Out</Text>
                 </View>
               </View>
 
               <View style={styles.specsColumn}>
                 <Text style={styles.specsLabel}>Dimensiones</Text>
                 <View style={styles.specsValueRow}>
-                  <Ionicons name="scan-outline" size={16} color="#8E95A2" style={{ marginRight: 6 }} />
-                  <Text style={styles.specsValue}>50 × 50 cm (0.25 m²)</Text>
+                  <View style={styles.specsIconCircle}>
+                    <Ionicons name="scan-outline" size={15} color="#60A5FA" />
+                  </View>
+                  <Text style={styles.specsValue}>50 × 50 cm</Text>
                 </View>
               </View>
             </View>
@@ -250,17 +272,21 @@ export const AssetDetailScreen: React.FC = () => {
               <View style={styles.specsColumn}>
                 <Text style={styles.specsLabel}>Ubicación actual</Text>
                 <View style={styles.specsValueRow}>
-                  <Ionicons name="location-outline" size={16} color="#8E95A2" style={{ marginRight: 6 }} />
-                  <Text style={styles.specsValue}>Bodega Central / En Terreno</Text>
+                  <View style={styles.specsIconCircle}>
+                    <Ionicons name="location-outline" size={15} color="#60A5FA" />
+                  </View>
+                  <Text style={styles.specsValue}>En Terreno / Bodega</Text>
                 </View>
               </View>
 
               <View style={styles.specsColumn}>
                 <Text style={styles.specsLabel}>Última mantención</Text>
                 <View style={styles.specsValueRow}>
-                  <Ionicons name="calendar-outline" size={16} color="#8E95A2" style={{ marginRight: 6 }} />
+                  <View style={styles.specsIconCircle}>
+                    <Ionicons name="calendar-outline" size={15} color="#60A5FA" />
+                  </View>
                   <Text style={styles.specsValue}>
-                    {incidents.length > 0 ? 'Con incidencias' : 'Sin mantenciones'}
+                    {incidents.length > 0 ? 'Con incidencias' : 'Al día'}
                   </Text>
                 </View>
               </View>
@@ -273,32 +299,34 @@ export const AssetDetailScreen: React.FC = () => {
           <View style={styles.specsHeaderRow}>
             <Text style={styles.specsHeaderTitle}>HISTORIAL RÁPIDO</Text>
             <Text style={styles.historyCountText}>
-              {incidents.length} {incidents.length === 1 ? 'registro previo' : 'registros previos'}
+              {incidents.length} {incidents.length === 1 ? 'registro' : 'registros'}
             </Text>
           </View>
 
           {incidents.length > 0 ? (
             incidents.map((h) => {
-              const isBaja = h.tipo_falla.toLowerCase().includes('baja') || h.tipo_falla.toLowerCase().includes('crítica');
-              const isMant = h.tipo_falla.toLowerCase().includes('manten') || h.tipo_falla.toLowerCase().includes('apagado') || h.tipo_falla.toLowerCase().includes('falla');
-              const iconColor = isBaja ? colors.danger : isMant ? colors.warning : colors.success;
-              const iconName: keyof typeof Ionicons.glyphMap = isBaja
+              const isItemBaja = h.tipo_falla.toLowerCase().includes('baja') || h.tipo_falla.toLowerCase().includes('crítica');
+              const isItemMant = h.tipo_falla.toLowerCase().includes('manten') || h.tipo_falla.toLowerCase().includes('apagado') || h.tipo_falla.toLowerCase().includes('falla');
+              const iconColor = isItemBaja ? colors.danger : isItemMant ? colors.warning : colors.success;
+              const iconName: keyof typeof Ionicons.glyphMap = isItemBaja
                 ? 'close-circle-outline'
-                : isMant
+                : isItemMant
                 ? 'warning-outline'
                 : 'checkmark-circle-outline';
 
               return (
                 <View key={`hist-${h.id}`} style={styles.historySubCard}>
-                  <View style={[styles.historyIconBox, { backgroundColor: isBaja ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)' }]}>
+                  <View style={[styles.historyIconBox, { backgroundColor: isItemBaja ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)' }]}>
                     <Ionicons name={iconName} size={18} color={iconColor} />
                   </View>
                   <View style={styles.historyContent}>
                     <View style={styles.historyTitleRow}>
                       <Text style={styles.historyTitle}>{h.tipo_falla}</Text>
-                      <Text style={styles.historyDate}>{h.is_local ? 'Local' : 'Cloud'}</Text>
+                      <View style={styles.sourceTag}>
+                        <Text style={styles.sourceTagText}>{h.is_local ? 'Local' : 'Cloud'}</Text>
+                      </View>
                     </View>
-                    <Text style={styles.historySubtitle}>
+                    <Text style={styles.historySubtitle} numberOfLines={1}>
                       {h.descripcion || 'Incidencia en terreno'} · {h.evento_nombre || 'Evento en curso'}
                     </Text>
                   </View>
@@ -330,7 +358,7 @@ export const AssetDetailScreen: React.FC = () => {
 
         {/* Banner Informativo */}
         <View style={styles.infoBanner}>
-          <Ionicons name="information-circle-outline" size={20} color="#8E95A2" style={{ marginRight: 10 }} />
+          <Ionicons name="information-circle-outline" size={18} color="#60A5FA" style={{ marginRight: 10 }} />
           <Text style={styles.infoBannerText}>
             Si este módulo presenta pixeles apagados o fallas en conector, repórtalo de inmediato para el recambio en bodega.
           </Text>
@@ -358,7 +386,7 @@ export const AssetDetailScreen: React.FC = () => {
           {decommissioning ? (
             <ActivityIndicator size="small" color={colors.danger} style={{ marginRight: 6 }} />
           ) : (
-            <Ionicons name="trash-outline" size={18} color={colors.danger} style={{ marginRight: 6 }} />
+            <Ionicons name="trash-outline" size={17} color={colors.danger} style={{ marginRight: 6 }} />
           )}
           <Text style={styles.decommissionButtonText}>
             {decommissioning ? 'Guardando...' : 'Dar de Baja'}
@@ -370,7 +398,7 @@ export const AssetDetailScreen: React.FC = () => {
           onPress={() => setModalVisible(true)}
           activeOpacity={0.85}
         >
-          <Ionicons name="warning-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+          <Ionicons name="warning-outline" size={17} color="#FFFFFF" style={{ marginRight: 6 }} />
           <Text style={styles.reportButtonText}>Reportar Falla</Text>
         </TouchableOpacity>
       </View>
@@ -414,54 +442,85 @@ export const AssetDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#080C14',
   },
-  header: {
+  topAmbientGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 220,
+    zIndex: -1,
+    ...Platform.select({
+      web: {
+        transform: [{ translateZ: 0 } as any],
+      },
+    }),
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  scrollView: {
-    flex: 1,
-    backgroundColor: colors.background,
   },
   backButton: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
+  },
+  headerTexts: {
+    justifyContent: 'center',
+  },
+  headerOrgText: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   headerTitle: {
-    color: colors.textPrimary,
-    fontSize: 17,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
-  moreButton: {
+  helpButton: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 18,
+    paddingTop: 4,
     paddingBottom: 24,
   },
-  assetHeader: {
-    marginBottom: 20,
+  assetHeroCard: {
+    backgroundColor: '#121620',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
   },
   assetTypeRow: {
     flexDirection: 'row',
@@ -470,135 +529,165 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   assetTypeMono: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#64748B',
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.2,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   statusBadge: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3.5,
     borderRadius: 20,
   },
   statusBadgeSuccess: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.35)',
+    borderColor: 'rgba(16, 185, 129, 0.28)',
   },
   statusBadgeWarning: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderColor: 'rgba(245, 158, 11, 0.28)',
   },
   statusBadgeDanger: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
+    borderColor: 'rgba(239, 68, 68, 0.28)',
   },
   statusBadgeText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
   },
   assetTitle: {
-    color: colors.textPrimary,
-    fontSize: 26,
+    color: '#FFFFFF',
+    fontSize: 24,
     fontWeight: '800',
-    marginBottom: 6,
-    letterSpacing: -0.5,
+    marginBottom: 8,
+    letterSpacing: -0.4,
   },
-  uuidRow: {
+  uuidBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
   },
   uuidText: {
-    color: colors.textSecondary,
-    fontSize: 13,
+    color: '#94A3B8',
+    fontSize: 11.5,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   specsCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 18,
+    marginBottom: 12,
   },
   specsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   specsHeaderTitle: {
-    color: colors.textSecondary,
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.1,
   },
+  loteBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
   loteText: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
   },
   specsGrid: {
-    marginTop: 4,
+    marginTop: 2,
   },
   specsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16,
-    marginBottom: 14,
+    gap: 12,
+    marginBottom: 12,
   },
   specsColumn: {
     flex: 1,
     minWidth: 0,
   },
   specsLabel: {
-    color: '#8E95A2',
-    fontSize: 12,
-    marginBottom: 6,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '500',
+    marginBottom: 4,
   },
   specsValueRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  specsIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
   specsValue: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: '700',
     flex: 1,
     flexShrink: 1,
   },
   historyCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 18,
+    marginBottom: 12,
   },
   historyCountText: {
-    color: colors.textSecondary,
-    fontSize: 12,
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
   },
   historySubCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#141A28',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
+    padding: 11,
+    marginBottom: 8,
   },
   historyIconBox: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#1E222B',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 11,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   historyContent: {
     flex: 1,
@@ -606,30 +695,39 @@ const styles = StyleSheet.create({
   historyTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 2,
   },
   historyTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
     flex: 1,
     marginRight: 8,
   },
-  historyDate: {
-    color: colors.textSecondary,
-    fontSize: 11,
+  sourceTag: {
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.25)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  sourceTagText: {
+    color: '#60A5FA',
+    fontSize: 9.5,
+    fontWeight: '600',
   },
   historySubtitle: {
-    color: colors.textSecondary,
-    fontSize: 11,
+    color: '#94A3B8',
+    fontSize: 11.5,
   },
   emptyHistoryBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#141A28',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+    borderColor: 'rgba(16, 185, 129, 0.20)',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -640,42 +738,44 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyHistoryTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 2,
   },
   emptyHistorySubtitle: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    lineHeight: 15,
+    color: '#94A3B8',
+    fontSize: 11.5,
+    lineHeight: 16,
   },
   fullHistoryLink: {
     alignSelf: 'flex-end',
     marginTop: 6,
   },
   fullHistoryLinkText: {
-    color: colors.primaryAmber,
-    fontSize: 13,
+    color: '#60A5FA',
+    fontSize: 12,
     fontWeight: '600',
   },
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#12151B',
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
     borderWidth: 1,
-    borderColor: '#262A34',
-    borderRadius: 12,
+    borderColor: 'rgba(59, 130, 246, 0.20)',
+    borderRadius: 14,
     padding: 14,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   infoBannerText: {
     flex: 1,
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
     lineHeight: 18,
   },
@@ -683,10 +783,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 14,
-    backgroundColor: colors.background,
+    paddingTop: 12,
+    backgroundColor: '#080C14',
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: 'rgba(255, 255, 255, 0.07)',
   },
   decommissionButton: {
     width: '48%',
@@ -695,12 +795,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: 48,
     borderRadius: 14,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    backgroundColor: 'rgba(239, 68, 68, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
+    borderColor: 'rgba(239, 68, 68, 0.28)',
   },
   decommissionButtonText: {
-    color: colors.danger,
+    color: '#EF4444',
     fontSize: 14,
     fontWeight: '700',
   },
