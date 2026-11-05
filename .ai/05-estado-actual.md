@@ -911,6 +911,12 @@
 
 - **2026-11-04 (Sesión 69 — Fusión Visual Orgánica Opción 1 en PWA iOS y Estabilidad de TabBar):**
   - **Preservación total de la barra inferior:** `LiquidGlassTabBar` se mantiene intacta en `position: fixed` flotando con elegancia y precisión milimétrica sobre la Home Bar del iPhone (`max(calc(env(safe-area-inset-bottom, 0px) - 22px), 12px)`), con la cápsula activa `slidingIndicator` en `position: 'absolute'`.
+  - **Rediseño Completo de Pantalla de Login (`LoginScreen.tsx`):** Implementación fiel al 100% de la maqueta `mobile/public/Login Aleprod.html`. Incluye:
+    - Cabecera con badge circular "AP" de 76px con degradado azul (`#4A74FF` a `#2446C8`), subtítulo `ALEJANDRA PRODUCCIONES` en tracking ancho y título principal "Hola, qué bueno verte de nuevo".
+    - Tarjeta elevada con fondo `rgba(17, 22, 34, 0.94)`, bordes `#1F2638`, inputs de 54px con iconos y focus azul cobalto (`#4C6FFF`).
+    - Checkbox estilizado "Recordarme", enlace a recuperación de contraseña y botón principal "Ingresar" con degradado azul y flecha.
+    - Banner inferior de seguridad: "Acceso restringido a personal técnico autorizado de Aleprod" con icono de escudo.
+    - Fondo base `#000000` con glow radial superior calibrado para mantener la status bar de iOS 100% negra y fundida sin costuras.
   - **Pintado 100% negro de la status bar en iOS (App, Login y Loading):** Para garantizar que la franja del status bar sea rigurosamente negra (`#000000` OLED puro) y calce sin discrepancias en toda la app, se unificó el fondo base en `html`, `body`, `#root`, `_layout.tsx` (incluyendo `loadingContainer`, `safeAreaProvider` y `customDarkTheme`), `(tabs)/_layout.tsx`, `HomeScreen`, `EventsScreen`, `SettingsScreen`, `NotificationsScreen`, `LoginScreen` y `ForgotPasswordScreen` a `#000000` (eliminando cualquier remanente `#070B14` y el parpadeo de 1s previo a cargar el login). Se inyectó una capa fija nativa `#ios-status-bar-fill` en `index.html` con `height: env(safe-area-inset-top)` y `z-index: 99999` para blindar el área superior en negro azabache, y los degradados ambientales (`topAmbientGlow`) mantienen los primeros 48px estrictamente en `#000000` antes de florecer en azul corporativo (App) o dorado corporativo (Login).
   - **Configuración de PWA:** `index.html` con `html, body, #root { background-color: #000000 !important; }`, `theme-color: #000000`, `manifest.json` y `app.json` sincronizados a `#000000`.
   - **Validación de Tipos:** `npx tsc --noEmit` en `/mobile` verificado con 0 errores.

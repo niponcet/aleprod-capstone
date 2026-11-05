@@ -18,7 +18,6 @@ import { ScreenSafeContainer } from '../../../core/components/ScreenSafeContaine
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../../core/theme/colors';
 import { supabase } from '../../../core/api/supabase';
 
 export const LoginScreen: React.FC = () => {
@@ -113,8 +112,6 @@ export const LoginScreen: React.FC = () => {
         // Redirección cliente estricta con Expo Router (cero escape a Safari)
         router.replace('/');
       }
-      // Al ser exitoso, supabase.auth.onAuthStateChange en AuthContext
-      // actualizará la sesión y la navegación redirigirá a la aplicación.
     } catch (err: any) {
       Alert.alert(
         'Error de conexión',
@@ -128,177 +125,179 @@ export const LoginScreen: React.FC = () => {
   return (
     <View style={styles.rootContainer}>
       <StatusBar style="light" />
-      {/* Glow ambiental superior dorado corporativo */}
+
+      {/* Glow ambiental superior con fusión pura a la status bar negra */}
       <LinearGradient
-        colors={['#000000', '#000000', 'rgba(212, 175, 55, 0.18)', 'rgba(212, 175, 55, 0.08)', 'transparent']}
-        locations={[0, 0.20, 0.45, 0.75, 1]}
+        colors={[
+          '#000000',
+          '#000000',
+          'rgba(47, 85, 224, 0.42)',
+          'rgba(47, 85, 224, 0.16)',
+          'transparent',
+        ]}
+        locations={[0, 0.18, 0.44, 0.72, 1]}
         style={styles.topAmbientGlow}
         pointerEvents="none"
       />
+
       <ScreenSafeContainer style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
-      <KeyboardAvoidingView
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.keyboardContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          {/* Logo Superior Corporativo */}
-          <View style={styles.logoSection}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoInitials}>AP</Text>
-            </View>
-            <Text style={styles.logoBrandName}>ALEJANDRA PRODUCCIONES</Text>
-          </View>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Header Superior Corporativo */}
+            <View style={styles.headerRow}>
+              <LinearGradient
+                colors={['#4A74FF', '#2446C8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.apBadge}
+              >
+                <Text style={styles.apBadgeText}>AP</Text>
+              </LinearGradient>
 
-          {/* Encabezado */}
-          <View style={styles.headerSection}>
-            <Text style={styles.title}>Iniciar sesión</Text>
-            <View style={styles.titleAccentBar} />
-            <Text style={styles.subtitle}>
-              Ingresa tus credenciales para acceder a la operación en terreno.
-            </Text>
-          </View>
-
-          {/* Formulario */}
-          <View style={styles.formSection}>
-            {/* Campo Correo Electrónico */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>CORREO ELECTRÓNICO</Text>
-              <View style={[styles.inputWrapper, isEmailFocused && styles.inputWrapperFocused]}>
-                <Ionicons
-                  name="mail-outline"
-                  size={20}
-                  color={isEmailFocused ? colors.primaryAmber : colors.textSecondary}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={[
-                    styles.input,
-                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any),
-                  ]}
-                  placeholder="tecnico@aleprod.cl"
-                  placeholderTextColor={colors.textMuted}
-                  value={email}
-                  onChangeText={setEmail}
-                  onFocus={() => setIsEmailFocused(true)}
-                  onBlur={() => setIsEmailFocused(false)}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="email-address"
-                  autoComplete="email"
-                  textContentType="emailAddress"
-                  editable={!loading}
-                  selectionColor={colors.primaryAmber}
-                />
+              <View style={styles.headerTexts}>
+                <Text style={styles.brandSubtitle}>ALEJANDRA PRODUCCIONES</Text>
+                <Text style={styles.greetingTitle}>Hola, qué bueno verte de nuevo</Text>
               </View>
             </View>
 
-            {/* Campo Contraseña */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>CONTRASEÑA</Text>
-              <View style={[styles.inputWrapper, isPasswordFocused && styles.inputWrapperFocused]}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={20}
-                  color={isPasswordFocused ? colors.primaryAmber : colors.textSecondary}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={[
-                    styles.input,
-                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any),
-                  ]}
-                  placeholder="••••••••••••"
-                  placeholderTextColor={colors.textMuted}
-                  value={password}
-                  onChangeText={setPassword}
-                  onFocus={() => setIsPasswordFocused(true)}
-                  onBlur={() => setIsPasswordFocused(false)}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="current-password"
-                  textContentType="password"
-                  editable={!loading}
-                  selectionColor={colors.primaryAmber}
-                />
+            {/* Tarjeta de Inicio de Sesión */}
+            <View style={styles.cardContainer}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Iniciar sesión</Text>
+                <Text style={styles.cardSubtitle}>
+                  Ingresa tus credenciales para acceder a la operación en terreno.
+                </Text>
+              </View>
+
+              {/* Formulario */}
+              <View style={styles.formSection}>
+                {/* Campo Correo Electrónico */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>CORREO ELECTRÓNICO</Text>
+                  <View style={[styles.inputWrapper, isEmailFocused && styles.inputWrapperFocused]}>
+                    <Ionicons
+                      name="mail-outline"
+                      size={20}
+                      color={isEmailFocused ? '#8FA8FF' : '#8A93A8'}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="tecnico@aleprod.cl"
+                      placeholderTextColor="#8A93A8"
+                      value={email}
+                      onChangeText={setEmail}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      onFocus={() => setIsEmailFocused(true)}
+                      onBlur={() => setIsEmailFocused(false)}
+                      editable={!loading}
+                    />
+                  </View>
+                </View>
+
+                {/* Campo Contraseña */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>CONTRASEÑA</Text>
+                  <View style={[styles.inputWrapper, isPasswordFocused && styles.inputWrapperFocused]}>
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={20}
+                      color={isPasswordFocused ? '#8FA8FF' : '#8A93A8'}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="••••••••••••"
+                      placeholderTextColor="#8A93A8"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                      onFocus={() => setIsPasswordFocused(true)}
+                      onBlur={() => setIsPasswordFocused(false)}
+                      editable={!loading}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeButton}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                        size={20}
+                        color={showPassword ? '#8FA8FF' : '#8A93A8'}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Fila Opciones: Recordarme & Olvidé contraseña */}
+                <View style={styles.optionsRow}>
+                  <TouchableOpacity
+                    style={styles.checkboxContainer}
+                    onPress={() => setRememberMe(!rememberMe)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                      {rememberMe && <Ionicons name="checkmark" size={13} color="#FFFFFF" />}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Recordarme</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => router.push('/forgot-password')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Botón Principal Ingresar */}
                 <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowPassword(!showPassword)}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  onPress={handleLogin}
                   disabled={loading}
+                  activeOpacity={0.85}
+                  style={styles.submitButtonTouchable}
                 >
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={isPasswordFocused ? colors.primaryAmber : colors.textSecondary}
-                  />
+                  <LinearGradient
+                    colors={['#4A74FF', '#2F55E0']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.submitButtonGradient}
+                  >
+                    {loading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <Text style={styles.submitButtonText}>Ingresar</Text>
+                        <Ionicons name="arrow-forward" size={19} color="#FFFFFF" />
+                      </>
+                    )}
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Fila de Opciones: Recordarme / Olvidaste Contraseña */}
-            <View style={styles.optionsRow}>
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => setRememberMe(!rememberMe)}
-                activeOpacity={0.8}
-                disabled={loading}
-              >
-                <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
-                  {rememberMe && (
-                    <Ionicons name="checkmark" size={14} color={colors.textInverse} />
-                  )}
-                </View>
-                <Text style={styles.checkboxLabel}>Recordarme</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => router.push('/forgot-password')}
-                activeOpacity={0.7}
-                disabled={loading}
-              >
-                <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
-              </TouchableOpacity>
+            {/* Aviso de Acceso Restringido */}
+            <View style={styles.restrictedNotice}>
+              <View style={styles.shieldIconBox}>
+                <Ionicons name="shield-checkmark-outline" size={18} color="#8FA8FF" />
+              </View>
+              <Text style={styles.restrictedText}>
+                Acceso restringido a personal técnico autorizado de Aleprod.
+              </Text>
             </View>
-
-            {/* Botón Principal Gradiente */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.85}
-              style={[styles.buttonWrapper, loading && styles.buttonDisabled]}
-            >
-              <LinearGradient
-                colors={loading ? ['#6E4506', '#9B7B2B'] : ['#C87A08', '#F5C242']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.loginButton}
-              >
-                {loading ? (
-                  <View style={styles.loadingRow}>
-                    <ActivityIndicator size="small" color={colors.textInverse} />
-                    <Text style={[styles.loginButtonText, styles.loadingText]}>
-                      Iniciando sesión...
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.loginButtonText}>Ingresar</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Pie de Página */}
-            <Text style={styles.footerText}>
-              Acceso restringido a personal técnico autorizado de Aleprod.
-            </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </ScreenSafeContainer>
     </View>
   );
@@ -318,100 +317,131 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 350,
+    height: 400,
     zIndex: 0,
-
+    ...Platform.select({
+      web: {
+        transform: [{ translateZ: 0 } as any],
+      },
+    }),
   },
   keyboardContainer: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-    paddingVertical: 24,
+    paddingHorizontal: 22,
+    paddingTop: 16,
+    paddingBottom: 28,
+    justifyContent: 'space-between',
   },
-  logoSection: {
+
+  /* Header Superior */
+  headerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 28,
-  },
-  logoCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: colors.backgroundDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-    marginBottom: 10,
-  },
-  logoInitials: {
-    color: colors.primary,
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-  logoBrandName: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2.2,
-  },
-  headerSection: {
+    gap: 16,
+    marginTop: Platform.OS === 'web' ? 20 : 12,
     marginBottom: 26,
   },
-  title: {
+  apBadge: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    shadowColor: '#2F55E0',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  apBadgeText: {
     fontSize: 28,
     fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: -0.5,
+    letterSpacing: 1,
+    color: '#FFFFFF',
   },
-  titleAccentBar: {
-    width: 42,
-    height: 3.5,
-    backgroundColor: colors.primaryAmber,
-    borderRadius: 2,
-    marginTop: 6,
-    marginBottom: 8,
+  headerTexts: {
+    flex: 1,
+    minWidth: 0,
   },
-  subtitle: {
+  brandSubtitle: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 2.6,
+    color: '#8FA8FF',
+    marginBottom: 4,
+  },
+  greetingTitle: {
+    fontSize: 22,
+    lineHeight: 27,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    color: '#FFFFFF',
+  },
+
+  /* Tarjeta de Inicio de Sesión */
+  cardContainer: {
+    backgroundColor: 'rgba(17, 22, 34, 0.94)',
+    borderWidth: 1,
+    borderColor: '#1F2638',
+    borderRadius: 26,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.45,
+    shadowRadius: 36,
+    elevation: 10,
+    marginBottom: 20,
+  },
+  cardHeader: {
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  cardSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary,
     lineHeight: 20,
+    color: '#9AA3B8',
   },
+
+  /* Formulario */
   formSection: {
     width: '100%',
   },
   inputGroup: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
+    color: '#9AA3B8',
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 12,
+    backgroundColor: '#0C101A',
+    borderWidth: 1,
+    borderColor: '#232B3F',
+    borderRadius: 16,
     paddingHorizontal: 14,
-    height: 52,
+    height: 54,
   },
   inputWrapperFocused: {
-    borderColor: colors.primaryAmber,
-    backgroundColor: '#181C26',
-    shadowColor: colors.primaryAmber,
+    borderColor: '#4C6FFF',
+    backgroundColor: '#0E1322',
+    shadowColor: '#4C6FFF',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -422,20 +452,24 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: colors.textPrimary,
+    color: '#F2F4FA',
     fontSize: 16,
     height: '100%',
     backgroundColor: 'transparent',
-  },
+    outlineStyle: 'none',
+  } as any,
   eyeButton: {
     padding: 6,
   },
+
+  /* Fila Opciones */
   optionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 24,
+    justifyContent: 'space-between',
+    marginTop: 2,
+    marginBottom: 22,
+    minHeight: 38,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -444,63 +478,82 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 5,
+    borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: colors.borderLight,
-    backgroundColor: colors.surface,
+    borderColor: '#232B3F',
+    backgroundColor: '#0C101A',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 9,
   },
-  checkboxActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+  checkboxChecked: {
+    borderColor: '#3B63F0',
+    backgroundColor: '#3B63F0',
   },
   checkboxLabel: {
-    color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 14,
+    color: '#E6EAF5',
     fontWeight: '500',
   },
   forgotPasswordText: {
-    color: colors.primaryAmber,
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#8FA8FF',
   },
-  buttonWrapper: {
-    shadowColor: colors.primaryDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
+
+  /* Botón Principal */
+  submitButtonTouchable: {
+    width: '100%',
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#2F55E0',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 7,
   },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  loginButton: {
-    height: 52,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingRow: {
+  submitButtonGradient: {
+    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
   },
-  loadingText: {
-    marginLeft: 10,
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
-  loginButtonText: {
-    color: colors.textInverse,
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+
+  /* Aviso Restringido */
+  restrictedNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+    borderRadius: 18,
+    backgroundColor: '#0E1320',
+    borderWidth: 1,
+    borderColor: '#1A2132',
+    marginTop: 10,
   },
-  footerText: {
-    marginTop: 22,
-    textAlign: 'center',
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
+  shieldIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#141B2D',
+    borderWidth: 1,
+    borderColor: '#232B3F',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  restrictedText: {
+    flex: 1,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: '#9AA3B8',
   },
 });
