@@ -20,6 +20,7 @@ import { triggerHaptic } from '../../../core/utils/haptics';
 import { supabase } from '../../../core/api/supabase';
 import { StartEventBottomSheet } from '../components/StartEventBottomSheet';
 import { EventCard } from '../components/EventCard';
+import { EventCardSkeleton } from '../components/EventCardSkeleton';
 import { useAuth } from '../../../core/context/AuthContext';
 
 export interface EventItem {
@@ -464,11 +465,12 @@ export const EventsScreen: React.FC = () => {
           )
         )}
 
-        {/* Indicador de Carga */}
-        {loading && (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator size="small" color="#3B82F6" />
-            <Text style={styles.loadingText}>Cargando eventos desde Supabase...</Text>
+        {/* Skeletons de Carga (3 repeticiones fluidas con pulso) */}
+        {loading && !refreshing && (
+          <View style={styles.skeletonContainer}>
+            <EventCardSkeleton />
+            <EventCardSkeleton />
+            <EventCardSkeleton />
           </View>
         )}
 
@@ -521,13 +523,14 @@ export const EventsScreen: React.FC = () => {
         )}
 
         {/* Listado de Tarjetas de Eventos */}
-        {displayedEvents.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            onPress={() => handleSelectEvent(event)}
-          />
-        ))}
+        {!loading &&
+          displayedEvents.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              onPress={() => handleSelectEvent(event)}
+            />
+          ))}
       </ScrollView>
 
       {/* Componente Bottom Sheet para Iniciar Evento */}
@@ -792,6 +795,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     letterSpacing: -0.1,
+  },
+  skeletonContainer: {
+    marginTop: 4,
+    marginBottom: 8,
   },
   loadingBox: {
     flexDirection: 'row',

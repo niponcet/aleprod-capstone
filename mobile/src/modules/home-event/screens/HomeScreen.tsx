@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -36,9 +36,11 @@ import {
   UnifiedIncident,
 } from '../../../core/api/incidencias';
 import { triggerHaptic } from '../../../core/utils/haptics';
+import { useAuth } from '../../../core/context/AuthContext';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
+  const { user, profile, role, refreshProfile } = useAuth();
   const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(70, 12);
   const { width: screenWidth } = useWindowDimensions();
   const [activeEvent, setActiveEvent] = useState<LocalEvento | null>(null);
@@ -47,6 +49,24 @@ export const HomeScreen: React.FC = () => {
   const [recentIncidents, setRecentIncidents] = useState<UnifiedIncident[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
+
+  // Nombre dinámico del usuario autenticado para el saludo
+  const userGreetingName = useMemo(() => {
+    if (profile?.nombre_completo?.trim()) {
+      return profile.nombre_completo.trim().split(' ')[0];
+    }
+    if (user?.user_metadata?.full_name?.trim()) {
+      return user.user_metadata.full_name.trim().split(' ')[0];
+    }
+    if (user?.user_metadata?.nombre?.trim()) {
+      return user.user_metadata.nombre.trim().split(' ')[0];
+    }
+    if (user?.email) {
+      const emailPrefix = user.email.split('@')[0];
+      return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+    }
+    return role === 'coordinador' ? 'Coordinador' : role === 'admin' ? 'Administrador' : 'Técnico';
+  }, [profile, user, role]);
 
   // Consulta híbrida: Supabase Cloud para datos frescos + SQLite local para offline
   const fetchActiveEvent = useCallback(async () => {
@@ -113,17 +133,18 @@ export const HomeScreen: React.FC = () => {
     }
   }, []);
 
-  // Recargar datos dinámicos y evento activo cada vez que la pantalla entra en foco
+  // Recargar datos dinámicos, perfil de usuario y evento activo cada vez que la pantalla entra en foco
   useFocusEffect(
     useCallback(() => {
       fetchActiveEvent();
       loadDynamicData();
+      refreshProfile().catch(() => {});
       try {
         setPendingSyncCount(getTotalPendingSyncCount());
       } catch {
         setPendingSyncCount(0);
       }
-    }, [fetchActiveEvent, loadDynamicData])
+    }, [fetchActiveEvent, loadDynamicData, refreshProfile])
   );
 
   // Sincronización Realtime instantánea de eventos (<100ms) sin recargar la pantalla
@@ -243,7 +264,7 @@ export const HomeScreen: React.FC = () => {
           </View>
           <View style={styles.headerTexts}>
             <Text style={styles.headerOrgText}>Aleprod Terreno</Text>
-            <Text style={styles.headerUserText}>Hola, Técnico</Text>
+            <Text style={styles.headerUserText}>Hola, {userGreetingName}</Text>
           </View>
         </View>
 

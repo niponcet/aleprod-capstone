@@ -24,6 +24,7 @@ import { decommissionPalmeta } from '../../../core/api/palmetas';
 import { useToast } from '../../../core/context/ToastContext';
 import { supabase } from '../../../core/api/supabase';
 import { fetchHybridIncidents, UnifiedIncident } from '../../../core/api/incidencias';
+import { AssetDetailSkeleton } from '../components/AssetDetailSkeleton';
 
 export const AssetDetailScreen: React.FC = () => {
   const router = useRouter();
@@ -198,8 +199,12 @@ export const AssetDetailScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Encabezado del Activo (Hero Card) */}
-        <View style={styles.assetHeroCard}>
+        {loading ? (
+          <AssetDetailSkeleton />
+        ) : (
+          <>
+            {/* Encabezado del Activo (Hero Card) */}
+            <View style={styles.assetHeroCard}>
           <View style={styles.assetTypeRow}>
             <Text style={styles.assetTypeMono}>MÓDULO LED P3.9</Text>
             <View
@@ -383,12 +388,14 @@ export const AssetDetailScreen: React.FC = () => {
         </View>
 
         {/* Banner Informativo */}
-        <View style={styles.infoBanner}>
-          <Ionicons name="information-circle-outline" size={18} color="#60A5FA" style={{ marginRight: 10 }} />
-          <Text style={styles.infoBannerText}>
-            Si este módulo presenta pixeles apagados o fallas en conector, repórtalo de inmediato para el recambio en bodega.
-          </Text>
-        </View>
+            <View style={styles.infoBanner}>
+              <Ionicons name="information-circle-outline" size={18} color="#60A5FA" style={{ marginRight: 10 }} />
+              <Text style={styles.infoBannerText}>
+                Si este módulo presenta pixeles apagados o fallas en conector, repórtalo de inmediato para el recambio en bodega.
+              </Text>
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Barra Inferior Fija de Acciones Anclada (Edge-to-Edge) */}

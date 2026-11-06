@@ -94,7 +94,7 @@ export const ScannerScreen = () => {
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
-          <Ionicons name="close" size={22} color="#EF4444" />
+          <Ionicons name="close" size={22} color="#94A3B8" />
         </TouchableOpacity>
           <Ionicons name="camera-outline" size={54} color="#60A5FA" style={{ marginBottom: 16 }} />
           <Text style={styles.permissionText}>
@@ -402,10 +402,10 @@ export const ScannerScreen = () => {
         )}
       </View>
 
-      {/* Overlay del Visor con esquinas doradas */}
+      {/* Overlay del Visor con esquinas azul corporativo */}
       <View style={styles.viewfinderCenterWrapper}>
         <View style={styles.viewfinderBox}>
-          {/* Esquinas doradas */}
+          {/* Esquinas azul corporativo (#3B82F6) */}
           <View style={[styles.corner, styles.cornerTopLeft]} />
           <View style={[styles.corner, styles.cornerTopRight]} />
           <View style={[styles.corner, styles.cornerBottomLeft]} />
@@ -620,8 +620,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(12, 32, 24, 0.96)',
   },
   toastCardOffline: {
-    borderColor: 'rgba(212, 175, 55, 0.65)',
-    backgroundColor: 'rgba(32, 28, 16, 0.96)',
+    borderColor: 'rgba(59, 130, 246, 0.65)',
+    backgroundColor: 'rgba(15, 23, 42, 0.96)',
   },
   toastCardError: {
     borderColor: 'rgba(239, 68, 68, 0.65)',

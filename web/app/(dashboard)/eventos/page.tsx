@@ -201,83 +201,83 @@ export default function EventosPage() {
 
   return (
     <>
-        {/* ── Resplandor Ambiental Sutil ── */}
-        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[var(--pr-glow)] rounded-full blur-[150px]" />
+      {/* ── Resplandor Ambiental Sutil ── */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[var(--pr-glow)] rounded-full blur-[150px]" />
+      </div>
+
+      {/* ── Top Bar ── */}
+      <header
+        className="px-4 py-3 sm:px-8 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--bd)] bg-[var(--sf)] sticky top-0 z-30"
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Link
+            href="/"
+            style={{
+              fontSize: "12px",
+              color: "var(--mu)",
+              fontWeight: 500,
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            Inicio
+          </Link>
+          <span style={{ color: "var(--bd)", fontSize: "12px" }}>/</span>
+          <span
+            style={{
+              fontSize: "14px",
+              color: "var(--tx)",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <span className="material-symbols-outlined text-base" style={{ color: "var(--pr)" }}>
+              calendar_month
+            </span>
+            Gestión de Eventos y Producciones
+          </span>
         </div>
 
-        {/* ── Top Bar ── */}
-        <header
-          className="px-4 py-3 sm:px-8 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--bd)] bg-[var(--sf)] sticky top-0 z-30"
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Link
-              href="/"
-              style={{
-                fontSize: "12px",
-                color: "var(--mu)",
-                fontWeight: 500,
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              Inicio
-            </Link>
-            <span style={{ color: "var(--bd)", fontSize: "12px" }}>/</span>
-            <span
-              style={{
-                fontSize: "14px",
-                color: "var(--tx)",
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span className="material-symbols-outlined text-base" style={{ color: "var(--pr)" }}>
-                calendar_month
-              </span>
-              Gestión de Eventos y Producciones
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            type="button"
+            onClick={() => fetchEventos()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[var(--border-light)] active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+            title="Recargar eventos"
+          >
+            <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
+              refresh
             </span>
-          </div>
+            <span className="hidden sm:inline">Actualizar</span>
+          </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button
-              type="button"
-              onClick={() => fetchEventos()}
-              disabled={loading}
-              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-[var(--bd)] bg-[var(--sf2)] text-[var(--tx)] text-xs font-semibold hover:border-[var(--border-light)] active:scale-95 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-              title="Recargar eventos"
-            >
-              <span className={`material-symbols-outlined text-base ${loading ? "animate-spin" : ""}`}>
-                refresh
-              </span>
-              <span className="hidden sm:inline">Actualizar</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => setModalAbierto(true)}
+            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[var(--go)] text-[var(--gt)] text-xs font-bold active:scale-95 transition-all shadow-sm hover:brightness-105 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-base">add</span>
+            <span>Nuevo Evento</span>
+          </button>
+        </div>
+      </header>
 
-            <button
-              type="button"
-              onClick={() => setModalAbierto(true)}
-              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-[var(--go)] text-[var(--gt)] text-xs font-bold active:scale-95 transition-all shadow-sm hover:brightness-105 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-base">add</span>
-              <span>Nuevo Evento</span>
-            </button>
-          </div>
-        </header>
+      {/* ── Toast de Confirmación ── */}
+      {toastMsg && (
+        <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981] text-xs font-['Outfit'] font-semibold shadow-2xl backdrop-blur-md animate-in slide-in-from-top-2">
+          <span className="material-symbols-outlined text-lg">check_circle</span>
+          <span>{toastMsg}</span>
+        </div>
+      )}
 
-        {/* ── Toast de Confirmación ── */}
-        {toastMsg && (
-          <div className="fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981] text-xs font-['Outfit'] font-semibold shadow-2xl backdrop-blur-md animate-in slide-in-from-top-2">
-            <span className="material-symbols-outlined text-lg">check_circle</span>
-            <span>{toastMsg}</span>
-          </div>
-        )}
-
-        {/* ── Contenido Principal ── */}
-        <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
+      {/* ── Contenido Principal ── */}
+      <main className="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full box-border flex-1">
         {/* Banner de Título (Limpio y directo, sin botones duplicados) */}
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--prs)] border border-[var(--pr)]/25 text-[var(--pr)] text-[11px] font-['Outfit'] font-semibold tracking-wider uppercase mb-2">
@@ -369,22 +369,20 @@ export default function EventosPage() {
             <button
               type="button"
               onClick={() => setFiltro("todas")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
-                filtro === "todas"
-                  ? "bg-[var(--go)] text-[var(--gt)] card-shadow transition-shadow"
-                  : "text-[var(--mu)] hover:text-[var(--tx)]"
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${filtro === "todas"
+                ? "bg-[var(--go)] text-[var(--gt)] card-shadow transition-shadow"
+                : "text-[var(--mu)] hover:text-[var(--tx)]"
+                }`}
             >
               Todos ({totalEventos})
             </button>
             <button
               type="button"
               onClick={() => setFiltro("en_curso")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                filtro === "en_curso"
-                  ? "bg-[#10B981] text-[var(--tx)] card-shadow transition-shadow"
-                  : "text-[var(--mu)] hover:text-[var(--tx)]"
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${filtro === "en_curso"
+                ? "bg-[#10B981] text-[var(--tx)] card-shadow transition-shadow"
+                : "text-[var(--mu)] hover:text-[var(--tx)]"
+                }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
               En Curso ({enCurso})
@@ -392,11 +390,10 @@ export default function EventosPage() {
             <button
               type="button"
               onClick={() => setFiltro("planificado")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                filtro === "planificado"
-                  ? "bg-[#78580a] text-[var(--tx)] border border-[#D4AF37]/40 card-shadow transition-shadow"
-                  : "text-[var(--mu)] hover:text-[var(--tx)]"
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${filtro === "planificado"
+                ? "bg-[#78580a] text-[var(--tx)] border border-[#D4AF37]/40 card-shadow transition-shadow"
+                : "text-[var(--mu)] hover:text-[var(--tx)]"
+                }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--go)]" />
               Planificados ({planificados})
@@ -404,11 +401,10 @@ export default function EventosPage() {
             <button
               type="button"
               onClick={() => setFiltro("finalizado")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
-                filtro === "finalizado"
-                  ? "bg-slate-200 text-slate-800 dark:bg-[#27272A] dark:text-[var(--tx)]"
-                  : "text-slate-500 dark:text-[#71717A] hover:text-[var(--tx)]"
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-['Outfit'] uppercase tracking-wider font-semibold transition-all cursor-pointer ${filtro === "finalizado"
+                ? "bg-slate-200 text-slate-800 dark:bg-[#27272A] dark:text-[var(--tx)]"
+                : "text-slate-500 dark:text-[#71717A] hover:text-[var(--tx)]"
+                }`}
             >
               Finalizados ({finalizados})
             </button>
@@ -461,13 +457,12 @@ export default function EventosPage() {
                       <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-3.5 h-3.5 rounded-full shrink-0 ${
-                              ev.estado === "en_curso"
-                                ? "bg-[#10B981] animate-pulse"
-                                : ev.estado === "planificado"
+                            className={`w-3.5 h-3.5 rounded-full shrink-0 ${ev.estado === "en_curso"
+                              ? "bg-[#10B981] animate-pulse"
+                              : ev.estado === "planificado"
                                 ? "bg-[var(--go)]"
                                 : "bg-[#71717A]"
-                            }`}
+                              }`}
                           />
                           <div className="flex flex-col">
                             <span className="font-semibold text-sm text-[var(--tx)] group-hover:text-[var(--pr)] transition-colors">
@@ -510,9 +505,9 @@ export default function EventosPage() {
                           <span className="text-[10px] text-[#71717A]">
                             {ev.fecha_termino
                               ? `Termina: ${new Date(ev.fecha_termino).toLocaleDateString("es-CL", {
-                                  day: "2-digit",
-                                  month: "short",
-                                })}`
+                                day: "2-digit",
+                                month: "short",
+                              })}`
                               : "En desarrollo"}
                           </span>
                         </div>

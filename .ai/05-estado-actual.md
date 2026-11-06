@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 05 de Noviembre de 2026 (Sesión 73 — Integración End-to-End de tabla maestra `centros_eventos` en Web y Mobile, Creación de `EventCard.tsx`, Selector relacional en formularios y diagnóstico Web Push).
+- **Fecha de Última Actualización:** 05 de Noviembre de 2026 (Sesión 74 — Sincronización de centros de eventos en StartEventBottomSheet con catálogo real de Supabase, alineación de Escáner QR a Azul Corporativo #3B82F6 y Skeleton Loaders en EventsScreen y AssetDetailScreen).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
@@ -116,6 +116,25 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-11-05 (Sesión 77 — Sincronización Real de Centros de Eventos, Alineación QR a Azul Corporativo y Skeleton Loaders):**
+  - **Sincronización de `centros_eventos` en `StartEventBottomSheet.tsx`:**
+    - Erradicación total de `FALLBACK_CENTROS` que contenía registros mock desalineados (`Espacio Riesco`, `Movistar Arena`, `Estadio Nacional`, `Metropolitan Santiago`).
+    - Incorporación de `MASTER_CENTROS` con los 42 registros reales de la tabla maestra de Supabase (`Alto Pomaire`, `Alto San Francisco`, `Best Western Premier Marina`, `Catamapu`, `Club Hípico`, `Hotel Ritz`, `Hotel Marriot`, `Hotel W`, `Stadio Italiano`, etc.).
+    - Búsqueda en tiempo real instantánea con filtrado reactivo de hasta 4 resultados y actualización dinámica vía Supabase query.
+  - **Alineación de Color en Escáner QR (`ScannerScreen.tsx` & `IncidentScannerModal.tsx`):**
+    - Unificación estricta de esquinas, retícula de enfoque y guías al Azul Corporativo `#3B82F6` (`colors.primary`).
+    - Limpieza de bordes residuales ámbar y alineación de tarjeta offline a Dark Navy (`#0F172A`) con borde `#3B82F6`.
+  - **Implementación de Skeleton Loaders de Carga (`mobile/src/core/components/skeletons/`):**
+    - `SkeletonBox.tsx`: Componente base con animación de pulso de opacidad en loop (`0.35` a `0.85`, 850ms) sobre fondo gris oscuro `#1E293B` con `useNativeDriver: true`.
+    - `EventCardSkeleton.tsx`: Componente espejo con las dimensiones exactas (`rounded-16`, `#0F172A`, borde `rgba(255, 255, 255, 0.07)`), pills de estado y fecha, barra de progreso y bloque de especificaciones.
+    - `AssetDetailSkeleton.tsx`: Componente espejo para el visor de activo con hero card, tags y grilla técnica 2x2.
+  - **Integración en Vistas Principales:**
+    - `EventsScreen.tsx`: Reemplazo del indicador estático por 3x `<EventCardSkeleton />` durante la carga inicial (`loading && !refreshing`), eliminando pantallas en blanco y layout shifts.
+    - `AssetDetailScreen.tsx`: Integración de `<AssetDetailSkeleton />` durante la resolución de metadata de Supabase y SQLite.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+
 - **2026-11-05 (Sesión 76 — Filtrado RBAC y Exclusión de Creador en EventNotificationJoiner):**
   - **Diagnóstico:** Al activarse el canal Realtime WebSocket en `EventNotificationJoiner`, las emisiones de eventos `en_curso` eran procesadas por cualquier dispositivo conectado sin discriminar si el usuario autenticado era el Coordinador/Admin o el creador del evento, provocando que a quien creaba la producción le apareciera el modal preguntando *"El Coordinador ha iniciado el montaje... ¿Deseas unirte?"*.
   - **Filtro de Rol y Autor en `EventNotificationJoiner.tsx`:**
@@ -201,6 +220,7 @@
     - Creado el componente estándar modular `mobile/src/modules/home-event/components/EventCard.tsx` que consume y renderiza `event.centros_eventos?.nombre || event.venue || event.locacion`.
     - Actualizado `EventsScreen.tsx` para usar `EventCard`, consultar `*, centros_eventos(nombre)` y mapear el nombre del centro relacional.
     - Actualizado `EventDetailScreen.tsx` para consultar `*, centros_eventos(nombre)` y renderizar `data.centros_eventos?.nombre || data.locacion`.
+    - Actualizado `HomeScreen.tsx` vinculando el saludo superior dinámicamente con `useAuth()` (`profile.nombre_completo` / `user.user_metadata` / `email`), eliminando el texto quemado *"Hola, Técnico"* para mostrar el nombre real del usuario conectado (ej: *"Hola, Nicolas"*).
     - Actualizado `HomeScreen.tsx` para sincronizar el evento activo en tiempo real con `centros_eventos(nombre)`.
     - Actualizado `StartEventBottomSheet.tsx` para consultar dinámicamente tanto `centros_eventos` como las locaciones históricas de `eventos` desde Supabase Cloud, permitiendo buscar y autocompletar recintos reales registrados en la base de datos de producción (*"puente alto"*, *"la pintana"*, *"Quinta Vergara"*, *"Movistar Arena"*, etc.) y limitando el desplegable estrictamente a 3 o 4 sugerencias.
   - **Corrección de Resplandor Azul en Nativo (iOS/Android) sin alterar la PWA:**
