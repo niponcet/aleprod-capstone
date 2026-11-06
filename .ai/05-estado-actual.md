@@ -202,11 +202,10 @@
     - Actualizado `EventsScreen.tsx` para usar `EventCard`, consultar `*, centros_eventos(nombre)` y mapear el nombre del centro relacional.
     - Actualizado `EventDetailScreen.tsx` para consultar `*, centros_eventos(nombre)` y renderizar `data.centros_eventos?.nombre || data.locacion`.
     - Actualizado `HomeScreen.tsx` para sincronizar el evento activo en tiempo real con `centros_eventos(nombre)`.
-    - Actualizado `StartEventBottomSheet.tsx` para consultar dinámicamente la tabla `centros_eventos` desde Supabase Cloud, eliminando el arreglo estático hardcodeado y limitando la lista desplegable estrictamente a 3 o 4 sugerencias en pantalla al enfocar el input.
-  - **Migración SQL (`supabase/migrations/20261105214500_centros_eventos_rls_and_seed.sql`):**
-    - Creado script DDL con políticas RLS para lectura pública (`anon`, `authenticated`) e inserción, más sembrado inicial de recintos recurrentes ('Espacio Riesco', 'Movistar Arena', 'Estadio Nacional', 'Metropolitan Santiago', etc.).
-  - **Diagnóstico Web Push (`usePushNotifications.ts`):**
-    - Log refinado con diagnóstico discriminado (`faltaVapidKey`, `faltaPushManager`, `faltaServiceWorker`, `esContextoSeguroHTTPS`).
+    - Actualizado `StartEventBottomSheet.tsx` para consultar dinámicamente tanto `centros_eventos` como las locaciones históricas de `eventos` desde Supabase Cloud, permitiendo buscar y autocompletar recintos reales registrados en la base de datos de producción (*"puente alto"*, *"la pintana"*, *"Quinta Vergara"*, *"Movistar Arena"*, etc.) y limitando el desplegable estrictamente a 3 o 4 sugerencias.
+  - **Corrección de Resplandor Azul en Nativo (iOS/Android) sin alterar la PWA:**
+    - Se identificó que `zIndex: -1` en `topAmbientGlow` provocaba que en React Native Nativo el `LinearGradient` quedara oculto detrás del fondo `#000000` de `container`.
+    - Se aisló con `Platform.select({ web: { zIndex: -1 }, default: { zIndex: 0 } })` en `HomeScreen.tsx`, `NotificationsScreen.tsx`, `EventsScreen.tsx`, `AssetDetailScreen.tsx` y `SettingsScreen.tsx`. La PWA conserva su diseño original y en la app nativa el halo azul cobalto es plenamente visible.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/web`: **0 errores**.
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.

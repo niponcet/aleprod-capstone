@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -40,6 +40,11 @@ const FALLBACK_CENTROS: CentroEvento[] = [
   { id: 'e1000000-0000-0000-0000-000000000002', nombre: 'Movistar Arena' },
   { id: 'e1000000-0000-0000-0000-000000000003', nombre: 'Estadio Nacional' },
   { id: 'e1000000-0000-0000-0000-000000000004', nombre: 'Metropolitan Santiago' },
+  { id: 'e1000000-0000-0000-0000-000000000005', nombre: 'Quinta Vergara' },
+  { id: 'e1000000-0000-0000-0000-000000000006', nombre: 'CentroParque' },
+  { id: 'e1000000-0000-0000-0000-000000000007', nombre: 'Club Hípico de Santiago' },
+  { id: 'e1000000-0000-0000-0000-000000000008', nombre: 'Parque Bicentenario de Cerrillos' },
+  { id: 'e1000000-0000-0000-0000-000000000009', nombre: 'Monticello Grand Casino' },
 ];
 
 const PRESET_METERS = [20, 45, 70, 100, 140];
@@ -106,20 +111,38 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
     })
   ).current;
 
-  // Cargar centros de eventos dinámicos desde Supabase al abrir el modal
+  // Cargar centros de eventos dinámicos exclusivamente desde la tabla maestra centros_eventos
   useEffect(() => {
     if (!visible) return;
 
     let isMounted = true;
-    supabase
-      .from('centros_eventos')
-      .select('id, nombre')
-      .order('nombre', { ascending: true })
-      .then(({ data, error }) => {
-        if (!error && data && data.length > 0 && isMounted) {
-          setCentros(data);
+
+    const loadCentros = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('centros_eventos')
+          .select('id, nombre')
+          .order('nombre', { ascending: true });
+
+        if (!isMounted) return;
+
+        if (error) {
+          console.warn('[StartEventBottomSheet] Error consultando centros_eventos:', error.message);
+          return;
         }
-      });
+
+        if (data && data.length > 0) {
+          console.log(`[StartEventBottomSheet] ${data.length} centros de eventos cargados desde Supabase.`);
+          setCentros(data);
+        } else {
+          console.log('[StartEventBottomSheet] centros_eventos devolvió 0 registros (revisar políticas RLS en Supabase).');
+        }
+      } catch (err: any) {
+        console.warn('[StartEventBottomSheet] Excepción cargando centros_eventos:', err?.message);
+      }
+    };
+
+    loadCentros();
 
     return () => {
       isMounted = false;
@@ -127,12 +150,15 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
   }, [visible]);
 
   // Filtrado reactivo de recintos desde la base de datos (límite estricto de 3 a 4 recintos para evitar saturar la vista)
-  const filteredVenues = centros
-    .filter((v) =>
-      !venue.trim() ||
-      v.nombre.toLowerCase().includes(venue.toLowerCase().trim())
-    )
-    .slice(0, 4);
+  const filteredVenues = useMemo(() => {
+    const q = venue.trim().toLowerCase();
+    if (!q) {
+      return centros.slice(0, 4);
+    }
+    return centros
+      .filter((v) => v.nombre.toLowerCase().includes(q))
+      .slice(0, 4);
+  }, [centros, venue]);
 
   const handleSelectVenue = (selected: CentroEvento) => {
     triggerHaptic('selection');
@@ -449,11 +475,19 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                         </TouchableOpacity>
                       ))
                     ) : (
-                      <View style={styles.dropdownEmpty}>
+                      <TouchableOpacity
+                        style={styles.dropdownEmpty}
+                        onPress={() => {
+                          triggerHaptic('selection');
+                          setShowVenueDropdown(false);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="add-circle-outline" size={16} color="#60A5FA" style={{ marginRight: 8 }} />
                         <Text style={styles.dropdownEmptyText}>
-                          Se usará "{venue}" como recinto personalizado.
+                          Usar "{venue.trim()}" como recinto del evento
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                     )}
                   </View>
                 )}
@@ -871,12 +905,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   dropdownEmpty: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
+    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
   },
   dropdownEmptyText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontStyle: 'italic',
+    color: '#93C5FD',
+    fontSize: 12.5,
+    fontWeight: '600',
   },
   servicesGrid: {
     flexDirection: 'row',

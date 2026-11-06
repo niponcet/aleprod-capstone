@@ -612,10 +612,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 220,
-    zIndex: -1,
     ...Platform.select({
       web: {
+        zIndex: -1,
         transform: [{ translateZ: 0 } as any],
+      },
+      default: {
+        zIndex: 0,
       },
     }),
   },
