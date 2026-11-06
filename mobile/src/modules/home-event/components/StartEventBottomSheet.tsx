@@ -30,19 +30,16 @@ export interface StartEventBottomSheetProps {
   onSuccess?: (newEvent: any) => void;
 }
 
-interface RecurrentVenue {
+interface CentroEvento {
   id: string;
-  name: string;
-  commune: string;
+  nombre: string;
 }
 
-const RECURRENT_VENUES: RecurrentVenue[] = [
-  { id: '1', name: 'Estadio Nacional', commune: 'Ñuñoa' },
-  { id: '2', name: 'Movistar Arena', commune: 'Parque O\'Higgins' },
-  { id: '3', name: 'Espacio Riesco', commune: 'Huechuraba' },
-  { id: '4', name: 'Quinta Vergara', commune: 'Viña del Mar' },
-  { id: '5', name: 'CentroParque', commune: 'Las Condes' },
-  { id: '6', name: 'Club Hípico', commune: 'Santiago' },
+const FALLBACK_CENTROS: CentroEvento[] = [
+  { id: 'e1000000-0000-0000-0000-000000000001', nombre: 'Espacio Riesco' },
+  { id: 'e1000000-0000-0000-0000-000000000002', nombre: 'Movistar Arena' },
+  { id: 'e1000000-0000-0000-0000-000000000003', nombre: 'Estadio Nacional' },
+  { id: 'e1000000-0000-0000-0000-000000000004', nombre: 'Metropolitan Santiago' },
 ];
 
 const PRESET_METERS = [20, 45, 70, 100, 140];
@@ -58,6 +55,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('');
   const [selectedCentroId, setSelectedCentroId] = useState<string | null>(null);
+  const [centros, setCentros] = useState<CentroEvento[]>(FALLBACK_CENTROS);
   const [showVenueDropdown, setShowVenueDropdown] = useState(false);
   const [meters, setMeters] = useState('70');
 
@@ -108,16 +106,37 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
     })
   ).current;
 
-  // Filtrado reactivo de recintos frecuentes
-  const filteredVenues = RECURRENT_VENUES.filter(
-    (v) =>
-      v.name.toLowerCase().includes(venue.toLowerCase()) ||
-      v.commune.toLowerCase().includes(venue.toLowerCase())
-  );
+  // Cargar centros de eventos dinámicos desde Supabase al abrir el modal
+  useEffect(() => {
+    if (!visible) return;
 
-  const handleSelectVenue = (selected: RecurrentVenue) => {
+    let isMounted = true;
+    supabase
+      .from('centros_eventos')
+      .select('id, nombre')
+      .order('nombre', { ascending: true })
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0 && isMounted) {
+          setCentros(data);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [visible]);
+
+  // Filtrado reactivo de recintos desde la base de datos (límite estricto de 3 a 4 recintos para evitar saturar la vista)
+  const filteredVenues = centros
+    .filter((v) =>
+      !venue.trim() ||
+      v.nombre.toLowerCase().includes(venue.toLowerCase().trim())
+    )
+    .slice(0, 4);
+
+  const handleSelectVenue = (selected: CentroEvento) => {
     triggerHaptic('selection');
-    setVenue(`${selected.name} · ${selected.commune}`);
+    setVenue(selected.nombre);
     setSelectedCentroId(selected.id);
     setShowVenueDropdown(false);
   };
@@ -360,7 +379,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                     activeOpacity={0.7}
                   >
                     <Text style={styles.toggleDropdownText}>
-                      {showVenueDropdown ? 'Ocultar sugerencias' : 'Ver frecuentes'}
+                      {showVenueDropdown ? 'Ocultar recintos' : 'Ver recintos'}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -374,7 +393,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="Escribe o busca un recinto recurrente..."
+                    placeholder="Selecciona o escribe el centro de eventos..."
                     placeholderTextColor={colors.textMuted}
                     value={venue}
                     onChangeText={(val) => {
@@ -386,7 +405,10 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                   />
                   {venue.length > 0 && (
                     <TouchableOpacity
-                      onPress={() => setVenue('')}
+                      onPress={() => {
+                        setVenue('');
+                        setSelectedCentroId(null);
+                      }}
                       style={{ padding: 4 }}
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
@@ -395,11 +417,11 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                   )}
                 </View>
 
-                {/* Dropdown flotante de Recintos Frecuentes */}
+                {/* Dropdown flotante de Centros de Eventos desde Base de Datos (3-4 sugerencias) */}
                 {showVenueDropdown && (
                   <View style={styles.venueDropdownContainer}>
                     <Text style={styles.dropdownSubtitle}>
-                      RECINTOS FRECUENTES ALEPROD:
+                      CENTROS DE EVENTOS REGISTRADOS:
                     </Text>
                     {filteredVenues.length > 0 ? (
                       filteredVenues.map((item) => (
@@ -416,20 +438,20 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
                             style={{ marginRight: 10 }}
                           />
                           <View style={{ flex: 1 }}>
-                            <Text style={styles.dropdownItemTitle}>{item.name}</Text>
-                            <Text style={styles.dropdownItemSub}>{item.commune}</Text>
+                            <Text style={styles.dropdownItemTitle}>{item.nombre}</Text>
+                            <Text style={styles.dropdownItemSub}>Recinto Oficial</Text>
                           </View>
                           <Ionicons
-                            name="arrow-forward"
-                            size={14}
-                            color={colors.textMuted}
+                            name="checkmark-circle-outline"
+                            size={15}
+                            color="#38BDF8"
                           />
                         </TouchableOpacity>
                       ))
                     ) : (
                       <View style={styles.dropdownEmpty}>
                         <Text style={styles.dropdownEmptyText}>
-                          Se usará el texto escrito como recinto personalizado.
+                          Se usará "{venue}" como recinto personalizado.
                         </Text>
                       </View>
                     )}

@@ -202,7 +202,7 @@
     - Actualizado `EventsScreen.tsx` para usar `EventCard`, consultar `*, centros_eventos(nombre)` y mapear el nombre del centro relacional.
     - Actualizado `EventDetailScreen.tsx` para consultar `*, centros_eventos(nombre)` y renderizar `data.centros_eventos?.nombre || data.locacion`.
     - Actualizado `HomeScreen.tsx` para sincronizar el evento activo en tiempo real con `centros_eventos(nombre)`.
-    - Actualizado `StartEventBottomSheet.tsx` para asociar `centro_id` en la creación rápida desde terreno.
+    - Actualizado `StartEventBottomSheet.tsx` para consultar dinámicamente la tabla `centros_eventos` desde Supabase Cloud, eliminando el arreglo estático hardcodeado y limitando la lista desplegable estrictamente a 3 o 4 sugerencias en pantalla al enfocar el input.
   - **Migración SQL (`supabase/migrations/20261105214500_centros_eventos_rls_and_seed.sql`):**
     - Creado script DDL con políticas RLS para lectura pública (`anon`, `authenticated`) e inserción, más sembrado inicial de recintos recurrentes ('Espacio Riesco', 'Movistar Arena', 'Estadio Nacional', 'Metropolitan Santiago', etc.).
   - **Diagnóstico Web Push (`usePushNotifications.ts`):**
