@@ -17,6 +17,8 @@ export interface DashboardViewProps {
   initialEventos: Array<{
     id: string;
     nombre: string;
+    centro_id?: string | null;
+    centros_eventos?: { id?: string; nombre: string } | null;
     locacion: string | null;
     fecha_inicio: string | null;
     fecha_termino: string | null;
@@ -98,6 +100,31 @@ export function DashboardView({
   const [showNotifications, setShowNotifications] = useState(false);
   const notifContainerRef = useRef<HTMLDivElement>(null);
   const [clearedNotificationIds, setClearedNotificationIds] = useState<string[]>([]);
+
+  /* ─── Centros de Eventos ─── */
+  const [centros, setCentros] = useState<Array<{ id: string; nombre: string }>>([
+    { id: "e1000000-0000-0000-0000-000000000001", nombre: "Espacio Riesco" },
+    { id: "e1000000-0000-0000-0000-000000000002", nombre: "Movistar Arena" },
+    { id: "e1000000-0000-0000-0000-000000000003", nombre: "Estadio Nacional" },
+    { id: "e1000000-0000-0000-0000-000000000004", nombre: "Metropolitan Santiago" },
+    { id: "e1000000-0000-0000-0000-000000000005", nombre: "CentroParque" },
+    { id: "e1000000-0000-0000-0000-000000000006", nombre: "Club Hípico de Santiago" },
+    { id: "e1000000-0000-0000-0000-000000000007", nombre: "Quinta Vergara" },
+  ]);
+  const [centroId, setCentroId] = useState<string>("e1000000-0000-0000-0000-000000000001");
+
+  useEffect(() => {
+    supabase
+      .from("centros_eventos")
+      .select("id, nombre")
+      .order("nombre", { ascending: true })
+      .then((res: any) => {
+        if (res?.data && res.data.length > 0) {
+          setCentros(res.data);
+          setCentroId((prev) => (prev ? prev : res.data[0].id));
+        }
+      });
+  }, [supabase]);
 
   // Cargar notificaciones limpiadas persistentes de localStorage
   useEffect(() => {
@@ -225,7 +252,7 @@ export function DashboardView({
         if (data) setIncidencias(data);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "eventos" }, async () => {
-        const { data } = await supabase.from("eventos").select("*").order("fecha_inicio", { ascending: false });
+        const { data } = await supabase.from("eventos").select("*, centros_eventos(nombre)").order("fecha_inicio", { ascending: false });
         if (data) setEventos(data);
       })
       .subscribe((status: string, err?: any) => {
@@ -331,11 +358,12 @@ export function DashboardView({
 
     // 3. Evento en curso activo
     if (eventoActivo && eventoActivo.estado === "en_curso") {
+      const nombreRecinto = eventoActivo.centros_eventos?.nombre || eventoActivo.locacion || "Locación por definir";
       items.push({
         id: "ev-" + eventoActivo.id,
         tipo: "evento",
         titulo: "Montaje Activo: " + eventoActivo.nombre,
-        descripcion: (eventoActivo.locacion || "Locación por definir") + " (" + (eventoActivo.metros_cuadrados || 0) + " m²)",
+        descripcion: nombreRecinto + " (" + (eventoActivo.metros_cuadrados || 0) + " m²)",
         tiempo: formatTimeAgo(eventoActivo.fecha_inicio || new Date().toISOString()),
         badge: "En Terreno",
         link: "/eventos",
@@ -399,24 +427,26 @@ export function DashboardView({
 
     setGuardandoEvento(true);
     try {
+      const selectedCentro = centros.find((c) => c.id === centroId);
       const { data, error } = await supabase
         .from("eventos")
         .insert({
           nombre: nuevoNombre.trim(),
-          locacion: nuevaLocacion.trim() || "Por definir",
+          centro_id: centroId || null,
+          locacion: selectedCentro?.nombre || "Por definir",
           metros_cuadrados: nuevosM2 || "0",
           tipo_pantalla: nuevoTipo,
           fecha_inicio: nuevaFecha ? new Date(nuevaFecha).toISOString() : new Date().toISOString(),
           estado: "planificado",
         })
-        .select()
+        .select("*, centros_eventos(nombre)")
         .single();
 
       if (!error && data) {
         setEventos([data, ...eventos]);
         setModalNuevoEvento(false);
         setNuevoNombre("");
-        setNuevaLocacion("");
+        setCentroId(centros[0]?.id || "");
       } else if (error) {
         alert("Error al crear evento: " + error.message);
       }
@@ -740,7 +770,7 @@ export function DashboardView({
                     <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                   </svg>
-                  {eventoActivo?.locacion || "Santiago, Chile"}
+                  {eventoActivo?.centros_eventos?.nombre || eventoActivo?.locacion || "Santiago, Chile"}
                 </span>
               </div>
 
@@ -1224,7 +1254,7 @@ export function DashboardView({
                             </span>
                           </div>
                           <span style={{ fontSize: "13px", color: "var(--mu)" }}>
-                            {ev.locacion || "Santiago"} · {ev.tipo_pantalla || "Pista de Baile LED"}
+                            {ev.centros_eventos?.nombre || ev.locacion || "Santiago"} · {ev.tipo_pantalla || "Pista de Baile LED"}
                           </span>
                         </div>
 
@@ -1584,13 +1614,11 @@ export function DashboardView({
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--mu)" }}>Locación *</label>
-                <input
-                  type="text"
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--mu)" }}>Centro de Eventos / Recinto *</label>
+                <select
                   required
-                  placeholder="Ej: Parque O'Higgins, Santiago"
-                  value={nuevaLocacion}
-                  onChange={(e) => setNuevaLocacion(e.target.value)}
+                  value={centroId}
+                  onChange={(e) => setCentroId(e.target.value)}
                   className="text-[16px] md:text-sm"
                   style={{
                     height: "40px",
@@ -1600,8 +1628,15 @@ export function DashboardView({
                     background: "var(--sf2)",
                     color: "var(--tx)",
                     outline: "none",
+                    cursor: "pointer",
                   }}
-                />
+                >
+                  {centros.map((c) => (
+                    <option key={c.id} value={c.id} style={{ background: "var(--sf)", color: "var(--tx)" }}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>

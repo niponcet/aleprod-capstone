@@ -10,6 +10,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -18,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { supabase } from '../../../core/api/supabase';
 import { StartEventBottomSheet } from '../components/StartEventBottomSheet';
+import { EventCard } from '../components/EventCard';
 import { useAuth } from '../../../core/context/AuthContext';
 
 export interface EventItem {
@@ -31,6 +33,8 @@ export interface EventItem {
   deployedMeters: number;
   screenType: string;
   responsible: string;
+  centro_id?: string | null;
+  centros_eventos?: { id?: string; nombre: string } | null;
 }
 
 type MainTabType = 'en_curso' | 'historial';
@@ -46,6 +50,7 @@ export const EventsScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState<boolean>(false);
+  const [historySearchQuery, setHistorySearchQuery] = useState<string>('');
 
   const formatEventDate = (startDateStr: string, endDateStr?: string | null): string => {
     try {
@@ -95,7 +100,7 @@ export const EventsScreen: React.FC = () => {
     return {
       id: dbEvent.id,
       title: dbEvent.nombre,
-      venue: dbEvent.locacion || 'Recinto por definir',
+      venue: dbEvent.centros_eventos?.nombre || dbEvent.locacion || 'Recinto por definir',
       dates: formatEventDate(dbEvent.fecha_inicio, dbEvent.fecha_termino),
       status,
       statusLabel,
@@ -103,6 +108,8 @@ export const EventsScreen: React.FC = () => {
       deployedMeters: deployedM,
       screenType: dbEvent.tipo_pantalla || 'Pista de Baile LED',
       responsible: dbEvent.tecnico_id ? 'Técnico Terreno' : 'Aleprod Producción',
+      centro_id: dbEvent.centro_id || null,
+      centros_eventos: dbEvent.centros_eventos || null,
     };
   };
 
@@ -110,7 +117,7 @@ export const EventsScreen: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('eventos')
-        .select('*')
+        .select('*, centros_eventos(nombre)')
         .order('fecha_inicio', { ascending: false });
 
       if (error) {
@@ -157,11 +164,22 @@ export const EventsScreen: React.FC = () => {
     router.push('/notifications');
   };
 
-  // Filtrar según la pestaña activa (HU-16)
+  // Filtrar según la pestaña activa y buscador de historial (HU-16)
   const activeEvents = events.filter((e) => e.status === 'en_curso' || e.status === 'planificado');
   const historyEvents = events.filter((e) => e.status === 'finalizado');
 
-  const displayedEvents = activeTab === 'en_curso' ? activeEvents : historyEvents;
+  const filteredHistoryEvents = historyEvents.filter((e) => {
+    if (!historySearchQuery.trim()) return true;
+    const q = historySearchQuery.toLowerCase().trim();
+    return (
+      e.title.toLowerCase().includes(q) ||
+      e.venue.toLowerCase().includes(q) ||
+      e.screenType.toLowerCase().includes(q) ||
+      e.dates.toLowerCase().includes(q)
+    );
+  });
+
+  const displayedEvents = activeTab === 'en_curso' ? activeEvents : filteredHistoryEvents;
 
   const handleSelectEvent = (event: EventItem) => {
     triggerHaptic('selection');
@@ -354,6 +372,54 @@ export const EventsScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Barra de Búsqueda y Filtro de Historial (HU-16) */}
+        {activeTab === 'historial' && (
+          <View style={styles.historySearchWrapper}>
+            <View style={styles.historySearchBar}>
+              <Ionicons name="search-outline" size={17} color="#60A5FA" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.historySearchInput}
+                placeholder="Buscar por evento, recinto o formato..."
+                placeholderTextColor="#64748B"
+                value={historySearchQuery}
+                onChangeText={setHistorySearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {historySearchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic('light');
+                    setHistorySearchQuery('');
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ padding: 4 }}
+                >
+                  <Ionicons name="close-circle" size={16} color="#94A3B8" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {historySearchQuery.trim().length > 0 && (
+              <View style={styles.historySearchFeedbackRow}>
+                <Text style={styles.historySearchFeedbackText}>
+                  {filteredHistoryEvents.length} {filteredHistoryEvents.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+                </Text>
+                {filteredHistoryEvents.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      triggerHaptic('light');
+                      setHistorySearchQuery('');
+                    }}
+                  >
+                    <Text style={styles.historySearchClearLink}>Limpiar</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Botón Iniciar Evento (Admin/Coordinador) vs Card Informativa (Técnico) — RBAC */}
         {activeTab === 'en_curso' && (
           canStartEvent ? (
@@ -411,14 +477,22 @@ export const EventsScreen: React.FC = () => {
           <View style={styles.emptyBox}>
             <View style={styles.emptyIconCircle}>
               <Ionicons
-                name={activeTab === 'en_curso' ? 'flash-outline' : 'archive-outline'}
+                name={
+                  activeTab === 'en_curso'
+                    ? 'flash-outline'
+                    : historySearchQuery.trim().length > 0
+                    ? 'search-outline'
+                    : 'archive-outline'
+                }
                 size={28}
-                color="#64748B"
+                color="#60A5FA"
               />
             </View>
             <Text style={styles.emptyTitle}>
               {activeTab === 'en_curso'
                 ? 'No hay eventos en curso actualmente'
+                : historySearchQuery.trim().length > 0
+                ? 'Sin resultados en el historial'
                 : 'No hay eventos archivados en el historial'}
             </Text>
             <Text style={styles.emptySubtitle}>
@@ -426,114 +500,34 @@ export const EventsScreen: React.FC = () => {
                 ? canStartEvent
                   ? 'Presiona "Iniciar Nuevo Evento" para registrar un montaje activo en terreno.'
                   : 'A la espera de que Coordinación o Jefatura dé inicio a un nuevo montaje.'
+                : historySearchQuery.trim().length > 0
+                ? `No encontramos eventos finalizados que coincidan con "${historySearchQuery}".`
                 : 'Los eventos finalizados se almacenarán aquí con su trazabilidad en modo solo lectura.'}
             </Text>
+            {activeTab === 'historial' && historySearchQuery.trim().length > 0 && (
+              <TouchableOpacity
+                style={styles.emptyResetSearchButton}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setHistorySearchQuery('');
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="close-circle-outline" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Text style={styles.emptyResetSearchButtonText}>Limpiar filtro de búsqueda</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
         {/* Listado de Tarjetas de Eventos */}
-        {displayedEvents.map((event) => {
-          const badge = getStatusBadgeStyle(event.status);
-          const progressPercent =
-            event.totalMeters > 0
-              ? Math.min(100, Math.round((event.deployedMeters / event.totalMeters) * 100))
-              : 0;
-
-          return (
-            <TouchableOpacity
-              key={event.id}
-              style={styles.eventCard}
-              onPress={() => handleSelectEvent(event)}
-              activeOpacity={0.82}
-            >
-              {/* Fila Superior con Tag y Fecha */}
-              <View style={styles.cardHeaderRow}>
-                <View
-                  style={[
-                    styles.statusTag,
-                    { backgroundColor: badge.bg, borderColor: badge.border },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.statusDot,
-                      { backgroundColor: badge.dot },
-                    ]}
-                  />
-                  <Text style={[styles.statusTagText, { color: badge.text }]}>
-                    {event.statusLabel}
-                  </Text>
-                </View>
-
-                <View style={styles.datesPill}>
-                  <Ionicons
-                    name="time-outline"
-                    size={12}
-                    color="#94A3B8"
-                    style={{ marginRight: 4 }}
-                  />
-                  <Text style={styles.datesText}>{event.dates}</Text>
-                </View>
-              </View>
-
-              {/* Título y Chevron */}
-              <View style={styles.titleRow}>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                <Ionicons name="chevron-forward" size={18} color="#64748B" />
-              </View>
-
-              {/* Locación */}
-              <View style={styles.venueRow}>
-                <Ionicons
-                  name="location-outline"
-                  size={14}
-                  color="#3B82F6"
-                  style={{ marginRight: 5 }}
-                />
-                <Text style={styles.venueText}>{event.venue}</Text>
-              </View>
-
-              {/* Ficha Técnica */}
-              <View style={styles.techDetailsBox}>
-                <View style={styles.techRow}>
-                  <Text style={styles.techLabel}>Configuración / Equipo:</Text>
-                  <Text style={styles.techValue}>{event.screenType}</Text>
-                </View>
-                <View style={styles.techRow}>
-                  <Text style={styles.techLabel}>Responsable:</Text>
-                  <Text style={styles.techValue}>{event.responsible}</Text>
-                </View>
-              </View>
-
-              {/* Métrica de Despliegue en m² */}
-              <View style={styles.metersBlock}>
-                <View style={styles.metersHeader}>
-                  <Text style={styles.metersTitle}>Superficie Requerida</Text>
-                  <Text style={styles.metersValue}>
-                    <Text style={styles.metersBold}>{event.deployedMeters}</Text> / {event.totalMeters} m²
-                  </Text>
-                </View>
-
-                <View style={styles.progressBarBg}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${progressPercent}%`,
-                        backgroundColor:
-                          event.status === 'en_curso'
-                            ? '#3B82F6'
-                            : event.status === 'finalizado'
-                            ? '#64748B'
-                            : '#10B981',
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+        {displayedEvents.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            onPress={() => handleSelectEvent(event)}
+          />
+        ))}
       </ScrollView>
 
       {/* Componente Bottom Sheet para Iniciar Evento */}
@@ -959,5 +953,55 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  historySearchWrapper: {
+    marginBottom: 14,
+  },
+  historySearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#121620',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+  },
+  historySearchInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    padding: 0,
+  },
+  historySearchFeedbackRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  historySearchFeedbackText: {
+    color: '#60A5FA',
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  historySearchClearLink: {
+    color: '#94A3B8',
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  emptyResetSearchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+    marginTop: 14,
+  },
+  emptyResetSearchButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
 });

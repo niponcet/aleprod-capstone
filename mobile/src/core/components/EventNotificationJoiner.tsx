@@ -24,7 +24,7 @@ interface EventPayload {
  */
 export const EventNotificationJoiner: React.FC = () => {
   const { showToast } = useToast();
-  const { user } = useAuth();
+  const { user, isTecnico, isCoordinador, isAdmin } = useAuth();
 
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
@@ -52,6 +52,20 @@ export const EventNotificationJoiner: React.FC = () => {
 
       if (!eventoId) {
         // La notificación no corresponde a un evento
+        return;
+      }
+
+      // 1. FILTRO DE ROL: Solo los técnicos de terreno deben ser invitados a unirse a eventos.
+      // Los coordinadores y administradores lideran las producciones y no se unen como técnicos.
+      if (!isTecnico && (isCoordinador || isAdmin)) {
+        console.log('[EventJoiner] Omitido: El usuario actual es Coordinador/Admin.');
+        return;
+      }
+
+      // 2. FILTRO DE CREADOR: Si el usuario actual es el creador/responsable del evento, omitir
+      const creadorId = data.tecnico_id || data.tecnicoId || data.creador_id;
+      if (user?.id && creadorId && creadorId === user.id) {
+        console.log('[EventJoiner] Omitido: El usuario actual inició o creó este evento.');
         return;
       }
 
@@ -101,7 +115,7 @@ export const EventNotificationJoiner: React.FC = () => {
       setPendingEvent({ evento_id: eventoId, nombre_evento: nombreEvento });
       setModalVisible(true);
     },
-    [modalVisible, pendingEvent, showToast]
+    [modalVisible, pendingEvent, showToast, isTecnico, isCoordinador, isAdmin, user]
   );
 
   useEffect(() => {
@@ -151,10 +165,21 @@ export const EventNotificationJoiner: React.FC = () => {
           const newRecord = payload.new as any;
           const oldRecord = payload.old as any;
           if (newRecord?.estado === 'en_curso' && oldRecord?.estado !== 'en_curso') {
+            // Omitir si el usuario actual es Coordinador/Admin o es el autor del evento
+            if (!isTecnico && (isCoordinador || isAdmin)) {
+              console.log('[EventJoiner] Omitido: Usuario actual es Coordinador/Admin.');
+              return;
+            }
+            if (user?.id && newRecord?.tecnico_id === user.id) {
+              console.log('[EventJoiner] Omitido: Usuario actual es el creador del evento.');
+              return;
+            }
+
             processEventPayload(
               {
                 evento_id: newRecord.id,
                 nombre_evento: newRecord.nombre,
+                tecnico_id: newRecord.tecnico_id,
               },
               false
             );
@@ -199,7 +224,7 @@ export const EventNotificationJoiner: React.FC = () => {
       // 1. Validación Realtime contra Supabase Cloud
       const { data: remoteEvent, error } = await supabase
         .from('eventos')
-        .select('*')
+        .select('*, centros_eventos(nombre)')
         .eq('id', targetId)
         .maybeSingle();
 
@@ -222,7 +247,9 @@ export const EventNotificationJoiner: React.FC = () => {
       const localToSave: LocalEvento = {
         id: remoteEvent.id,
         nombre: remoteEvent.nombre,
-        locacion: remoteEvent.locacion || 'Recinto no especificado',
+        centro_id: remoteEvent.centro_id,
+        centros_eventos: remoteEvent.centros_eventos,
+        locacion: (remoteEvent.centros_eventos as any)?.nombre || remoteEvent.locacion || 'Recinto no especificado',
         fecha_inicio: remoteEvent.fecha_inicio || new Date().toISOString(),
         fecha_termino: remoteEvent.fecha_termino || null,
         estado: 'en_curso',

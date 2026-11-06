@@ -6,7 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initDB } from '../src/core/db/database';
 import { AuthProvider, useAuth } from '../src/core/context/AuthContext';
 import { ToastProvider } from '../src/core/context/ToastContext';
-import { EventNotificationJoiner } from '../src/core/components/EventNotificationJoiner';
 import { colors } from '../src/core/theme/colors';
 import { setupAlertPolyfill } from '../src/core/utils/alertPolyfill';
 import { useFonts } from 'expo-font';
@@ -93,7 +92,6 @@ export default function RootLayout() {
         <AuthProvider>
           <ToastProvider>
             <RootNavigationLayout />
-            <EventNotificationJoiner />
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>

@@ -36,15 +36,23 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
       }
 
       const vapidKey = process.env.EXPO_PUBLIC_VAPID_KEY;
-      if (
-        !vapidKey ||
-        typeof window === 'undefined' ||
-        !('serviceWorker' in navigator) ||
-        !('PushManager' in window)
-      ) {
-        console.log(
-          '[PushNotifications] Web Push omitido: VAPID key no configurada o PushManager no disponible en este navegador.'
-        );
+      const isWindowAvailable = typeof window !== 'undefined';
+      const hasSW = isWindowAvailable && 'serviceWorker' in navigator;
+      const hasPushManager = isWindowAvailable && 'PushManager' in window;
+      const isSecure = isWindowAvailable && (window.isSecureContext ?? false);
+
+      if (!vapidKey || !isWindowAvailable || !hasSW || !hasPushManager) {
+        console.log('[PushNotifications] Web Push omitido. Diagnóstico:', {
+          faltaVapidKey: !vapidKey,
+          faltaServiceWorker: !hasSW,
+          faltaPushManager: !hasPushManager,
+          esContextoSeguroHTTPS: isSecure,
+        });
+        if (!isSecure && isWindowAvailable) {
+          console.log(
+            '[PushNotifications] Web Push requiere HTTPS o localhost. En conexiones HTTP por IP (ej. http://192.168.x.x) los navegadores deshabilitan PushManager.'
+          );
+        }
         return null;
       }
     }

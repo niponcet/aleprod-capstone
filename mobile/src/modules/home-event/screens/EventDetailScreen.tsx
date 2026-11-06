@@ -14,6 +14,7 @@ import {
 import { useEdgeInsets } from '../../../core/hooks/useEdgeInsets';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { triggerHaptic } from '../../../core/utils/haptics';
@@ -155,14 +156,14 @@ export const EventDetailScreen: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('eventos')
-        .select('*')
+        .select('*, centros_eventos(nombre)')
         .eq('id', eventId)
         .single();
 
       if (data && !error) {
         setEventData({
           nombre: data.nombre,
-          locacion: data.locacion,
+          locacion: (data.centros_eventos as any)?.nombre || data.locacion || 'Recinto no especificado',
           metros_cuadrados: Number(data.metros_cuadrados) || 0,
           tipo_pantalla: data.tipo_pantalla || 'Pista de Baile LED',
           fecha_inicio: data.fecha_inicio,
@@ -268,7 +269,7 @@ export const EventDetailScreen: React.FC = () => {
 
   const renderHeader = () => (
     <View style={styles.headerContentContainer}>
-      {/* Tarjeta de Información General */}
+      {/* Tarjeta de Información General Glass */}
       <View style={styles.infoCard}>
         {/* Fila de Estado */}
         <View style={styles.statusRow}>
@@ -281,13 +282,13 @@ export const EventDetailScreen: React.FC = () => {
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: isReadOnly ? colors.textMuted : colors.primaryLight },
+                { backgroundColor: isReadOnly ? '#94A3B8' : '#3B82F6' },
               ]}
             />
             <Text
               style={[
                 styles.statusText,
-                { color: isReadOnly ? colors.textMuted : colors.primaryLight },
+                { color: isReadOnly ? '#94A3B8' : '#60A5FA' },
               ]}
             >
               {isReadOnly ? 'FINALIZADO · SOLO LECTURA' : 'MONTAJE EN CURSO'}
@@ -295,13 +296,13 @@ export const EventDetailScreen: React.FC = () => {
           </View>
 
           <View style={styles.categoryPill}>
-            <MaterialCommunityIcons
-              name="party-popper"
-              size={13}
-              color={colors.primaryAmber}
+            <Ionicons
+              name="flash"
+              size={11}
+              color="#60A5FA"
               style={{ marginRight: 4 }}
             />
-            <Text style={styles.categoryText}>Operativo</Text>
+            <Text style={styles.categoryText}>Producción Activa</Text>
           </View>
         </View>
 
@@ -309,31 +310,37 @@ export const EventDetailScreen: React.FC = () => {
         <Text style={styles.eventTitle}>{eventData.nombre}</Text>
         <View style={styles.venueRow}>
           <Ionicons
-            name="location-outline"
-            size={16}
-            color={colors.primaryAmber}
+            name="location-sharp"
+            size={15}
+            color="#60A5FA"
             style={{ marginRight: 6 }}
           />
           <Text style={styles.venueText}>{eventData.locacion}</Text>
         </View>
 
-        {/* Ficha de Métricas Rápidas */}
+        {/* Ficha de Métricas Rápidas en Cuadrícula Dark Navy Glass */}
         <View style={styles.metricsGrid}>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>SUPERFICIE</Text>
+            <View style={styles.metricHeaderRow}>
+              <Ionicons name="scan-outline" size={13} color="#60A5FA" style={{ marginRight: 4 }} />
+              <Text style={styles.metricLabel}>SUPERFICIE</Text>
+            </View>
             <Text style={styles.metricValue}>
               {eventData.metros_cuadrados}{' '}
               <Text style={styles.metricUnit}>m²</Text>
             </Text>
             <Text style={styles.metricSub}>
-              ≈ {Math.round(eventData.metros_cuadrados * 4)} palmetas
+              ≈ {Math.round(eventData.metros_cuadrados * 4)} palmetas LED
             </Text>
           </View>
 
           <View style={styles.metricDivider} />
 
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>CONFIGURACIÓN</Text>
+            <View style={styles.metricHeaderRow}>
+              <Ionicons name="grid-outline" size={13} color="#60A5FA" style={{ marginRight: 4 }} />
+              <Text style={styles.metricLabel}>FORMATO</Text>
+            </View>
             <Text style={styles.metricValueSmall} numberOfLines={1}>
               {eventData.tipo_pantalla}
             </Text>
@@ -345,41 +352,49 @@ export const EventDetailScreen: React.FC = () => {
       {/* Banner Informativo de Modo Solo Lectura (HU-16) */}
       {isReadOnly ? (
         <View style={styles.readOnlyBanner}>
-          <Ionicons
-            name="lock-closed"
-            size={18}
-            color={colors.textSecondary}
-            style={{ marginRight: 8 }}
-          />
+          <View style={styles.lockIconCircle}>
+            <Ionicons
+              name="lock-closed"
+              size={16}
+              color="#94A3B8"
+            />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.readOnlyTitle}>Evento Concluido y Protegido</Text>
             <Text style={styles.readOnlyDesc}>
-              Este evento se encuentra archivado. Las incidencias y el inventario están en modo de solo lectura.
+              Este evento se encuentra archivado en el historial. Las incidencias y el inventario están en modo de solo lectura.
             </Text>
           </View>
         </View>
       ) : (
         /* Acciones de Operación (Solo visibles si el evento está activo) */
         <View style={styles.actionsContainer}>
-          {/* Botón Reportar Falla en Terreno (Abre Cámara Directa) */}
+          {/* Botón Principal Gradiente: Reportar Falla en Terreno */}
           <TouchableOpacity
-            style={styles.reportButton}
+            style={styles.reportButtonWrapper}
             onPress={() => {
               triggerHaptic('medium');
               setIsScannerVisible(true);
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Ionicons
-              name="warning-outline"
-              size={18}
-              color="#60A5FA"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.reportButtonText}>Reportar Falla en este Evento</Text>
+            <LinearGradient
+              colors={['#2563EB', '#1D4ED8']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.reportButtonGradient}
+            >
+              <Ionicons
+                name="camera-outline"
+                size={18}
+                color="#FFFFFF"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.reportButtonText}>Escanear y Reportar Falla</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
-          {/* Botón Rojo de Cierre: Finalizar Evento */}
+          {/* Botón de Cierre: Finalizar Evento */}
           <TouchableOpacity
             style={styles.finalizeButton}
             onPress={handleConfirmFinalizeEvent}
@@ -387,16 +402,16 @@ export const EventDetailScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             {closingEvent ? (
-              <ActivityIndicator size="small" color={colors.danger} />
+              <ActivityIndicator size="small" color="#EF4444" />
             ) : (
               <View style={styles.finalizeInner}>
                 <Ionicons
                   name="stop-circle-outline"
-                  size={18}
-                  color={colors.danger}
+                  size={16}
+                  color="#EF4444"
                   style={{ marginRight: 6 }}
                 />
-                <Text style={styles.finalizeText}>Finalizar Evento</Text>
+                <Text style={styles.finalizeText}>Finalizar Montaje</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -406,20 +421,21 @@ export const EventDetailScreen: React.FC = () => {
       {/* Encabezado de la Sección de Trazabilidad */}
       <View style={styles.sectionHeaderRow}>
         <View style={styles.sectionHeaderLeft}>
-          <Ionicons
-            name="list-outline"
-            size={18}
-            color="#60A5FA"
-            style={{ marginRight: 6 }}
-          />
+          <View style={styles.sectionIconCircle}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={16}
+              color="#60A5FA"
+            />
+          </View>
           <Text style={styles.sectionTitle}>
-            Trazabilidad de Incidencias ({incidents.length})
+            Trazabilidad de Incidencias
           </Text>
         </View>
 
-        {loadingIncidents && (
-          <ActivityIndicator size="small" color="#60A5FA" />
-        )}
+        <View style={styles.incidentsCountPill}>
+          <Text style={styles.incidentsCountText}>{incidents.length}</Text>
+        </View>
       </View>
     </View>
   );
@@ -430,10 +446,10 @@ export const EventDetailScreen: React.FC = () => {
         <View style={styles.incidentTopRow}>
           <View style={styles.incidentTag}>
             <Ionicons
-              name="alert-circle"
-              size={14}
-              color={colors.warning}
-              style={{ marginRight: 4 }}
+              name="alert-circle-outline"
+              size={13}
+              color="#F59E0B"
+              style={{ marginRight: 5 }}
             />
             <Text style={styles.incidentTagText}>{item.tipo_falla}</Text>
           </View>
@@ -441,14 +457,14 @@ export const EventDetailScreen: React.FC = () => {
           <View style={styles.syncBadge}>
             <Ionicons
               name={item.is_local ? 'cloud-offline-outline' : 'cloud-done-outline'}
-              size={12}
-              color={item.is_local ? colors.warning : colors.success}
+              size={11}
+              color={item.is_local ? '#F59E0B' : '#10B981'}
               style={{ marginRight: 4 }}
             />
             <Text
               style={[
                 styles.syncBadgeText,
-                { color: item.is_local ? colors.warning : colors.success },
+                { color: item.is_local ? '#F59E0B' : '#10B981' },
               ]}
             >
               {item.is_local ? 'Local' : 'Cloud'}
@@ -458,7 +474,10 @@ export const EventDetailScreen: React.FC = () => {
 
         <View style={styles.incidentBody}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.incidentQrCode}>Palmeta QR: {item.qr_uuid}</Text>
+            <View style={styles.qrCodeBadge}>
+              <Ionicons name="qr-code" size={13} color="#60A5FA" style={{ marginRight: 6 }} />
+              <Text style={styles.incidentQrCode} numberOfLines={1}>{item.qr_uuid}</Text>
+            </View>
             {item.observaciones ? (
               <Text style={styles.incidentObservations} numberOfLines={2}>
                 "{item.observaciones}"
@@ -481,11 +500,13 @@ export const EventDetailScreen: React.FC = () => {
     if (loadingIncidents) return null;
     return (
       <View style={styles.emptyIncidentsBox}>
-        <Ionicons
-          name="checkmark-done-circle-outline"
-          size={44}
-          color={colors.success}
-        />
+        <View style={styles.emptyIconCircle}>
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={36}
+            color="#10B981"
+          />
+        </View>
         <Text style={styles.emptyIncidentsTitle}>Sin incidencias reportadas</Text>
         <Text style={styles.emptyIncidentsSubtitle}>
           El montaje opera con normalidad y no presenta fallas registradas.
@@ -498,6 +519,14 @@ export const EventDetailScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
+      {/* Halo ambiental superior suave idéntico a Notificaciones y Agenda */}
+      <LinearGradient
+        colors={['#000000', '#000000', 'rgba(29, 78, 216, 0.35)', 'rgba(37, 99, 235, 0.18)', 'transparent']}
+        locations={[0, 0.22, 0.50, 0.78, 1]}
+        style={styles.topAmbientGlow}
+        pointerEvents="none"
+      />
+
       {/* Barra de Navegación Superior Fija */}
       <View
         style={[
@@ -505,24 +534,53 @@ export const EventDetailScreen: React.FC = () => {
           {
             paddingTop:
               Platform.OS === 'web'
-                ? ('max(calc(env(safe-area-inset-top, 0px) + 8px), 20px)' as any)
-                : insets.top + 8,
+                ? ('max(calc(env(safe-area-inset-top, 0px) + 12px), 20px)' as any)
+                : insets.top + 12,
           },
         ]}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
+        <View style={styles.topBarLeft}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              triggerHaptic('light');
+              router.back();
+            }}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <View style={styles.topBarTexts}>
+            <Text style={styles.topBarSubtitle}>Aleprod Terreno</Text>
+            <Text style={styles.topBarTitle} numberOfLines={1}>
+              {eventData.nombre}
+            </Text>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.headerStatusBadge,
+            isReadOnly ? styles.headerStatusBadgeFinalized : styles.headerStatusBadgeActive,
+          ]}
         >
-          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-        </TouchableOpacity>
-
-        <Text style={styles.topBarTitle} numberOfLines={1}>
-          {eventData.nombre}
-        </Text>
-
-        <View style={styles.topBarRightPlaceholder} />
+          <View
+            style={[
+              styles.headerStatusDot,
+              { backgroundColor: isReadOnly ? '#94A3B8' : '#3B82F6' },
+            ]}
+          />
+          <Text
+            style={[
+              styles.headerStatusText,
+              { color: isReadOnly ? '#94A3B8' : '#60A5FA' },
+            ]}
+          >
+            {isReadOnly ? 'FINALIZADO' : 'EN CURSO'}
+          </Text>
+        </View>
       </View>
 
       <FlatList
@@ -610,39 +668,84 @@ export const EventDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#000000',
+  },
+  topAmbientGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 180,
+    zIndex: 0,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
+    paddingBottom: 14,
+    backgroundColor: 'transparent',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255, 255, 255, 0.07)',
     zIndex: 10,
+  },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
   },
   backButton: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
+  },
+  topBarTexts: {
+    flex: 1,
+  },
+  topBarSubtitle: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
   },
   topBarTitle: {
-    flex: 1,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginHorizontal: 10,
+    fontWeight: '800',
   },
-  topBarRightPlaceholder: {
-    width: 38,
+  headerStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  headerStatusBadgeActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  headerStatusBadgeFinalized: {
+    backgroundColor: 'rgba(100, 116, 139, 0.14)',
+    borderColor: 'rgba(100, 116, 139, 0.25)',
+  },
+  headerStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 5,
+  },
+  headerStatusText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
   listContent: {
     paddingHorizontal: 18,
@@ -653,12 +756,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   infoCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 18,
     padding: 18,
     marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
   },
   statusRow: {
     flexDirection: 'row',
@@ -675,12 +782,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusBadgeActive: {
-    backgroundColor: 'rgba(234, 179, 8, 0.14)',
-    borderColor: 'rgba(234, 179, 8, 0.35)',
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   statusBadgeFinalized: {
-    backgroundColor: 'rgba(113, 113, 122, 0.16)',
-    borderColor: 'rgba(113, 113, 122, 0.35)',
+    backgroundColor: 'rgba(100, 116, 139, 0.14)',
+    borderColor: 'rgba(100, 116, 139, 0.25)',
   },
   statusDot: {
     width: 6,
@@ -689,27 +796,27 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
   },
   categoryText: {
-    color: colors.textSecondary,
-    fontSize: 10,
+    color: '#60A5FA',
+    fontSize: 10.5,
     fontWeight: '600',
   },
   eventTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 6,
@@ -721,14 +828,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   venueText: {
-    color: colors.textSecondary,
-    fontSize: 14,
+    color: '#94A3B8',
+    fontSize: 13.5,
+    fontWeight: '500',
   },
   metricsGrid: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#0F1422',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 14,
     padding: 14,
   },
@@ -737,54 +845,69 @@ const styles = StyleSheet.create({
   },
   metricDivider: {
     width: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     marginHorizontal: 12,
   },
+  metricHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   metricLabel: {
-    color: colors.textMuted,
+    color: '#64748B',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.8,
-    marginBottom: 4,
   },
   metricValue: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
   },
   metricValueSmall: {
-    color: colors.textPrimary,
-    fontSize: 13,
+    color: '#FFFFFF',
+    fontSize: 13.5,
     fontWeight: '700',
   },
   metricUnit: {
-    color: colors.primaryAmber,
+    color: '#60A5FA',
     fontSize: 13,
     fontWeight: '600',
   },
   metricSub: {
-    color: colors.textSecondary,
-    fontSize: 10,
+    color: '#64748B',
+    fontSize: 10.5,
     marginTop: 2,
   },
   readOnlyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(38, 42, 52, 0.45)',
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 14,
     padding: 14,
     marginBottom: 18,
   },
+  lockIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   readOnlyTitle: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 2,
   },
   readOnlyDesc: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 11,
     lineHeight: 16,
   },
@@ -792,28 +915,35 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     gap: 10,
   },
-  reportButton: {
+  reportButtonWrapper: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  reportButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-    paddingVertical: 12,
+    paddingVertical: 13,
     borderRadius: 12,
   },
   reportButtonText: {
-    color: '#60A5FA',
-    fontSize: 13,
+    color: '#FFFFFF',
+    fontSize: 13.5,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
   finalizeButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
-    paddingVertical: 12,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+    paddingVertical: 11,
     borderRadius: 12,
   },
   finalizeInner: {
@@ -821,7 +951,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   finalizeText: {
-    color: colors.danger,
+    color: '#EF4444',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -830,22 +960,45 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
-    marginTop: 6,
+    marginTop: 4,
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  sectionIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
   sectionTitle: {
-    color: colors.textPrimary,
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 14.5,
     fontWeight: '700',
-    letterSpacing: 0.2,
+  },
+  incidentsCountPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  incidentsCountText: {
+    color: '#60A5FA',
+    fontSize: 11,
+    fontWeight: '800',
   },
   incidentCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#121620',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
@@ -859,22 +1012,24 @@ const styles = StyleSheet.create({
   incidentTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderColor: 'rgba(245, 158, 11, 0.28)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   incidentTagText: {
-    color: colors.warning,
+    color: '#F59E0B',
     fontSize: 11,
     fontWeight: '700',
   },
   syncBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
@@ -887,52 +1042,68 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  qrCodeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   incidentQrCode: {
-    color: colors.textPrimary,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
-    marginBottom: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   incidentObservations: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 12,
     fontStyle: 'italic',
     marginBottom: 4,
+    lineHeight: 16,
   },
   incidentDate: {
-    color: colors.textMuted,
-    fontSize: 10,
+    color: '#64748B',
+    fontSize: 10.5,
   },
   incidentThumbnail: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     borderRadius: 8,
-    marginLeft: 10,
+    marginLeft: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   emptyIncidentsBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 32,
+    paddingVertical: 36,
     paddingHorizontal: 20,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: '#121620',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     marginTop: 8,
   },
+  emptyIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
   emptyIncidentsTitle: {
-    color: colors.textPrimary,
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
-    marginTop: 10,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   emptyIncidentsSubtitle: {
-    color: colors.textSecondary,
-    fontSize: 11,
+    color: '#94A3B8',
+    fontSize: 12,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 17,
   },
 });

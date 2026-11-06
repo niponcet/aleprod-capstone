@@ -626,9 +626,10 @@ export const ActivityHistoryScreen: React.FC = () => {
     <View style={[styles.container, { width: screenWidth }]}>
       <StatusBar barStyle="light-content" />
 
-      {/* Halo ambiental superior suave idéntico a Notificaciones y Detalle de Activo */}
+      {/* Halo ambiental superior continuo idéntico a Notificaciones y Agenda */}
       <LinearGradient
-        colors={['rgba(29, 78, 216, 0.35)', 'rgba(29, 78, 216, 0.08)', 'transparent']}
+        colors={['#000000', '#000000', 'rgba(29, 78, 216, 0.35)', 'rgba(37, 99, 235, 0.18)', 'transparent']}
+        locations={[0, 0.22, 0.50, 0.78, 1]}
         style={styles.topAmbientGlow}
         pointerEvents="none"
       />
@@ -953,18 +954,18 @@ export const ActivityHistoryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#080C14',
+    backgroundColor: '#000000',
   },
   topAmbientGlow: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 280,
+    height: 180,
     zIndex: 0,
   },
   headerContainer: {
-    backgroundColor: '#080C14',
+    backgroundColor: 'transparent',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.07)',
     paddingHorizontal: 16,

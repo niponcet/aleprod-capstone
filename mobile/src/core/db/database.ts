@@ -33,6 +33,7 @@ export interface LocalIncidencia {
   foto_uri?: string;
   observaciones?: string;
   evento_id?: string;
+  tecnico_id?: string;
   sincronizado: number;
   sincronizado_at?: string;
 }
@@ -40,6 +41,8 @@ export interface LocalIncidencia {
 export interface LocalEvento {
   id: string;
   nombre: string;
+  centro_id?: string | null;
+  centros_eventos?: { id?: string; nombre: string } | null;
   locacion: string;
   fecha_inicio: string;
   fecha_termino?: string;
@@ -101,6 +104,9 @@ export const initDB = () => {
     }
     if (!colNames.includes('sincronizado_at')) {
       db.execSync('ALTER TABLE incidencias_locales ADD COLUMN sincronizado_at TEXT;');
+    }
+    if (!colNames.includes('tecnico_id')) {
+      db.execSync('ALTER TABLE incidencias_locales ADD COLUMN tecnico_id TEXT;');
     }
 
     // 2. Tabla de eventos locales para resiliencia offline (HU-16)
@@ -175,7 +181,8 @@ export const insertIncidencia = (
   tipoFalla: string = 'Escaneo Operativo',
   fotoUri?: string,
   observaciones?: string,
-  eventoId?: string
+  eventoId?: string,
+  tecnicoId?: string
 ) => {
   try {
     const fecha = new Date().toISOString();
@@ -186,8 +193,8 @@ export const insertIncidencia = (
         : activeLocal?.nombre || activeLocal?.id || 'Festival Estadio Nacional';
 
     const result = db.runSync(
-      'INSERT INTO incidencias_locales (qr_uuid, fecha, tipo_falla, foto_uri, observaciones, evento_id, sincronizado) VALUES (?, ?, ?, ?, ?, ?, 0)',
-      [qrUuid, fecha, tipoFalla, fotoUri ?? null, observaciones ?? null, resolvedEvento]
+      'INSERT INTO incidencias_locales (qr_uuid, fecha, tipo_falla, foto_uri, observaciones, evento_id, tecnico_id, sincronizado) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
+      [qrUuid, fecha, tipoFalla, fotoUri ?? null, observaciones ?? null, resolvedEvento, tecnicoId ?? null]
     );
     console.log("Registro guardado con éxito. ID:", result.lastInsertRowId);
     return result.lastInsertRowId;
@@ -327,6 +334,21 @@ export const getActiveLocalEvento = (): LocalEvento | null => {
   } catch (error) {
     console.warn("Error obteniendo evento activo local:", error);
     return null;
+  }
+};
+
+/**
+ * Retorna todos los eventos en curso de la caché SQLite local
+ */
+export const getActiveLocalEventos = (): LocalEvento[] => {
+  try {
+    const rows = db.getAllSync<LocalEvento>(
+      "SELECT * FROM eventos_locales WHERE estado = 'en_curso' ORDER BY fecha_inicio DESC"
+    );
+    return rows;
+  } catch (error) {
+    console.warn("Error obteniendo eventos activos locales:", error);
+    return [];
   }
 };
 

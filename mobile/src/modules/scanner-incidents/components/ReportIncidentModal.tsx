@@ -22,8 +22,9 @@ import { colors } from '../../../core/theme/colors';
 import { LiquidGlassView } from '../../../core/components/LiquidGlassView';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { insertLocalIncidencia } from '../../../core/db/database';
-import { reportIncident } from '../../../core/api/incidencias';
+import { reportIncident, fetchActiveEvents, ActiveEventOption } from '../../../core/api/incidencias';
 import { useToast } from '../../../core/context/ToastContext';
+import { useAuth } from '../../../core/context/AuthContext';
 
 export interface ReportIncidentModalProps {
   visible: boolean;
@@ -53,10 +54,11 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
   onClose,
   qrUuid,
   eventoId,
-  eventoNombre = 'Festival Estadio Nacional',
+  eventoNombre,
   onSuccess,
   onRequestScan,
 }) => {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [activeQr, setActiveQr] = useState<string>(qrUuid || '');
   const [isManualInput, setIsManualInput] = useState<boolean>(!qrUuid);
@@ -64,6 +66,65 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [observations, setObservations] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
+
+  // Selector Dinámico de Eventos en Curso (HU-10/HU-11)
+  const [activeEvents, setActiveEvents] = useState<ActiveEventOption[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState<boolean>(false);
+  const [selectedEventId, setSelectedEventId] = useState<string>(eventoId || '');
+  const [selectedEventNombre, setSelectedEventNombre] = useState<string>(eventoNombre || '');
+  const [isEventPickerOpen, setIsEventPickerOpen] = useState<boolean>(false);
+
+  // Consulta de eventos en curso al abrir el modal
+  useEffect(() => {
+    if (!visible) {
+      setIsEventPickerOpen(false);
+      return;
+    }
+
+    let isMounted = true;
+    const loadActiveEvents = async () => {
+      setLoadingEvents(true);
+      try {
+        const list = await fetchActiveEvents();
+        if (!isMounted) return;
+        setActiveEvents(list);
+
+        if (eventoId) {
+          setSelectedEventId(eventoId);
+          const match = list.find((e) => e.id === eventoId);
+          if (match) {
+            setSelectedEventNombre(match.nombre);
+          } else if (eventoNombre) {
+            setSelectedEventNombre(eventoNombre);
+          }
+        } else if (list.length > 0) {
+          // Pre-seleccionar el primer evento activo para ahorrar clics si solo hay 1
+          setSelectedEventId((prev) => {
+            const existing = list.find((e) => e.id === prev);
+            if (existing) {
+              setSelectedEventNombre(existing.nombre);
+              return existing.id;
+            }
+            setSelectedEventNombre(list[0].nombre);
+            return list[0].id;
+          });
+        } else {
+          setSelectedEventId('');
+          setSelectedEventNombre('');
+        }
+      } catch (err) {
+        console.warn('Error cargando eventos activos:', err);
+      } finally {
+        if (isMounted) setLoadingEvents(false);
+      }
+    };
+
+    loadActiveEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [visible, eventoId, eventoNombre]);
 
   // Gesto PanResponder para bajar/deslizar el modal y cerrarlo
   const panY = useRef(new Animated.Value(0)).current;
@@ -172,17 +233,28 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
       return;
     }
 
+    if (!selectedEventId) {
+      triggerHaptic('warning');
+      Alert.alert(
+        'Evento Requerido',
+        'Debes seleccionar un evento en curso para asociar la incidencia.'
+      );
+      return;
+    }
+
     setSaving(true);
-    const effectiveEvent = eventoNombre || eventoId || 'Festival Estadio Nacional';
+    const effectiveEvent = selectedEventNombre || selectedEventId;
 
     try {
-      // Flujo Online-First con Offline-Fallback automático
+      // Flujo Online-First con Offline-Fallback automático y trazabilidad de usuario
       const result = await reportIncident({
         qrUuid: cleanQr,
         tipoFalla: selectedComponent,
         fotoUri: photoUri ?? undefined,
         observaciones: observations.trim() || undefined,
+        eventoId: selectedEventId,
         eventoIdOrNombre: effectiveEvent,
+        usuarioId: user?.id,
       });
 
       setSaving(false);
@@ -281,6 +353,113 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
                 contentContainerStyle={styles.sheetBody}
                 keyboardShouldPersistTaps="handled"
               >
+                {/* Sección: Selector Obligatorio de Evento Asociado (Stateless HU-10/HU-11) */}
+                <View style={styles.eventSectionHeader}>
+                  <Text style={styles.sectionLabel}>EVENTO ASOCIADO *</Text>
+                  {activeEvents.length > 0 && (
+                    <View style={styles.eventCountBadge}>
+                      <View style={styles.eventDotActive} />
+                      <Text style={styles.eventCountText}>{activeEvents.length} activo{activeEvents.length > 1 ? 's' : ''}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {loadingEvents ? (
+                  <View style={styles.eventLoadingCard}>
+                    <ActivityIndicator size="small" color="#60A5FA" style={{ marginRight: 10 }} />
+                    <Text style={styles.eventLoadingText}>Consultando montajes en curso...</Text>
+                  </View>
+                ) : activeEvents.length === 0 ? (
+                  <View style={styles.noEventsWarningBox}>
+                    <Ionicons name="alert-circle" size={20} color="#F59E0B" style={{ marginRight: 8 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.noEventsWarningTitle}>Sin montajes en curso</Text>
+                      <Text style={styles.noEventsWarningSubtitle}>
+                        A la espera de que Jefatura o Coordinación inicie un evento para registrar incidencias.
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.eventPickerContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.eventSelectorCard,
+                        isEventPickerOpen && styles.eventSelectorCardOpen,
+                        !selectedEventId && styles.eventSelectorCardMissing,
+                      ]}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        setIsEventPickerOpen(!isEventPickerOpen);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.eventSelectorIconBox}>
+                        <Ionicons name="calendar-outline" size={16} color="#60A5FA" />
+                      </View>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={styles.eventSelectorTitle} numberOfLines={1}>
+                          {selectedEventNombre || 'Selecciona un montaje activo...'}
+                        </Text>
+                        <Text style={styles.eventSelectorSubtitle}>
+                          {selectedEventId ? '● Montaje asignado a la falla' : 'Requerido para guardar'}
+                        </Text>
+                      </View>
+                      <Ionicons
+                        name={isEventPickerOpen ? 'chevron-up' : 'chevron-down'}
+                        size={16}
+                        color="#94A3B8"
+                      />
+                    </TouchableOpacity>
+
+                    {/* Desplegable de Selección de Evento */}
+                    {isEventPickerOpen && (
+                      <View style={styles.dropdownListContainer}>
+                        {activeEvents.map((ev) => {
+                          const isSelected = ev.id === selectedEventId;
+                          return (
+                            <TouchableOpacity
+                              key={ev.id}
+                              style={[
+                                styles.dropdownItem,
+                                isSelected && styles.dropdownItemActive,
+                              ]}
+                              onPress={() => {
+                                triggerHaptic('selection');
+                                setSelectedEventId(ev.id);
+                                setSelectedEventNombre(ev.nombre);
+                                setIsEventPickerOpen(false);
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <View style={{ flex: 1 }}>
+                                <Text
+                                  style={[
+                                    styles.dropdownItemTitle,
+                                    isSelected && styles.dropdownItemTitleActive,
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {ev.nombre}
+                                </Text>
+                                {ev.locacion ? (
+                                  <Text style={styles.dropdownItemLocation} numberOfLines={1}>
+                                    📍 {ev.locacion}
+                                  </Text>
+                                ) : null}
+                              </View>
+                              {isSelected && (
+                                <View style={styles.dropdownCheckCircle}>
+                                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </View>
+                )}
+
                 {/* Sección: Identificación del Activo (QR Escaneado o Manual) */}
                 <View style={styles.assetHeaderRow}>
                   <Text style={styles.sectionLabel}>PALMETA / CÓDIGO QR</Text>
@@ -438,38 +617,63 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
                 />
 
                 {/* Botón Principal Guardar Registro */}
-                <TouchableOpacity
-                  style={[styles.saveButtonWrapper, saving && styles.buttonDisabled]}
-                  onPress={handleSave}
-                  disabled={saving}
-                  activeOpacity={0.85}
-                >
-                  <LinearGradient
-                    colors={saving ? ['#1E40AF', '#1D4ED8'] : ['#2563EB', '#1D4ED8']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.saveButtonGradient}
-                  >
-                    {saving ? (
-                      <View style={styles.savingRow}>
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                        <Text style={[styles.saveButtonText, { marginLeft: 10 }]}>
-                          Guardando en SQLite...
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={styles.savingRow}>
-                        <Ionicons
-                          name="checkmark-sharp"
-                          size={18}
-                          color="#FFFFFF"
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={styles.saveButtonText}>Guardar Registro</Text>
-                      </View>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
+                {(() => {
+                  const isFormInvalid = !selectedEventId || !activeQr.trim();
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.saveButtonWrapper,
+                        (saving || isFormInvalid) && styles.buttonDisabled,
+                      ]}
+                      onPress={handleSave}
+                      disabled={saving || isFormInvalid}
+                      activeOpacity={0.85}
+                    >
+                      <LinearGradient
+                        colors={
+                          saving
+                            ? ['#1E40AF', '#1D4ED8']
+                            : isFormInvalid
+                            ? ['#1E293B', '#1E293B']
+                            : ['#2563EB', '#1D4ED8']
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.saveButtonGradient}
+                      >
+                        {saving ? (
+                          <View style={styles.savingRow}>
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                            <Text style={[styles.saveButtonText, { marginLeft: 10 }]}>
+                              Guardando en SQLite...
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={styles.savingRow}>
+                            <Ionicons
+                              name={isFormInvalid ? "alert-circle-outline" : "checkmark-sharp"}
+                              size={18}
+                              color={isFormInvalid ? '#94A3B8' : '#FFFFFF'}
+                              style={{ marginRight: 8 }}
+                            />
+                            <Text
+                              style={[
+                                styles.saveButtonText,
+                                isFormInvalid && styles.saveButtonTextDisabled,
+                              ]}
+                            >
+                              {!selectedEventId
+                                ? 'Selecciona un Evento para Guardar'
+                                : !activeQr.trim()
+                                ? 'Ingresa o Escanea Palmeta'
+                                : 'Guardar Registro'}
+                            </Text>
+                          </View>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  );
+                })()}
 
                 {/* Pie Informativo */}
                 <View style={styles.footerRow}>
@@ -823,6 +1027,159 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.3,
+  },
+  saveButtonTextDisabled: {
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  eventSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  eventCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  eventDotActive: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#60A5FA',
+    marginRight: 5,
+  },
+  eventCountText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#60A5FA',
+  },
+  eventLoadingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#0F1422',
+    borderRadius: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  eventLoadingText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  noEventsWarningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderRadius: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  noEventsWarningTitle: {
+    color: '#F59E0B',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  noEventsWarningSubtitle: {
+    color: '#CBD5E1',
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  eventPickerContainer: {
+    marginBottom: 14,
+  },
+  eventSelectorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#121620',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  eventSelectorCardOpen: {
+    borderColor: '#2563EB',
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  eventSelectorCardMissing: {
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+  },
+  eventSelectorIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  eventSelectorTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  eventSelectorSubtitle: {
+    color: '#60A5FA',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  dropdownListContainer: {
+    backgroundColor: '#0B0F19',
+    borderWidth: 1.5,
+    borderTopWidth: 0,
+    borderColor: '#2563EB',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  dropdownItemActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
+  },
+  dropdownItemTitle: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  dropdownItemTitleActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  dropdownItemLocation: {
+    color: '#94A3B8',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  dropdownCheckCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footerRow: {
     flexDirection: 'row',

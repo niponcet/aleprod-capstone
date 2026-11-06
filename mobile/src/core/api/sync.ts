@@ -244,7 +244,7 @@ export const syncPendingIncidencias = async (): Promise<SyncResult> => {
           qr_uuid: item.qr_uuid,
           palmeta_id: palmetaUuid,
           evento_id: eventoUuid,
-          tecnico_id: tecnicoId,
+          tecnico_id: item.tecnico_id || tecnicoId,
           tipo_falla: item.tipo_falla || 'Escaneo Operativo',
           descripcion: item.observaciones || null,
           foto_url: remoteFotoUrl,

@@ -60,7 +60,7 @@ export const HomeScreen: React.FC = () => {
       // 2. Consultar en Supabase para obtener el estado real en tiempo real
       const { data, error } = await supabase
         .from('eventos')
-        .select('*')
+        .select('*, centros_eventos(nombre)')
         .eq('estado', 'en_curso')
         .order('fecha_inicio', { ascending: false })
         .limit(1);
@@ -70,7 +70,9 @@ export const HomeScreen: React.FC = () => {
           const remoteEvent: LocalEvento = {
             id: data[0].id,
             nombre: data[0].nombre,
-            locacion: data[0].locacion || 'Recinto no especificado',
+            centro_id: data[0].centro_id,
+            centros_eventos: data[0].centros_eventos,
+            locacion: data[0].centros_eventos?.nombre || data[0].locacion || 'Recinto no especificado',
             fecha_inicio: data[0].fecha_inicio,
             fecha_termino: data[0].fecha_termino,
             estado: 'en_curso',

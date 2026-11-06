@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS incidencias_locales (
   fecha TEXT NOT NULL,
   tipo_falla TEXT DEFAULT 'Escaneo Operativo',
   foto_uri TEXT,
+  observaciones TEXT,
   evento_id TEXT DEFAULT 'Festival Estadio Nacional',
+  tecnico_id TEXT,
   sincronizado INTEGER DEFAULT 0,
   sincronizado_at TEXT
 );
@@ -43,7 +45,9 @@ CREATE TABLE IF NOT EXISTS incidencias_locales (
 | `fecha` | `TEXT` | `NO` | Timestamp en formato ISO 8601 (`new Date().toISOString()`), registrando el momento exacto de la captura en terreno. |
 | `tipo_falla` | `TEXT` | `SÍ` | Categoría de la falla reportada (por defecto `'Escaneo Operativo'`). |
 | `foto_uri` | `TEXT` | `SÍ` | Ruta local temporal del archivo de imagen de evidencia fotográfica. |
-| `evento_id` | `TEXT` | `SÍ` | Nombre o identificador del evento activo de turno (ej: `'Festival Estadio Nacional'`). |
+| `observaciones` | `TEXT` | `SÍ` | Detalle o notas adicionales del técnico en terreno. |
+| `evento_id` | `TEXT` | `SÍ` | Identificador UUID o nombre del evento activo seleccionado en el reporte. |
+| `tecnico_id` | `TEXT` | `SÍ` | UUID de autenticación de Supabase (`auth.users.id`) del técnico que reportó la falla. |
 | `sincronizado` | `INTEGER` | `NO` | `0` = Pendiente de subir a Supabase, `1` = Ya sincronizado en la nube. |
 | `sincronizado_at`| `TEXT` | `SÍ` | Timestamp ISO del momento en que se completó el push a Supabase. |
 
@@ -144,16 +148,31 @@ CREATE TABLE public.perfiles (
 );
 ```
 
+### Tabla Maestra: `centros_eventos` (Recintos y Sedes de Producción)
+```sql
+CREATE TABLE public.centros_eventos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
 ### Tabla: `eventos` (Contexto de Turno Operativo)
 ```sql
 CREATE TABLE public.eventos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre TEXT NOT NULL,
-  locacion TEXT NOT NULL,
+  centro_id UUID REFERENCES public.centros_eventos(id) ON DELETE SET NULL,
+  locacion TEXT, -- Preservado para compatibilidad y fallback de texto
   fecha_inicio TIMESTAMPTZ NOT NULL,
   fecha_termino TIMESTAMPTZ,
   estado TEXT NOT NULL DEFAULT 'planificado' CHECK (estado IN ('planificado', 'en_curso', 'finalizado')),
   tecnico_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  metros_cuadrados NUMERIC DEFAULT 0,
+  tipo_pantalla TEXT DEFAULT 'Pista de Baile LED',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+```
   metros_cuadrados NUMERIC DEFAULT 0,
   tipo_pantalla TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())

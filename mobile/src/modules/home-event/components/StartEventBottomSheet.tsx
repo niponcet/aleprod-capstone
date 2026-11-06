@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Animated,
   PanResponder,
+  DeviceEventEmitter,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -21,6 +22,7 @@ import { triggerHaptic } from '../../../core/utils/haptics';
 import { supabase } from '../../../core/api/supabase';
 import { useAuth } from '../../../core/context/AuthContext';
 import { useToast } from '../../../core/context/ToastContext';
+import { setActiveLocalEvento, LocalEvento } from '../../../core/db/database';
 
 export interface StartEventBottomSheetProps {
   visible: boolean;
@@ -55,6 +57,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
 
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('');
+  const [selectedCentroId, setSelectedCentroId] = useState<string | null>(null);
   const [showVenueDropdown, setShowVenueDropdown] = useState(false);
   const [meters, setMeters] = useState('70');
 
@@ -115,6 +118,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
   const handleSelectVenue = (selected: RecurrentVenue) => {
     triggerHaptic('selection');
     setVenue(`${selected.name} · ${selected.commune}`);
+    setSelectedCentroId(selected.id);
     setShowVenueDropdown(false);
   };
 
@@ -128,6 +132,7 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
   const resetForm = () => {
     setEventName('');
     setVenue('');
+    setSelectedCentroId(null);
     setMeters('70');
     setHasPista(true);
     setHasPirotecnia(false);
@@ -195,9 +200,10 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
     triggerHaptic('medium');
 
     try {
-      const newEventPayload = {
+      const newEventPayload: any = {
         nombre: trimmedName,
         locacion: trimmedVenue,
+        centro_id: selectedCentroId || null,
         metros_cuadrados: parsedMeters,
         tipo_pantalla: configLabel,
         estado: 'en_curso', // Activo de inmediato para el turno en terreno
@@ -208,11 +214,32 @@ export const StartEventBottomSheet: React.FC<StartEventBottomSheetProps> = ({
       const { data, error } = await supabase
         .from('eventos')
         .insert(newEventPayload)
-        .select()
+        .select('*, centros_eventos(nombre)')
         .single();
 
       if (error) {
         throw error;
+      }
+
+      // Si el coordinador inició el evento desde esta app, asociarlo de inmediato a su entorno local sin preguntas
+      try {
+        const localToSave: LocalEvento = {
+          id: data.id,
+          nombre: data.nombre,
+          centro_id: data.centro_id,
+          centros_eventos: data.centros_eventos,
+          locacion: (data.centros_eventos as any)?.nombre || data.locacion || 'Recinto no especificado',
+          fecha_inicio: data.fecha_inicio || new Date().toISOString(),
+          fecha_termino: data.fecha_termino || null,
+          estado: 'en_curso',
+          metros_cuadrados: Number(data.metros_cuadrados) || 0,
+          tipo_pantalla: data.tipo_pantalla || 'Pista de Baile LED',
+          tecnico_id: data.tecnico_id || user?.id,
+        };
+        setActiveLocalEvento(localToSave);
+        DeviceEventEmitter.emit('aleprod_event_changed', localToSave);
+      } catch (err) {
+        console.warn('[StartEventBottomSheet] Error guardando evento local:', err);
       }
 
       triggerHaptic('success');

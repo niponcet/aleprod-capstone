@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 04 de Noviembre de 2026 (Sesión 69 — Resolución empírica en PWA iOS y Arquitectura Realtime Supabase de alta disponibilidad: Singleton client, REPLICA IDENTITY FULL, RLS para WebSocket, reactividad inmediata y polling de respaldo cada 8s).
+- **Fecha de Última Actualización:** 05 de Noviembre de 2026 (Sesión 73 — Integración End-to-End de tabla maestra `centros_eventos` en Web y Mobile, Creación de `EventCard.tsx`, Selector relacional en formularios y diagnóstico Web Push).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
@@ -116,6 +116,18 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-11-05 (Sesión 76 — Filtrado RBAC y Exclusión de Creador en EventNotificationJoiner):**
+  - **Diagnóstico:** Al activarse el canal Realtime WebSocket en `EventNotificationJoiner`, las emisiones de eventos `en_curso` eran procesadas por cualquier dispositivo conectado sin discriminar si el usuario autenticado era el Coordinador/Admin o el creador del evento, provocando que a quien creaba la producción le apareciera el modal preguntando *"El Coordinador ha iniciado el montaje... ¿Deseas unirte?"*.
+  - **Filtro de Rol y Autor en `EventNotificationJoiner.tsx`:**
+    - Se incorporaron validaciones con `useAuth()` (`isTecnico`, `isCoordinador`, `isAdmin`, `user`):
+      1. Si el usuario actual tiene rol `coordinador` o `admin`, se omite la apertura del modal (estos roles lideran el evento, no se unen como técnicos).
+      2. Si el usuario actual es el creador del evento (`tecnico_id === user.id`), se omite la apertura del modal para evitar auto-invitación.
+  - **Activación Inmediata para Coordinadores Móviles en `StartEventBottomSheet.tsx`:**
+    - Al crear un evento desde la app móvil, el coordinador ahora asocia directamente la producción a su SQLite local (`setActiveLocalEvento`) y emite `aleprod_event_changed`, dejando su entorno activo al instante sin interrumpir con diálogos redundantes.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
+    - `npx expo export --platform web`: **Exportación exitosa**.
+
 - **2026-11-05 (Sesión 75 — Arquitectura Híbrida Realtime + Web Push Service Worker para Detección Inmediata de Montajes en PWA):**
   - **Diagnóstico Causa Raíz de Falta de Alerta en PWA:**
     1. En PWA Web, el hook `usePushNotifications` omitía la generación del token al no contar con VAPID key ni Service Worker registrado en `index.html`, dejando `push_token = null` en `perfiles`.
@@ -173,6 +185,31 @@
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
+
+- **2026-11-05 (Sesión 73 — Integración End-to-End de la Tabla Maestra `centros_eventos` en Web y Mobile, Creación de `EventCard.tsx` y Diagnóstico Web Push):**
+  - **Actualización de Tipos y Contratos (Monorepo):**
+    - Añadida interfaz `CentroEvento` (`id: string; nombre: string;`).
+    - Actualizada interfaz `Evento` y `LocalEvento` incorporando `centro_id?: string | null` y `centros_eventos?: { id?: string; nombre: string } | null`, preservando `locacion?: string | null` como fallback de retrocompatibilidad.
+  - **Web Dashboard (`/web`):**
+    - En `web/app/(dashboard)/eventos/page.tsx`, `components/eventos-section.tsx` y `components/dashboard-view.tsx`:
+      - Eliminados los inputs de texto libre para locación/recinto.
+      - Implementado `<select>` desplegable obligatorio que consulta `centros_eventos` ordenado alfabéticamente (con fallback robusto a recintos recurrentes si la tabla estuviese vacía o con RLS pendiente).
+      - Inyección del payload con `centro_id` y `locacion: selectedCentro.nombre` en la creación de eventos.
+      - Consultas actualizadas con join relacional `*, centros_eventos(nombre)`.
+      - Tablas y listados actualizados para renderizar `ev.centros_eventos?.nombre || ev.locacion || 'Recinto no especificado'`.
+  - **Mobile App (`/mobile`):**
+    - Creado el componente estándar modular `mobile/src/modules/home-event/components/EventCard.tsx` que consume y renderiza `event.centros_eventos?.nombre || event.venue || event.locacion`.
+    - Actualizado `EventsScreen.tsx` para usar `EventCard`, consultar `*, centros_eventos(nombre)` y mapear el nombre del centro relacional.
+    - Actualizado `EventDetailScreen.tsx` para consultar `*, centros_eventos(nombre)` y renderizar `data.centros_eventos?.nombre || data.locacion`.
+    - Actualizado `HomeScreen.tsx` para sincronizar el evento activo en tiempo real con `centros_eventos(nombre)`.
+    - Actualizado `StartEventBottomSheet.tsx` para asociar `centro_id` en la creación rápida desde terreno.
+  - **Migración SQL (`supabase/migrations/20261105214500_centros_eventos_rls_and_seed.sql`):**
+    - Creado script DDL con políticas RLS para lectura pública (`anon`, `authenticated`) e inserción, más sembrado inicial de recintos recurrentes ('Espacio Riesco', 'Movistar Arena', 'Estadio Nacional', 'Metropolitan Santiago', etc.).
+  - **Diagnóstico Web Push (`usePushNotifications.ts`):**
+    - Log refinado con diagnóstico discriminado (`faltaVapidKey`, `faltaPushManager`, `faltaServiceWorker`, `esContextoSeguroHTTPS`).
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**.
+    - `npx tsc --noEmit` en `/mobile`: **0 errores**.
 
 - **2026-11-05 (Sesión 72 — Arquitectura Push Notifications & Event Driven UX: usePushNotifications, EventNotificationJoiner y Sincronización SQLite):**
   - **Instalación y Configuración Universal:**
@@ -988,6 +1025,30 @@
   - Actualización directa en Supabase con `UPDATE palmetas_led SET estado, ubicacion_actual, updated_at`.
   - Actualización del Dashboard (`web/app/page.tsx`): KPI card de Palmetas ahora es un `<Link>` a `/palmetas`; botón "Inventario Palmetas" en Accesos Rápidos también enlaza a `/palmetas`.
   - Verificación exitosa: `GET /palmetas 200` en Turbopack, compilación sin errores, ruta protegida por middleware de sesión.
+
+- **2026-11-05 (Sesión 71 — Arquitectura Stateless de Eventos (KISS), Selector en ReportIncidentModal, Trazabilidad de Técnico y Push PWA):**
+  - **Arquitectura Stateless en Móvil (KISS):** Siguiendo las directrices del Tech Lead, se eliminó la lógica de "Unirse a un evento" y bloqueo de sesiones locales. Se desmontó el componente global `<EventNotificationJoiner />` de `mobile/app/_layout.tsx`. Las tarjetas en `EventsScreen.tsx` son ahora puramente informativas y permiten consultar el detalle del evento sin imponer estados bloqueantes en el dispositivo.
+  - **Selector Dinámico de Eventos en `ReportIncidentModal.tsx`:**
+    - Al abrir el modal de reporte de averías, consulta en tiempo real los eventos cuyo `estado === 'en_curso'` mediante la función unificada `fetchActiveEvents()` (Supabase Cloud con fallback automático a SQLite `eventos_locales`).
+    - Menú desplegable obligatorio `"EVENTO ASOCIADO *"` con estética Dark Navy glassmorphism, indicador de estado activo, nombre y recinto.
+    - Pre-selección inteligente del primer evento activo para ahorrar clics al técnico cuando solo hay una producción en curso.
+    - Validación y bloqueo del botón "Guardar Registro" hasta que un evento en curso sea seleccionado y el activo (QR) esté debidamente identificado.
+    - Card de advertencia cuando no existen montajes en curso, orientando al técnico a esperar el alta por parte de Jefatura/Coordinación.
+  - **Trazabilidad de Auditoría del Usuario (`tecnico_id`):**
+    - **SQLite Local:** Se actualizó `initDB()` en `mobile/src/core/db/database.ts` para verificar y agregar la columna `tecnico_id TEXT` en `incidencias_locales`.
+    - Se adaptó `insertIncidencia` (y su alias `insertLocalIncidencia`) para registrar el `tecnicoId` en la base de datos local.
+    - Se refactorizó `reportIncident` en `mobile/src/core/api/incidencias.ts` para capturar el `usuarioId` desde `useAuth()` (o sesión activa en `supabase.auth.getUser()`) y persistirlo tanto en el INSERT directo a Supabase `incidencias` (`tecnico_id`) como en el almacenamiento de contingencia offline.
+    - En el motor de sincronización `sync.ts`, se preserva `item.tecnico_id || tecnicoId` para que el lote conserve la autoría de quien reportó originalmente la falla.
+  - **Web Push PWA & Usuarios Semilla:**
+    - Configuración de `EXPO_PUBLIC_VAPID_KEY` en `mobile/.env`, creación de `mobile/public/sw.js` para recepción de Web Push en segundo plano y registro en `index.html`.
+    - Activación y verificación de cuenta de terreno `terreno@aleprod.cl` (rol `tecnico`) para pruebas E2E en paralelo con `tecnico@aleprod.cl` (rol `coordinador`) y `gerencia@aleprod.cl` (rol `admin`).
+  - **Refinamiento de Consistencia UI/UX en Móvil (Fondo OLED y Dark Navy Glass):**
+    - **Historial de Incidencias (`ActivityHistoryScreen.tsx`):** Unificación de la paleta de fondo al negro OLED absoluto (`#000000`) idéntico a `NotificationsScreen` y `HomeScreen`. Reemplazo del halo por el gradiente continuo de 5 paradas (`#000000`, `rgba(29, 78, 216, 0.35)`, etc.), cabecera translúcida integrada y eliminación de cualquier remanente `#080C14`.
+    - **Detalle de Evento (`EventDetailScreen.tsx`):** Rediseño completo con Dark Navy Glass (`#121620`, borde `rgba(255, 255, 255, 0.08)`), halo ambiental superior `topAmbientGlow`, botón "Escanear y Reportar Falla" con degradado cobalto (`#2563EB` a `#1D4ED8`), botón de finalización en rojo semántico sutil, cuadrícula de métricas técnicas ($m^2$ y formato) y tarjetas de trazabilidad de incidencias sincronizadas.
+    - **Pestaña Historial en Agenda de Eventos (`EventsScreen.tsx`):** Integración de barra de búsqueda y filtrado dinámico en tiempo real (`historySearchQuery`) por nombre, recinto o formato técnico, con contador de resultados, botón de reseteo rápido y estado vacío contextual para evitar scroll infinito en producciones pasadas.
+  - **Validación de Calidad:**
+    - `npx tsc --noEmit` en `/mobile`: 0 errores.
+    - Export Web (`npx expo export --platform web`): Exitoso en 5.3s (19 bundles generados sin advertencias).
 
 - **2026-10-22 (Sesión 9 — Activación de Datos Reales en Incidencias y Sincronización Web/Móvil):**
   - **Supabase Cloud:** Sembrado de registros iniciales reales en `public.incidencias` vinculados a las palmetas existentes (`PL-AF69C8` y `PL-6D3FFA`), al evento `Festival Estadio Nacional` y a técnicos registrados. Creación de clave foránea `incidencias_perfiles_fkey`.

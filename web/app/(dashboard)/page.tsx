@@ -29,7 +29,7 @@ export default async function DashboardPage() {
       .maybeSingle(),
     supabase
       .from("eventos")
-      .select("*")
+      .select("*, centros_eventos(nombre)")
       .order("fecha_inicio", { ascending: false }),
     supabase
       .from("palmetas_led")

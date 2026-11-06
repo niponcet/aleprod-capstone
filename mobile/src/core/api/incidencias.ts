@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import {
   getAllLocalIncidencias,
   getAllLocalEventos,
+  getActiveLocalEventos,
   LocalIncidencia,
   LocalEvento,
   insertLocalIncidencia,
@@ -14,6 +15,14 @@ export interface ReportIncidentParams {
   fotoUri?: string;
   observaciones?: string;
   eventoIdOrNombre?: string;
+  eventoId?: string;
+  usuarioId?: string;
+}
+
+export interface ActiveEventOption {
+  id: string;
+  nombre: string;
+  locacion?: string;
 }
 
 export interface ReportIncidentResult {
@@ -217,6 +226,42 @@ export const fetchFilterEvents = async (): Promise<EventFilterOption[]> => {
   return list;
 };
 
+/**
+ * Consulta la lista de eventos cuyo estado sea 'en_curso'.
+ * Utiliza Supabase Cloud en primera instancia con fallback automático a la caché SQLite.
+ */
+export const fetchActiveEvents = async (): Promise<ActiveEventOption[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('eventos')
+      .select('id, nombre, locacion')
+      .eq('estado', 'en_curso')
+      .order('fecha_inicio', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      return data.map((e: any) => ({
+        id: String(e.id),
+        nombre: String(e.nombre),
+        locacion: e.locacion ? String(e.locacion) : undefined,
+      }));
+    }
+  } catch (cloudErr) {
+    console.warn('Error consultando eventos activos en Supabase:', cloudErr);
+  }
+
+  // Fallback a SQLite local
+  try {
+    const local = getActiveLocalEventos();
+    return local.map((e) => ({
+      id: String(e.id),
+      nombre: String(e.nombre),
+      locacion: e.locacion ? String(e.locacion) : undefined,
+    }));
+  } catch (localErr) {
+    console.warn('Error consultando eventos activos en SQLite:', localErr);
+    return [];
+  }
+};
 
 /**
  * Mutación Online-First con Offline-Fallback para "Reportar Falla" de una palmeta.
@@ -233,7 +278,7 @@ export const reportIncident = async (
     throw new Error('Código QR de la palmeta requerido');
   }
 
-  const effectiveEvent = params.eventoIdOrNombre || 'Festival Estadio Nacional';
+  const effectiveEvent = params.eventoId || params.eventoIdOrNombre || 'Festival Estadio Nacional';
   const tipoFalla = params.tipoFalla || 'Escaneo Operativo';
   const observaciones = params.observaciones?.trim() || null;
 
@@ -244,12 +289,14 @@ export const reportIncident = async (
       remoteFotoUrl = await uploadEvidenceImage(params.fotoUri);
     }
 
-    let tecnicoId: string | null = null;
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      tecnicoId = userData?.user?.id ?? null;
-    } catch {
-      // Ignorar si no hay sesión
+    let tecnicoId: string | null = params.usuarioId ?? null;
+    if (!tecnicoId) {
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        tecnicoId = userData?.user?.id ?? null;
+      } catch {
+        // Ignorar si no hay sesión
+      }
     }
 
     const eventoUuid = await resolveEventoUuid(effectiveEvent);
@@ -299,6 +346,9 @@ export const reportIncident = async (
   } catch (networkError: any) {
     console.warn('[Online-First] Falló reporte a Supabase, aplicando Offline-Fallback:', networkError?.message);
 
+    // Resolver tecnicoId para almacenamiento local resiliente
+    let tecnicoIdLocal: string | undefined = params.usuarioId;
+
     // 2. Offline-Fallback (Catch & Queue en SQLite)
     try {
       const localId = insertLocalIncidencia(
@@ -306,7 +356,8 @@ export const reportIncident = async (
         tipoFalla,
         params.fotoUri,
         observaciones || undefined,
-        effectiveEvent
+        effectiveEvent,
+        tecnicoIdLocal
       );
 
       return {

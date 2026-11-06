@@ -5,10 +5,29 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 /* ─── Interfaces ─── */
+export interface CentroEvento {
+  id: string;
+  nombre: string;
+}
+
+export const CENTROS_EVENTOS_FALLBACK: CentroEvento[] = [
+  { id: "e1000000-0000-0000-0000-000000000001", nombre: "Espacio Riesco" },
+  { id: "e1000000-0000-0000-0000-000000000002", nombre: "Movistar Arena" },
+  { id: "e1000000-0000-0000-0000-000000000003", nombre: "Estadio Nacional" },
+  { id: "e1000000-0000-0000-0000-000000000004", nombre: "Metropolitan Santiago (Ex CasaPiedra)" },
+  { id: "e1000000-0000-0000-0000-000000000005", nombre: "CentroParque" },
+  { id: "e1000000-0000-0000-0000-000000000006", nombre: "Club Hípico de Santiago" },
+  { id: "e1000000-0000-0000-0000-000000000007", nombre: "Quinta Vergara" },
+  { id: "e1000000-0000-0000-0000-000000000008", nombre: "Parque Bicentenario de Cerrillos" },
+  { id: "e1000000-0000-0000-0000-000000000009", nombre: "Monticello Grand Casino" },
+];
+
 interface Evento {
   id: string;
   nombre: string;
-  locacion: string;
+  centro_id?: string | null;
+  centros_eventos?: { id?: string; nombre: string } | null;
+  locacion?: string | null;
   fecha_inicio: string;
   fecha_termino: string | null;
   estado: "planificado" | "en_curso" | "finalizado";
@@ -31,22 +50,46 @@ export default function EventosPage() {
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState("");
 
+  /* ─── Centros de Eventos ─── */
+  const [centros, setCentros] = useState<CentroEvento[]>(CENTROS_EVENTOS_FALLBACK);
+  const [centroId, setCentroId] = useState<string>(CENTROS_EVENTOS_FALLBACK[0].id);
+
   /* ─── Formulario ─── */
   const [nombre, setNombre] = useState("");
-  const [locacion, setLocacion] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaTermino, setFechaTermino] = useState("");
   const [metrosCuadrados, setMetrosCuadrados] = useState("80");
   const [tipoPantalla, setTipoPantalla] = useState("Pantalla Escenario P3.9 Outdoor");
   const [estadoInicial, setEstadoInicial] = useState<"planificado" | "en_curso">("planificado");
 
-  /* ─── Fetch Eventos ─── */
+  /* ─── Fetch Centros de Eventos ─── */
+  const fetchCentros = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("centros_eventos")
+        .select("id, nombre")
+        .order("nombre", { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        setCentros(data);
+        setCentroId((prev) => (prev ? prev : data[0].id));
+      }
+    } catch (err) {
+      console.warn("Fallo al consultar centros_eventos en Cloud:", err);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchCentros();
+  }, [fetchCentros]);
+
+  /* ─── Fetch Eventos con Relación a Centros ─── */
   const fetchEventos = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("eventos")
-        .select("*")
+        .select("*, centros_eventos(nombre)")
         .order("fecha_inicio", { ascending: false });
 
       if (error) {
@@ -96,15 +139,17 @@ export default function EventosPage() {
   /* ─── Guardar Nuevo Evento ─── */
   const handleCrearEvento = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim() || !locacion.trim() || !fechaInicio) return;
+    if (!nombre.trim() || !centroId || !fechaInicio) return;
 
     setGuardando(true);
     try {
       const { data: authData } = await supabase.auth.getUser();
+      const selectedCentro = centros.find((c) => c.id === centroId);
 
       const { error } = await supabase.from("eventos").insert({
         nombre: nombre.trim(),
-        locacion: locacion.trim(),
+        centro_id: centroId,
+        locacion: selectedCentro?.nombre || "Recinto no especificado",
         fecha_inicio: new Date(fechaInicio).toISOString(),
         fecha_termino: fechaTermino ? new Date(fechaTermino).toISOString() : null,
         estado: estadoInicial,
@@ -120,7 +165,7 @@ export default function EventosPage() {
         setTimeout(() => setToastMsg(""), 3500);
         setModalAbierto(false);
         setNombre("");
-        setLocacion("");
+        setCentroId(centros[0]?.id || "");
         setFechaInicio("");
         setFechaTermino("");
         setMetrosCuadrados("80");
@@ -144,10 +189,11 @@ export default function EventosPage() {
       filtro === "todas" ? true : ev.estado === filtro;
 
     const q = busqueda.toLowerCase();
+    const nombreRecinto = ev.centros_eventos?.nombre || ev.locacion || "";
     const coincideBusqueda =
       !q ||
       ev.nombre.toLowerCase().includes(q) ||
-      ev.locacion.toLowerCase().includes(q) ||
+      nombreRecinto.toLowerCase().includes(q) ||
       (ev.tipo_pantalla || "").toLowerCase().includes(q);
 
     return coincideFiltro && coincideBusqueda;
@@ -431,7 +477,7 @@ export default function EventosPage() {
                               <span className="material-symbols-outlined text-xs text-[#71717A]">
                                 location_on
                               </span>
-                              {ev.locacion}
+                              {ev.centros_eventos?.nombre || ev.locacion || "Recinto no especificado"}
                             </span>
                           </div>
                         </div>
@@ -568,16 +614,20 @@ export default function EventosPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
-                  Locación / Recinto
+                  Centro de Eventos / Recinto *
                 </label>
-                <input
-                  type="text"
+                <select
                   required
-                  value={locacion}
-                  onChange={(e) => setLocacion(e.target.value)}
-                  placeholder="Ej: Parque Bicentenario de Cerrillos, Santiago"
-                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] placeholder-[var(--mu)] focus:outline-none focus:border-[var(--pr)] transition-all"
-                />
+                  value={centroId}
+                  onChange={(e) => setCentroId(e.target.value)}
+                  className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[var(--pr)] transition-all cursor-pointer"
+                >
+                  {centros.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
