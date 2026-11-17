@@ -75,7 +75,7 @@ export default function LoginPage() {
       }
 
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
@@ -87,8 +87,30 @@ export default function LoginPage() {
             : authError.message
         );
         setStatusMessage(null);
-      } else {
-        setStatusMessage("Acceso concedido • Redirigiendo...");
+      } else if (authData?.user) {
+        // Validar rol y estado activo en public.perfiles
+        const { data: perfil } = await supabase
+          .from("perfiles")
+          .select("nombre_completo, rol, activo")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        if (perfil && perfil.activo === false) {
+          await supabase.auth.signOut();
+          setErrorMessage("Tu cuenta se encuentra suspendida. Contacta a un Administrador.");
+          setStatusMessage(null);
+          return;
+        }
+
+        if (perfil && perfil.rol === "tecnico") {
+          await supabase.auth.signOut();
+          setErrorMessage("Acceso exclusivo para Coordinadores y Administradores. Si eres técnico de terreno, por favor ingresa desde la App Móvil.");
+          setStatusMessage(null);
+          return;
+        }
+
+        const rolLabel = perfil?.rol === "admin" ? "Administrador" : "Coordinador";
+        setStatusMessage(`Acceso concedido • Bienvenido(a), ${perfil?.nombre_completo || "Colaborador"} (${rolLabel})`);
         setTimeout(() => {
           router.push("/");
           router.refresh();

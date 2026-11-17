@@ -37,10 +37,12 @@ import {
 } from '../../../core/api/incidencias';
 import { triggerHaptic } from '../../../core/utils/haptics';
 import { useAuth } from '../../../core/context/AuthContext';
+import { useToast } from '../../../core/context/ToastContext';
 
 export const HomeScreen: React.FC = () => {
   const router = useRouter();
   const { user, profile, role, refreshProfile } = useAuth();
+  const { showToast } = useToast();
   const { topPadding: headerTopPadding, bottomPadding: scrollBottomPadding } = useEdgeInsets(70, 12);
   const { width: screenWidth } = useWindowDimensions();
   const [activeEvent, setActiveEvent] = useState<LocalEvento | null>(null);
@@ -85,37 +87,50 @@ export const HomeScreen: React.FC = () => {
         .order('fecha_inicio', { ascending: false })
         .limit(1);
 
-      if (!error) {
-        if (data && data.length > 0) {
-          const remoteEvent: LocalEvento = {
-            id: data[0].id,
-            nombre: data[0].nombre,
-            centro_id: data[0].centro_id,
-            centros_eventos: data[0].centros_eventos,
-            locacion: data[0].centros_eventos?.nombre || data[0].locacion || 'Recinto no especificado',
-            fecha_inicio: data[0].fecha_inicio,
-            fecha_termino: data[0].fecha_termino,
-            estado: 'en_curso',
-            metros_cuadrados: Number(data[0].metros_cuadrados) || 0,
-            tipo_pantalla: data[0].tipo_pantalla || 'Pista de Baile LED',
-            tecnico_id: data[0].tecnico_id,
-          };
-          setActiveEvent(remoteEvent);
-          upsertLocalEvento(remoteEvent);
-        } else {
-          // No hay ningún evento 'en_curso' (están planificados sin iniciar o finalizados)
-          setActiveEvent(null);
-          clearAllLocalActiveEvents();
+      if (!error && data && data.length > 0) {
+        const found = data[0];
+        const remoteEvent: LocalEvento = {
+          id: found.id,
+          nombre: found.nombre,
+          centro_id: found.centro_id,
+          centros_eventos: found.centros_eventos,
+          locacion: found.centros_eventos?.nombre || found.locacion || 'Recinto no especificado',
+          fecha_inicio: found.fecha_inicio,
+          fecha_termino: found.fecha_termino,
+          estado: 'en_curso',
+          metros_cuadrados: Number(found.metros_cuadrados) || 0,
+          tipo_pantalla: found.tipo_pantalla || 'Pista de Baile LED',
+          tecnico_id: found.tecnico_id,
+        };
+
+        setActiveEvent(remoteEvent);
+        upsertLocalEvento(remoteEvent);
+
+        // Registrar presencia en evento_participantes para trazabilidad de equipo
+        if (user?.id) {
+          await supabase
+            .from('evento_participantes')
+            .upsert(
+              {
+                evento_id: found.id,
+                tecnico_id: user.id,
+                activo: true,
+                fecha_union: new Date().toISOString(),
+              },
+              { onConflict: 'evento_id,tecnico_id' }
+            );
         }
-      } else if (!localActive) {
+      } else {
+        // No hay eventos en curso
         setActiveEvent(null);
+        clearAllLocalActiveEvents();
       }
     } catch (err) {
       console.warn('Error consultando evento activo en HomeScreen:', err);
     } finally {
       setLoadingEvent(false);
     }
-  }, []);
+  }, [user]);
 
   // Consulta de métricas de inventario y actividad reciente híbrida (Supabase + SQLite)
   const loadDynamicData = useCallback(async () => {
@@ -614,6 +629,7 @@ export const HomeScreen: React.FC = () => {
           )}
         </View>
       </ScrollView>
+
     </View>
   );
 };
@@ -830,6 +846,60 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginRight: 4,
+  },
+  pendingMountCard: {
+    backgroundColor: '#16140F',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
+  },
+  pendingTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    flexShrink: 0,
+  },
+  pendingTagText: {
+    color: '#D4AF37',
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  pendingSubtitle: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  pendingMountBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  joinPinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginLeft: 8,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  joinPinButtonText: {
+    color: '#000000',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   noActiveMountCard: {
     backgroundColor: '#121620',

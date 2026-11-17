@@ -14,6 +14,7 @@ interface SidebarProps {
     palmetasMantencion?: number;
     incidencias?: number;
     repuestos?: number;
+    usuarios?: number;
   };
   userNombre?: string;
   userRol?: string;
@@ -37,6 +38,7 @@ export function Sidebar({
     palmetasMantencion: initialCounts?.palmetasMantencion ?? 0,
     incidencias: initialCounts?.incidencias ?? 0,
     repuestos: initialCounts?.repuestos ?? 0,
+    usuarios: initialCounts?.usuarios ?? 0,
   });
 
   const [nombre, setNombre] = useState(userNombre);
@@ -62,12 +64,14 @@ export function Sidebar({
         { data: palmetasData },
         { count: incCount },
         { count: repCount },
+        { count: userCount },
         { data: authData },
       ] = await Promise.all([
         supabase.from("eventos").select("id", { count: "exact", head: true }),
         supabase.from("palmetas_led").select("id, estado"),
         supabase.from("incidencias").select("id", { count: "exact", head: true }).eq("resuelto", false),
         supabase.from("repuestos_inventario").select("id", { count: "exact", head: true }),
+        supabase.from("perfiles").select("id", { count: "exact", head: true }),
         supabase.auth.getUser(),
       ]);
 
@@ -80,6 +84,7 @@ export function Sidebar({
         palmetasMantencion: mantP,
         incidencias: incCount || 0,
         repuestos: repCount || 0,
+        usuarios: userCount || 0,
       });
 
       if (authData?.user) {
@@ -91,7 +96,14 @@ export function Sidebar({
 
         if (perfil) {
           setNombre(perfil.nombre_completo || "Gerencia");
-          setRol(perfil.rol === "admin" ? "Administrador total" : "Técnico");
+          const rawRole = (perfil.rol || "").toLowerCase();
+          setRol(
+            rawRole === "admin"
+              ? "Administrador total"
+              : rawRole === "coordinador"
+              ? "Coordinador de producción"
+              : "Técnico de terreno"
+          );
         }
       }
     } catch (err) {
@@ -107,6 +119,7 @@ export function Sidebar({
       .on("postgres_changes", { event: "*", schema: "public", table: "palmetas_led" }, () => fetchLiveCounts())
       .on("postgres_changes", { event: "*", schema: "public", table: "incidencias" }, () => fetchLiveCounts())
       .on("postgres_changes", { event: "*", schema: "public", table: "eventos" }, () => fetchLiveCounts())
+      .on("postgres_changes", { event: "*", schema: "public", table: "perfiles" }, () => fetchLiveCounts())
       .subscribe();
 
     return () => {
@@ -404,18 +417,25 @@ export function Sidebar({
             ADMINISTRACIÓN
           </span>
 
-          <div
+          <Link
+            href="/usuarios"
+            prefetch={true}
+            onClick={() => onClose?.()}
             className="dash-nav"
+            aria-current={pathname === "/usuarios" ? "page" : undefined}
             style={{
               display: "flex",
               alignItems: "center",
               gap: "12px",
               padding: "11px 12px",
               borderRadius: "12px",
-              color: "var(--mu)",
+              background: pathname === "/usuarios" ? "var(--prs)" : "transparent",
+              color: pathname === "/usuarios" ? "var(--lk)" : "var(--mu)",
               fontSize: "14px",
-              fontWeight: 500,
-              cursor: "pointer",
+              fontWeight: pathname === "/usuarios" ? 600 : 500,
+              textDecoration: "none",
+              transition: "all 0.15s ease",
+              border: pathname === "/usuarios" ? "1px solid rgba(212, 175, 55, 0.25)" : "1px solid transparent",
             }}
           >
             <svg
@@ -434,7 +454,22 @@ export function Sidebar({
               <path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"></path>
             </svg>
             <span style={{ flex: 1 }}>Técnicos y accesos</span>
-          </div>
+            {counts.usuarios > 0 && (
+              <span
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: "999px",
+                  background: "var(--sf2)",
+                  color: "var(--tx)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {counts.usuarios}
+              </span>
+            )}
+          </Link>
 
           <div
             className="dash-nav"
@@ -576,8 +611,8 @@ export function Sidebar({
               width: "38px",
               height: "38px",
               borderRadius: "999px",
-              background: "var(--go)",
-              color: "var(--gt)",
+              background: rol.includes("Administrador") ? "var(--go)" : rol.includes("Coordinador") ? "#2563EB" : "#10B981",
+              color: rol.includes("Administrador") ? "var(--gt)" : "#FFFFFF",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -601,7 +636,17 @@ export function Sidebar({
             >
               {nombre}
             </span>
-            <span style={{ fontSize: "12px", color: "var(--mu)" }}>{rol}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+              <span
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "999px",
+                  background: rol.includes("Administrador") ? "var(--go)" : rol.includes("Coordinador") ? "#3B82F6" : "#10B981",
+                }}
+              />
+              <span style={{ fontSize: "11.5px", color: "var(--mu)", fontWeight: 500 }}>{rol}</span>
+            </div>
           </div>
           <button
             type="button"

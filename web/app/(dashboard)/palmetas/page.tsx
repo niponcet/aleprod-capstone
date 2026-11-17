@@ -66,6 +66,7 @@ export default function PalmetasPage() {
   const [nuevoEstado, setNuevoEstado] = useState<Palmeta["estado"] | "">("");
   const [nuevaUbicacion, setNuevaUbicacion] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [currentUserRole, setCurrentUserRole] = useState<string>("admin");
 
   /* ─── Fetch Data ─── */
   const fetchPalmetas = useCallback(async () => {
@@ -83,6 +84,19 @@ export default function PalmetasPage() {
 
   useEffect(() => {
     fetchPalmetas();
+
+    supabase.auth.getUser().then((res: { data: { user: any } }) => {
+      if (res.data?.user) {
+        supabase
+          .from("perfiles")
+          .select("rol")
+          .eq("id", res.data.user.id)
+          .maybeSingle()
+          .then((pRes: { data: { rol: string } | null }) => {
+            if (pRes.data?.rol) setCurrentUserRole(pRes.data.rol);
+          });
+      }
+    });
 
     // Suscripción en tiempo real a cambios en palmetas_led
     const channel = supabase
@@ -615,25 +629,30 @@ export default function PalmetasPage() {
                     const cfg = ESTADO_CONFIG[estado];
                     const isSelected = nuevoEstado === estado;
                     const isCurrent = palmetaSeleccionada.estado === estado;
+                    const isRestricted = estado === "baja" && currentUserRole !== "admin";
                     return (
                       <button
                         key={estado}
                         type="button"
                         onClick={() => setNuevoEstado(estado)}
-                        disabled={isCurrent}
+                        disabled={isCurrent || isRestricted}
+                        title={isRestricted ? "Solo los Administradores tienen permisos para dar de baja definitiva" : undefined}
                         className={`px-3 py-2.5 rounded-xl text-xs font-['Outfit'] font-semibold tracking-wider uppercase transition-all flex items-center gap-2 cursor-pointer border ${
-                          isCurrent
+                          isCurrent || isRestricted
                             ? "opacity-40 cursor-not-allowed bg-[var(--sf2)] border-[var(--bd)] text-[#71717A]"
                             : isSelected
                             ? `${cfg.bg} ${cfg.border} card-shadow transition-shadow`
                             : "bg-[var(--sf2)] border-[var(--bd)] text-[var(--mu)] hover:text-[var(--tx)] hover:border-[var(--border-light)]"
                         }`}
-                        style={isSelected && !isCurrent ? { color: cfg.color } : undefined}
+                        style={isSelected && !isCurrent && !isRestricted ? { color: cfg.color } : undefined}
                       >
                         <span className="material-symbols-outlined text-base">{cfg.icon}</span>
                         {cfg.label}
                         {isCurrent && (
                           <span className="text-[9px] ml-auto opacity-60">(actual)</span>
+                        )}
+                        {isRestricted && (
+                          <span className="text-[9px] ml-auto text-amber-500 font-bold">(Solo Admin)</span>
                         )}
                       </button>
                     );

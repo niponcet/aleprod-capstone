@@ -9,15 +9,48 @@ export interface CentroEvento {
 }
 
 export const CENTROS_EVENTOS_FALLBACK: CentroEvento[] = [
-  { id: "e1000000-0000-0000-0000-000000000001", nombre: "Espacio Riesco" },
-  { id: "e1000000-0000-0000-0000-000000000002", nombre: "Movistar Arena" },
-  { id: "e1000000-0000-0000-0000-000000000003", nombre: "Estadio Nacional" },
-  { id: "e1000000-0000-0000-0000-000000000004", nombre: "Metropolitan Santiago (Ex CasaPiedra)" },
-  { id: "e1000000-0000-0000-0000-000000000005", nombre: "CentroParque" },
-  { id: "e1000000-0000-0000-0000-000000000006", nombre: "Club Hípico de Santiago" },
-  { id: "e1000000-0000-0000-0000-000000000007", nombre: "Quinta Vergara" },
-  { id: "e1000000-0000-0000-0000-000000000008", nombre: "Parque Bicentenario de Cerrillos" },
-  { id: "e1000000-0000-0000-0000-000000000009", nombre: "Monticello Grand Casino" },
+  { id: "eb8a6ee9-8afb-4eea-b817-05afab6005d7", nombre: "Alto Pomaire" },
+  { id: "f260b80b-91d5-45c4-9f8f-3bf17296f592", nombre: "Alto San Francisco" },
+  { id: "66d1c529-0246-4d36-884e-3a0177c774cb", nombre: "Best Western Premier Marina" },
+  { id: "cadeb35b-af17-4875-afe4-1b08bda045a2", nombre: "Casa Barros" },
+  { id: "3a497f97-0849-4851-a3b5-965880d7cd7e", nombre: "Casona El Rosario" },
+  { id: "12d55cdc-9e3c-461a-a82c-949b6aa2f60b", nombre: "Casona La Laguna" },
+  { id: "d1790bf4-f1bb-4df1-8976-ea9adf07a81e", nombre: "Casona Macul" },
+  { id: "e4d31758-3cff-43ae-bb80-0376101070d6", nombre: "Catamapu" },
+  { id: "0620be55-d0f6-498d-a054-5bbcb5c4e66c", nombre: "Cenco Florida" },
+  { id: "694c6cae-06d9-4c56-af6b-41992c4c6a09", nombre: "Centro La Reina" },
+  { id: "c677edc0-b507-40d8-a409-6c07f14e3aba", nombre: "CentroParque" },
+  { id: "ebb6f306-b0a0-4533-83c7-548139b9fdbb", nombre: "Club Golf" },
+  { id: "304baee2-076c-42d2-a128-d8c469d0a875", nombre: "Club Hípico" },
+  { id: "464ea1ee-3579-4019-98d5-0eebc3551300", nombre: "Club Manquehue" },
+  { id: "dc893ba7-01cd-47ee-bd15-1b13378befe9", nombre: "Club Militar" },
+  { id: "34cadde6-831b-48e5-a134-c8436044de82", nombre: "Club Providencia" },
+  { id: "2a8cf718-4889-4879-83f5-a1d0044a57db", nombre: "Country Club Marbella" },
+  { id: "65e5b6a1-2554-454a-997a-09c4c8d92fce", nombre: "Entremuros" },
+  { id: "b5348ed0-16e7-417c-afca-3b8e1b09649f", nombre: "Espacio Fogon" },
+  { id: "2c21bc78-bf57-44f4-8bbf-895ad0575f0c", nombre: "Espacio Nehuen" },
+  { id: "c6c99377-4f67-4d33-9af4-1f4d3fcaa5c9", nombre: "Estadio Israelita" },
+  { id: "5cd6a7d9-58f8-4c1d-b808-c97e51e30f73", nombre: "GH" },
+  { id: "0dd6aa5a-8fce-418e-9a0c-67b34f8e04e2", nombre: "Hilaria" },
+  { id: "3f24a92e-ab3b-4fa2-9c35-e04695188aa8", nombre: "Hotel AlmaCruz" },
+  { id: "19e037db-d09a-4bcd-98a8-64e9e69b10ef", nombre: "Hotel Casa Maire" },
+  { id: "168af36f-3314-4bf0-9572-d2ca6a87ba71", nombre: "Hotel Marriot" },
+  { id: "383183b8-e108-47c9-8745-07023c24e0d8", nombre: "Hotel NOI" },
+  { id: "4b263120-eb0b-438b-8e05-a273cd8590db", nombre: "Hotel Renaissance" },
+  { id: "794193ce-c5d8-431f-b5af-dfb245c9e604", nombre: "Hotel Ritz" },
+  { id: "1bbf8414-2737-434e-83d0-afe44cadb6d0", nombre: "Hotel W" },
+  { id: "bf0e4f0f-636d-4629-82ee-df2bb3b60d6e", nombre: "Intercontinental" },
+  { id: "bb368e72-1810-4233-8f6e-bf6ebc25af9a", nombre: "Las Pircas de Chicureo" },
+  { id: "16bdd7c8-34b1-4434-bae8-626c30cf8792", nombre: "Metropolitan" },
+  { id: "9f0feafe-2320-4b3a-8949-b16b6393e450", nombre: "Prince Of Wales" },
+  { id: "ca24a8d5-6068-4354-94e3-110c36abdf14", nombre: "Reality Calera Tango" },
+  { id: "d1b3092b-4343-4d11-95fb-583d89012d9f", nombre: "Salon Omnium" },
+  { id: "da08a26e-753f-42a6-8397-33f50a3305f3", nombre: "Santiago Sky" },
+  { id: "994af6fe-56c9-44e1-8ffe-b28998ed45fa", nombre: "Stadio Italiano" },
+  { id: "82ee3b12-7148-4dcc-8a6a-64829f5f169c", nombre: "Universidad de Talca" },
+  { id: "38b68c36-36a4-4cf0-a01e-4e427db82124", nombre: "UTEM" },
+  { id: "cbb2712b-78d6-4d2f-9f8c-61faefcce9d5", nombre: "Viña Santa Carolina" },
+  { id: "f229f2fe-5c2e-45d1-8f2e-16da5bc6ec97", nombre: "Viña Vik" },
 ];
 
 export interface Evento {
@@ -77,7 +110,10 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
 
       if (!error && data && data.length > 0) {
         setCentros(data);
-        setCentroId((prev) => (prev ? prev : data[0].id));
+        setCentroId((prev) => {
+          const exists = data.some((c: CentroEvento) => c.id === prev);
+          return exists ? prev : data[0].id;
+        });
       }
     } catch (err) {
       console.warn("Fallo al consultar centros_eventos:", err);
@@ -129,13 +165,20 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const selectedCentro = centros.find((c) => c.id === centroId);
+      const validCentroId = selectedCentro ? selectedCentro.id : (centros[0]?.id || null);
+      const validLocacion = selectedCentro?.nombre || centros[0]?.nombre || "Recinto no especificado";
+
+      const toIsoDate = (d: string) => {
+        if (!d) return null;
+        return d.includes("T") ? new Date(d).toISOString() : new Date(`${d}T12:00:00`).toISOString();
+      };
 
       const { error } = await supabase.from("eventos").insert({
         nombre: nombre.trim(),
-        centro_id: centroId,
-        locacion: selectedCentro?.nombre || "Recinto no especificado",
-        fecha_inicio: new Date(fechaInicio).toISOString(),
-        fecha_termino: fechaTermino ? new Date(fechaTermino).toISOString() : null,
+        centro_id: validCentroId,
+        locacion: validLocacion,
+        fecha_inicio: toIsoDate(fechaInicio),
+        fecha_termino: toIsoDate(fechaTermino),
         estado: estadoInicial,
         metros_cuadrados: parseFloat(metrosCuadrados) || 0,
         tipo_pantalla: tipoPantalla,
@@ -282,22 +325,23 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                   onChange={(e) =>
                     handleCambiarEstado(ev.id, e.target.value as Evento["estado"])
                   }
-                  className={`px-2.5 py-1.5 rounded-lg text-[16px] md:text-xs font-['Outfit'] uppercase tracking-wider font-semibold border transition-all cursor-pointer focus:outline-none ${
+                  style={{ colorScheme: "dark" }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-['Outfit'] uppercase tracking-wider font-bold border transition-all cursor-pointer focus:outline-none shadow-sm ${
                     ev.estado === "en_curso"
-                      ? "bg-[#10B981]/15 text-[#10B981] border-[#10B981]/40 hover:bg-[#10B981]/25"
+                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
                       : ev.estado === "planificado"
-                      ? "bg-[var(--go)]/15 text-[var(--pr)] border-[#D4AF37]/40 hover:bg-[var(--go)]/25"
-                      : "bg-[#27272A] text-[#71717A] border-[var(--border-light)] hover:text-[var(--mu)]"
+                      ? "bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/40 hover:bg-[#D4AF37]/25"
+                      : "bg-[#27272A] text-[#A1A1AA] border-[var(--border-light)] hover:text-white"
                   }`}
                   title="Cambiar estado del evento"
                 >
-                  <option value="en_curso" className="bg-[var(--sf)] text-[#10B981]">
+                  <option value="en_curso" className="bg-[#18181B] text-emerald-400 font-bold py-2">
                     ● En Curso
                   </option>
-                  <option value="planificado" className="bg-[var(--sf)] text-[var(--pr)]">
+                  <option value="planificado" className="bg-[#18181B] text-[#D4AF37] font-bold py-2">
                     ● Planificado
                   </option>
-                  <option value="finalizado" className="bg-[var(--sf)] text-[#71717A]">
+                  <option value="finalizado" className="bg-[#18181B] text-[#A1A1AA] font-bold py-2">
                     ● Finalizado
                   </option>
                 </select>
@@ -379,14 +423,14 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-[var(--mu)] uppercase tracking-wider font-['Outfit']">
-                    Fecha y Hora de Inicio
+                    Fecha de Inicio *
                   </label>
                   <input
-                    type="datetime-local"
+                    type="date"
                     required
                     value={fechaInicio}
                     onChange={(e) => setFechaInicio(e.target.value)}
-                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[#D4AF37] transition-all cursor-pointer"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -394,10 +438,10 @@ export function EventosSection({ initialEventos }: EventosSectionProps) {
                     Fecha de Término (Opcional)
                   </label>
                   <input
-                    type="datetime-local"
+                    type="date"
                     value={fechaTermino}
                     onChange={(e) => setFechaTermino(e.target.value)}
-                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full h-10 px-3 bg-[var(--sf2)] border border-[var(--bd)] rounded-xl text-[16px] md:text-sm text-[var(--tx)] focus:outline-none focus:border-[#D4AF37] transition-all cursor-pointer"
                   />
                 </div>
               </div>

@@ -103,15 +103,15 @@ export function DashboardView({
 
   /* ─── Centros de Eventos ─── */
   const [centros, setCentros] = useState<Array<{ id: string; nombre: string }>>([
-    { id: "e1000000-0000-0000-0000-000000000001", nombre: "Espacio Riesco" },
-    { id: "e1000000-0000-0000-0000-000000000002", nombre: "Movistar Arena" },
-    { id: "e1000000-0000-0000-0000-000000000003", nombre: "Estadio Nacional" },
-    { id: "e1000000-0000-0000-0000-000000000004", nombre: "Metropolitan Santiago" },
-    { id: "e1000000-0000-0000-0000-000000000005", nombre: "CentroParque" },
-    { id: "e1000000-0000-0000-0000-000000000006", nombre: "Club Hípico de Santiago" },
-    { id: "e1000000-0000-0000-0000-000000000007", nombre: "Quinta Vergara" },
+    { id: "eb8a6ee9-8afb-4eea-b817-05afab6005d7", nombre: "Alto Pomaire" },
+    { id: "f260b80b-91d5-45c4-9f8f-3bf17296f592", nombre: "Alto San Francisco" },
+    { id: "66d1c529-0246-4d36-884e-3a0177c774cb", nombre: "Best Western Premier Marina" },
+    { id: "e4d31758-3cff-43ae-bb80-0376101070d6", nombre: "Catamapu" },
+    { id: "c677edc0-b507-40d8-a409-6c07f14e3aba", nombre: "CentroParque" },
+    { id: "304baee2-076c-42d2-a128-d8c469d0a875", nombre: "Club Hípico" },
+    { id: "994af6fe-56c9-44e1-8ffe-b28998ed45fa", nombre: "Stadio Italiano" },
   ]);
-  const [centroId, setCentroId] = useState<string>("e1000000-0000-0000-0000-000000000001");
+  const [centroId, setCentroId] = useState<string>("eb8a6ee9-8afb-4eea-b817-05afab6005d7");
 
   useEffect(() => {
     supabase
@@ -121,7 +121,10 @@ export function DashboardView({
       .then((res: any) => {
         if (res?.data && res.data.length > 0) {
           setCentros(res.data);
-          setCentroId((prev) => (prev ? prev : res.data[0].id));
+          setCentroId((prev) => {
+            const exists = res.data.some((c: any) => c.id === prev);
+            return exists ? prev : res.data[0].id;
+          });
         }
       });
   }, [supabase]);
@@ -194,6 +197,22 @@ export function DashboardView({
   const [nuevosM2, setNuevosM2] = useState("50");
   const [nuevoTipo, setNuevoTipo] = useState("Pista de Baile LED");
   const [nuevaFecha, setNuevaFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [nuevoTecnicoId, setNuevoTecnicoId] = useState("");
+  const [tecnicos, setTecnicos] = useState<
+    Array<{ id: string; nombre_completo: string; rol: string; telefono?: string | null; activo?: boolean }>
+  >([]);
+
+  useEffect(() => {
+    supabase
+      .from("perfiles")
+      .select("id, nombre_completo, rol, telefono, activo")
+      .order("nombre_completo", { ascending: true })
+      .then((res: any) => {
+        if (res?.data) {
+          setTecnicos(res.data);
+        }
+      });
+  }, [supabase]);
 
   /* ─── Realtime Subscriptions & Auto-Sync ─── */
   useEffect(() => {
@@ -428,16 +447,22 @@ export function DashboardView({
     setGuardandoEvento(true);
     try {
       const selectedCentro = centros.find((c) => c.id === centroId);
+      const validCentroId = selectedCentro ? selectedCentro.id : (centros[0]?.id || null);
+      const validLocacion = selectedCentro?.nombre || centros[0]?.nombre || "Por definir";
+
       const { data, error } = await supabase
         .from("eventos")
         .insert({
           nombre: nuevoNombre.trim(),
-          centro_id: centroId || null,
-          locacion: selectedCentro?.nombre || "Por definir",
+          centro_id: validCentroId,
+          locacion: validLocacion,
           metros_cuadrados: nuevosM2 || "0",
           tipo_pantalla: nuevoTipo,
-          fecha_inicio: nuevaFecha ? new Date(nuevaFecha).toISOString() : new Date().toISOString(),
+          fecha_inicio: nuevaFecha
+            ? (nuevaFecha.includes("T") ? new Date(nuevaFecha).toISOString() : new Date(`${nuevaFecha}T12:00:00`).toISOString())
+            : new Date().toISOString(),
           estado: "planificado",
+          tecnico_id: nuevoTecnicoId.trim() || null,
         })
         .select("*, centros_eventos(nombre)")
         .single();
@@ -446,6 +471,7 @@ export function DashboardView({
         setEventos([data, ...eventos]);
         setModalNuevoEvento(false);
         setNuevoNombre("");
+        setNuevoTecnicoId("");
         setCentroId(centros[0]?.id || "");
       } else if (error) {
         alert("Error al crear evento: " + error.message);
@@ -1702,6 +1728,37 @@ export function DashboardView({
                   <option value="Pantalla Escenario P2.9">Pantalla Escenario P2.9</option>
                   <option value="Tótem LED Publicitario">Tótem LED Publicitario</option>
                 </select>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--mu)" }}>Técnico Asignado (Opcional)</label>
+                <select
+                  value={nuevoTecnicoId}
+                  onChange={(e) => setNuevoTecnicoId(e.target.value)}
+                  className="text-[16px] md:text-sm"
+                  style={{
+                    height: "40px",
+                    padding: "0 12px",
+                    borderRadius: "10px",
+                    border: "1px solid var(--bd)",
+                    background: "var(--sf2)",
+                    color: "var(--tx)",
+                    outline: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">● Dejar Abierto (Cualquier técnico puede unirse en terreno)</option>
+                  {tecnicos
+                    .filter((t) => t.activo !== false)
+                    .map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.nombre_completo} ({t.rol === "tecnico" ? "Técnico" : t.rol}) {t.telefono ? `· ${t.telefono}` : ""}
+                      </option>
+                    ))}
+                </select>
+                <span style={{ fontSize: "11px", color: "var(--mu)" }}>
+                  Si lo dejas abierto, el personal podrá tomar la producción directamente desde la app móvil.
+                </span>
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}>

@@ -138,6 +138,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 2. Refrescar con la nube
     const remote = await fetchProfile(currentSession.user.id);
     if (remote) {
+      if (remote.activo === false) {
+        console.warn('[AuthContext] Cuenta inhabilitada detectada. Forzando cierre de sesión...');
+        await supabase.auth.signOut();
+        setProfile(null);
+        setRole('tecnico');
+        await cacheProfile(null);
+        return;
+      }
       setProfile(remote);
       setRole(remote.rol);
     }

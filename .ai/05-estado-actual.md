@@ -7,11 +7,10 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 05 de Noviembre de 2026 (Sesión 74 — Sincronización de centros de eventos en StartEventBottomSheet con catálogo real de Supabase, alineación de Escáner QR a Azul Corporativo #3B82F6 y Skeleton Loaders en EventsScreen y AssetDetailScreen).
-- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias conectados en tiempo real).
-- **Sprint Activo:** Épica 1 (HU-05 y HU-06 Refinadas con roles Admin/Coordinador/Técnico), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
-- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso.
-- **Credenciales Cloud:** `mobile/.env` y `web/.env.local` configurados con proyecto activo de Supabase (`fovmurimpbexfrjwxdew`). Base de datos relacional PostgreSQL con RLS, triggers alineados de código visible y storage bucket `evidencias-incidencias` activos y verificados.
+- **Fecha de Última Actualización:** 16 de Noviembre de 2026 (Sesión 83 — Corrección de Contraste en Columna Gestión y Centrado Horizontal/Vertical de Columna Equipo/Técnico en `/eventos`).
+- **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias, Usuarios y Auto-Registro conectados en tiempo real).
+- **Sprint Activo:** Épica 1 (HU-05, HU-06 y Gestión de Colaboradores Completadas con roles Admin/Coordinador/Técnico y Auto-Registro), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
+- **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso. Servidores activos en local: Web en `http://localhost:3000` y Mobile Expo en `http://localhost:8081`.
 
 ---
 
@@ -32,9 +31,19 @@
   - Usuarios Auth activos: `gerencia@aleprod.cl` (Admin), `tecnico@aleprod.cl` (Coordinador / Nicolas Ponce) y `terreno@aleprod.cl` (Técnico Terreno).
 
 #### Épica 2: Plataforma Web
-- ✅ **HU-06: Control de Acceso (RBAC)** `[Completada en Base de Datos y Web]`
-  - Perfil de `Gerencia` asignado con `rol: 'admin'` en `public.perfiles`.
-  - Roles soportados: `admin` (Dirección/Dashboard) y `tecnico` (Terreno/Móvil).
+- ✅ **HU-06: Control de Acceso (RBAC) y Gestión de Equipo** `[Completada en Base de Datos, Web y Móvil]`
+  - Perfiles clasificados en 3 niveles: `admin` (Dirección/Acceso Total), `coordinador` (Jefatura de Operaciones y Montajes) y `tecnico` (Terreno/Móvil 3 Taps).
+  - Módulo Web `/usuarios` ("Técnicos y accesos") completamente renovado:
+    - Alta directa con contraseña provisoria y asignación de rol inicial.
+    - Modal de invitación y auto-registro con copiado de enlace (`/registro`) y botón directo de compartir por WhatsApp (`https://wa.me/?text=...`).
+    - Modificación de roles RBAC interactiva con modal dedicado.
+    - Inhabilitación / suspensión inmediata de colaboradores con botón de un clic en la tabla (`UPDATE perfiles SET activo = false`).
+  - Auto-registro público `/registro`: Los técnicos se registran de forma autónoma con su nombre, correo y teléfono; el sistema los aprovisiona como Técnicos de Terreno activos y les ofrece un enlace directo a la app móvil.
+  - Bloqueo de cuentas inhabilitadas sincronizado en tiempo real:
+    - Web: Gatekeeper en `/login` verifica `perfil.activo` y rechaza el acceso si la cuenta está suspendida.
+    - Móvil: `LoginScreen.tsx` y `AuthContext.tsx` consultan el campo `activo`. Si el colaborador está suspendido, se revoca inmediatamente la sesión local mediante `supabase.auth.signOut()` y se bloquea el acceso con una alerta clara.
+  - Gatekeeper en Login Web: Bloqueo amigable de cuentas de técnicos con redirección a App Móvil.
+  - Protección de "Baja Definitiva" de Palmetas LED reservada exclusivamente para Administradores.
 - ✅ **HU-07: Dashboard Central Web & Módulo de Incidencias** `[Completada — Conectada a Supabase en Vivo]`
   - Dashboard Server Component con SSR en Next.js 16 (Turbopack).
   - Consulta en tiempo real de eventos, parque de palmetas, incidencias y estado de repuestos desde Supabase.
@@ -116,6 +125,74 @@
 
 ## 5. Bitácora de Cambios Recientes (Session Log)
 
+- **2026-11-16 (Sesión 80 — Sistema de PIN de 4 Dígitos para Unión de Técnicos a Producciones en Web y App Móvil, Tabla `evento_participantes`, Servidores Web y Móvil Iniciados en Local):**
+  - **Base de Datos Supabase Cloud:**
+    - Se ejecutó migración formal (`supabase/migrations/20261116133000_eventos_pin_participantes.sql`).
+    - Se agregó columna `pin_acceso VARCHAR(4)` a `public.eventos`, inicializando eventos con PINs deterministas de 4 dígitos.
+    - Se creó la tabla `public.evento_participantes` (`evento_id`, `tecnico_id`, `fecha_union`, `activo`) con RLS y políticas seguras para auditar quién se une a cada producción.
+  - **Panel Web Administrativo (`web/app/(dashboard)/eventos/page.tsx` y `components/dashboard-view.tsx`):**
+    - En el formulario de alta de eventos se incorporó el campo **"PIN de Acceso Terreno (4 dígitos) *"** con generador aleatorio y validación numérica estricta.
+    - En la tabla de eventos se añadió el badge con icono de llave: `PIN: XXXX` en la columna de equipo para consulta inmediata del encargado.
+    - En el modal "Equipo del Evento" se añadió la sección de gestión del PIN (visualización destacada, edición y regeneración) y en la lista de colaboradores se integraron los técnicos unidos con PIN indicando su hora de unión y reportes realizados.
+  - **App Móvil (`mobile/src/core/components/PinJoinModal.tsx`, `HomeScreen.tsx`, `EventNotificationJoiner.tsx`):**
+    - Se implementó `PinJoinModal.tsx` con teclado numérico, validación de 4 dígitos y feedback táctil (`triggerHaptic`).
+    - En `HomeScreen.tsx`: Si hay un evento en curso al que el técnico aún no se ha unido, ya no se activa ciegamente, sino que se presenta la tarjeta destacada con el botón **"Unirme con PIN"**. Al ingresar el PIN correcto, se valida contra Supabase, se guarda la participación en `evento_participantes`, se activa en SQLite local y se emite la señal global de evento activo.
+    - En `EventNotificationJoiner.tsx`: Las notificaciones push y WebSocket solicitan el PIN antes de permitir la unión.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/web`: **0 errores**. Servidor Next.js activo en puerto 3000 (`task-1328`).
+    - `npm install` en `/mobile` completado exitosamente. Servidor Metro Bundler de Expo activo en `http://localhost:8081` (`task-1972`).
+
+- **2026-11-16 (Sesión 79 — Asignación de Técnicos Responsables, Opción de Auto-unión Abierta en Terreno y Vista de Trazabilidad "Quién Trabajó" en Eventos Web `/eventos` y Dashboard):**
+  - **Asignación de Técnico y Opción de Dejar Abierto en Eventos (`web/app/(dashboard)/eventos/page.tsx`):**
+    - En el formulario "Registrar Nueva Producción" se añadió el campo opcional **"Técnico Asignado / Responsable"** con opción predeterminada *"● Dejar Abierto (Cualquier técnico puede unirse desde la app móvil)"* y selector de técnicos activos de `public.perfiles`.
+    - Nueva columna en la tabla de producciones: **"Equipo / Técnico"**, mostrando el avatar y nombre del técnico asignado o un badge dinámico *"Abierto · Por unirse"* cuando aún no hay asignación previa.
+    - Se incorporó en cada fila el botón de acceso rápido con icono `groups` para gestionar el equipo del evento.
+  - **Modal Ejecutivo "Equipo de Producción en Terreno" y Trazabilidad "Quién Trabajó":**
+    - **Sección 1 (Asignación/Reasignación):** Permite cambiar o asignar el técnico responsable en cualquier momento o dejarlo abierto, actualizando `eventos.tecnico_id` en Supabase con toast de confirmación.
+    - **Sección 2 (Quién Trabajó en Terreno):** Cruce fáctico en tiempo real con `public.incidencias` (`tecnico_id` y relación con `perfiles`). Muestra a todos los colaboradores que reportaron intervenciones o averías in situ durante el evento, total de reportes realizados y fecha/hora exacta de su última actividad en terreno.
+  - **Sincronización en el Modal del Dashboard Principal (`web/app/components/dashboard-view.tsx`):**
+    - Se conectó la consulta de técnicos (`perfiles`) y se añadió el selector de "Técnico Asignado (Opcional)" con la misma opción de auto-unión abierta en el modal "+ Nuevo evento" del dashboard.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/web`: **0 errores de compilación**.
+    - Servidor local Turbopack activo y respondiendo de forma reactiva.
+
+- **2026-11-16 (Sesión 78 — Módulo de Gestión de Equipo y Control RBAC para Coordinadores y Administradores en Web `/usuarios`, Gatekeeper en Login Web y Políticas RLS en Supabase):**
+  - **Módulo de Gestión de Equipo y Accesos (`web/app/(dashboard)/usuarios/page.tsx`):**
+    - Nueva vista ejecutiva para Administradores y Coordinadores conectada en tiempo real a `public.perfiles`.
+    - 4 Tarjetas KPI: Total Equipo, Administradores, Coordinadores y Técnicos de Terreno.
+    - Filtros segmentados por rol ("Todos", "Admins", "Coordinadores", "Técnicos", "Inactivos") y buscador dinámico por nombre, correo y rol.
+    - Tabla ejecutiva de colaboradores con avatares semánticos, badges de rol (Dorado para Admin, Azul Cobalto para Coordinador, Verde para Técnico) y estado activo/suspendido.
+    - Modal de alta "Registrar Nuevo Colaborador" con creación en Supabase Auth y sincronización inmediata a `perfiles`.
+    - Modal "Cambiar Rol de Acceso" y botón toggle para suspender/reactivar cuentas protegido para Administradores.
+  - **Sidebar Universal (`web/app/components/sidebar.tsx`):**
+    - Enlace activo a `/usuarios` desde "Técnicos y accesos" con contador numérico sincronizado en tiempo real.
+    - Detección precisa de roles en perfil (`admin` -> "Administrador Total", `coordinador` -> "Coordinador de Producción", `tecnico` -> "Técnico de Terreno") con avatares coloreados y dots semánticos.
+    - Suscripción en tiempo real a la tabla `public.perfiles` (`postgres_changes`).
+  - **Gatekeeper en Login Web (`web/app/(auth)/login/page.tsx`):**
+    - Verificación inmediata de rol post-login: si un usuario con rol `tecnico` intenta ingresar al panel web, se invalida la sesión y se muestra mensaje explicativo guiándolo a la App Móvil.
+    - Detección y bloqueo de cuentas suspendidas (`activo === false`).
+  - **Formulario de Registro de Eventos (Solo Fecha / Sin Hora):**
+    - Se adaptaron los inputs en `web/app/(dashboard)/eventos/page.tsx`, `components/eventos-section.tsx` y `components/dashboard-view.tsx` de `datetime-local` a `type="date"`.
+    - Ahora el registro solicita exclusivamente el día del evento (*Fecha de Inicio* y *Fecha de Término* opcional) sin exigir hora, serializando con compensación horaria segura a mediodía UTC (`T12:00:00`) para erradicar desfases de zona horaria en Chile (UTC-3).
+  - **Resolución de Error Foreign Key `eventos_centro_id_fkey`:**
+    - Se identificó que `CENTROS_EVENTOS_FALLBACK` contenía UUIDs ficticios (`e1000000-0000-...`). Al cargar la página, `centroId` mantenía el ID ficticio si el usuario no tocaba el desplegable, violando la clave foránea relacional en PostgreSQL.
+    - Se sincronizó el catálogo completo con los 42 UUIDs reales de `public.centros_eventos` en `eventos/page.tsx`, `eventos-section.tsx` y `dashboard-view.tsx`.
+    - Se blindó la función de inserción resolviendo `validCentroId` contra la lista real antes de enviar a Supabase.
+  - **Base de Datos y RLS Cloud:**
+    - Incorporación de columna `email` en `public.perfiles` y sincronización con `auth.users`.
+    - Nuevas políticas RLS en Supabase: `Admins pueden actualizar cualquier perfil`, `Gestion de palmetas para coordinadores`, `Gestion de incidencias para coordinadores` y `Gestion de eventos para coordinadores`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
+  - **Validación Técnica:**
+    - `npx tsc --noEmit` en `/web`: **0 errores de compilación**.
+    - Servidor local Turbopack sirviendo `/usuarios` con código HTTP 200.
+
 - **2026-11-05 (Sesión 77 — Sincronización Real de Centros de Eventos, Alineación QR a Azul Corporativo y Skeleton Loaders):**
   - **Sincronización de `centros_eventos` en `StartEventBottomSheet.tsx`:**
     - Erradicación total de `FALLBACK_CENTROS` que contenía registros mock desalineados (`Espacio Riesco`, `Movistar Arena`, `Estadio Nacional`, `Metropolitan Santiago`).
@@ -131,6 +208,10 @@
   - **Integración en Vistas Principales:**
     - `EventsScreen.tsx`: Reemplazo del indicador estático por 3x `<EventCardSkeleton />` durante la carga inicial (`loading && !refreshing`), eliminando pantallas en blanco y layout shifts.
     - `AssetDetailScreen.tsx`: Integración de `<AssetDetailSkeleton />` durante la resolución de metadata de Supabase y SQLite.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -143,6 +224,10 @@
       2. Si el usuario actual es el creador del evento (`tecnico_id === user.id`), se omite la apertura del modal para evitar auto-invitación.
   - **Activación Inmediata para Coordinadores Móviles en `StartEventBottomSheet.tsx`:**
     - Al crear un evento desde la app móvil, el coordinador ahora asocia directamente la producción a su SQLite local (`setActiveLocalEvento`) y emite `aleprod_event_changed`, dejando su entorno activo al instante sin interrumpir con diálogos redundantes.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx expo export --platform web`: **Exportación exitosa**.
@@ -163,6 +248,10 @@
     - Se implementó `sw.js` con handlers de `push` y `notificationclick`.
     - Se registró el Service Worker en `index.html`.
     - Se generó y configuró la clave VAPID pública (`EXPO_PUBLIC_VAPID_KEY`) en `mobile/.env`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx expo export --platform web`: **Exportación exitosa con Service Worker y bundle actualizado**.
@@ -181,6 +270,10 @@
   - **Activación de Cuenta Terreno en Supabase Cloud:**
     - Se actualizó el rol de `tecnico@aleprod.cl` en `public.perfiles` de `coordinador` a **`tecnico`** (`rol = 'tecnico'`), validando su inicio de sesión con clave `Aleprod2026!`.
     - Esta cuenta es el objetivo directo del emisor push (`notify-event-start`), permitiendo probar de inmediato en terreno o PWA la recepción de notificaciones cuando el Coordinador (`gerencia@aleprod.cl`) inicie un montaje.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -201,6 +294,10 @@
   - **Documentación de Despliegue (`supabase/README_WEBHOOK_SETUP.md`):**
     - Guía de despliegue con CLI (`npx supabase functions deploy notify-event-start --no-verify-jwt`).
     - Instrucciones paso a paso para configurar el Webhook nativo desde el Dashboard UI de Supabase Studio.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -226,6 +323,10 @@
   - **Corrección de Resplandor Azul en Nativo (iOS/Android) sin alterar la PWA:**
     - Se identificó que `zIndex: -1` en `topAmbientGlow` provocaba que en React Native Nativo el `LinearGradient` quedara oculto detrás del fondo `#000000` de `container`.
     - Se aisló con `Platform.select({ web: { zIndex: -1 }, default: { zIndex: 0 } })` en `HomeScreen.tsx`, `NotificationsScreen.tsx`, `EventsScreen.tsx`, `AssetDetailScreen.tsx` y `SettingsScreen.tsx`. La PWA conserva su diseño original y en la app nativa el halo azul cobalto es plenamente visible.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/web`: **0 errores**.
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
@@ -245,6 +346,10 @@
     - Detección de conflicto contra `eventos_locales` (SQLite) adaptando dinámicamente el mensaje de `<ConfirmModal>`.
     - Validación Realtime rápida contra Supabase Cloud (`estado === 'en_curso'`) previo a cualquier mutación.
     - Guardado local en SQLite (`setActiveLocalEvento`) y amarre automático de `insertIncidencia`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -259,6 +364,10 @@
     - **Tarjetas y Superficies:** Tarjetas de datos en `#121620` con bordes finos translúcidos `rgba(255, 255, 255, 0.07)`, badges de UUID estilizados, sub-tarjetas de historial en `#141A28` con tags `Local`/`Cloud`, e íconos en círculos con tinte azul (`rgba(37, 99, 235, 0.12)`).
     - **Barra de Acciones Inferior:** Barra fija en `#080C14` con borde translúcido, botón "Dar de Baja" en coral translúcido y botón principal "Reportar Falla" en Azul Corporativo (`#2563EB`).
     - **Inyección de Insets:** Migrado a `useEdgeInsets` garantizando clearance uniforme en WebKit (PWA) y Nativo.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -278,6 +387,10 @@
   - **Busting de Caché y Exportación:**
     - Se actualizó el parámetro de versión de caché a `?v=aleprod4` en `mobile/public/index.html` y `web/app/layout.tsx`.
     - Se regeneró el build de exportación estática de la PWA móvil con `npx expo export --platform web`, actualizando `mobile/dist/`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
     - `npx tsc --noEmit` en `/web`: **0 errores de compilación**.
@@ -290,6 +403,10 @@
   - **Calibración Geométrica de Clearance Inferior en Pestañas (70px):**
     - Se calibró el despeje base `bottomSpace` de 88px a 70px en `HomeScreen.tsx`, `EventsScreen.tsx`, `SettingsScreen.tsx` y `useEdgeInsets.ts` (así como la clase utilitaria `.edge-to-edge-pb` en `index.html`).
     - Con este ajuste, al llegar al fondo del scroll se garantizan exactamente 12px de respiración visual sobre la cápsula de 58px de `LiquidGlassTabBar`, erradicando el colchón desmedido de 122px que empujaba el contenido hacia arriba.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `tsc --noEmit` en `/mobile`: **0 errores de compilación**.
 
@@ -305,6 +422,10 @@
     - En iOS WebKit, el foco en los campos de entrada de `LoginScreen` comprime el viewport visual. Al pulsar "Ingresar" y navegar, Safari/WebKit no reexpande el viewport a su altura completa, dejando una franja muerta inferior persistente.
     - Se incorporó desenfoque preventivo de inputs (`document.activeElement.blur()`), `Keyboard.dismiss()` y `window.scrollTo(0, 0)` en `LoginScreen.tsx` previo a la navegación.
     - Se implementó un script de resiliencia en `mobile/public/index.html` que ante eventos `focusout` y `visualViewport.resize` restaura `window.scrollTo(0, 0)` y refresca la altura `#root.style.height = '100dvh'`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
     - `npx tsc --noEmit` en `/web`: **0 errores de compilación**.
@@ -321,6 +442,10 @@
     - Esto fuerza a WebKit en iOS Retina a generar una capa de composición acelerada por hardware (GPU layer), preservando el antialiasing subpixel nítido en los textos superiores sobre el degradado ambiental sin afectar plataformas nativas.
   - **Calibración de Despeje Inferior (useEdgeInsets(88, 12)):**
     - Se aumentó el despeje inferior base de 74px a 88px en las pantallas de pestañas, garantizando que al scrollear hasta el fondo la última tarjeta quede completamente visible con amplio margen sobre la barra flotante LiquidGlassTabBar.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
     - `npx expo export --platform web`: **Exportación web limpia con 0 errores**.
@@ -333,6 +458,10 @@
   - **Sanación del Contenedor Raíz WebKit (`mobile/public/index.html`):**
     - Se retiraron las directivas `position: absolute; top: 0; bottom: 0; min-height: 100dvh;` sobre `#root` y `html, body`.
     - Se restituyó el estándar fluido canónico de React Native Web (`display: flex; width: 100%; height: 100%; flex: 1; overflow: hidden;`), eliminando el bug de anclaje negativo que desplazaba el origen visual del viewport hacia arriba en navegadores móviles.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores de compilación**.
     - `npx expo export --platform web`: **Exportación exitosa con 0 errores**.
@@ -349,6 +478,10 @@
   - **Refactorización de Navegación en `SettingsScreen.tsx`:**
     - Eliminado el estado y la invocación de `InfoModal` en el menú de Ajustes.
     - Conectados los botones a navegación fluida nativa vía `router.push('/manual')` y `router.push('/soporte')`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -367,6 +500,10 @@
   - **Reemplazo de Alerta de Opciones por Ayuda en `AssetDetailScreen.tsx`:**
     - El botón de cabecera con tres puntos (`ellipsis-horizontal`) fue reemplazado por un botón de ayuda accesible con ícono `help-circle-outline`.
     - Eliminado el `Alert.alert` nativo; ahora despliega un `InfoModal` ("Uso del Módulo") explicando la consulta de especificaciones, baja del activo y reporte de fallas.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -383,6 +520,10 @@
     - Se erradicó por completo el bloque condicional de `window.confirm` para Web y `Alert.alert` para Nativo.
     - Se integró el estado local `isLogoutModalVisible` e instanció el nuevo `<ConfirmModal>`.
     - Al presionar "Cerrar Sesión", se despliega el diálogo visual inmersivo y, al confirmar, se dispara de forma limpia la función `onSignOut()`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -403,6 +544,10 @@
     - Se ajustó `nativeTopSpace` de `0px` a `8px` en `useEdgeInsets.ts`. Esto añade un despeje visual orgánico y sutil a las cabeceras de `HomeScreen`, `EventsScreen` y `SettingsScreen` frente al Notch y la Dynamic Island, alineándose con el estándar de $8\text{ px}$ ya utilizado en las vistas secundarias (`EventDetailScreen`, `ActivityHistoryScreen`, `AssetDetailScreen`).
   - **Limpieza de CSS Estático Residual en Vistas Principales:**
     - Se erradicó `paddingBottom: 120` de `styles.scrollContent` en `HomeScreen.tsx`, `EventsScreen.tsx` y `SettingsScreen.tsx`. El padding inferior queda 100% gobernado por el hook reactivo `useEdgeInsets`.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx expo export --platform web`: **Compilación y generación limpia en 1779ms**.
@@ -418,6 +563,10 @@
     - **Barra de Acciones Inferior Anclada:** `styles.bottomBar` anclada al extremo físico inferior del dispositivo, absorbiendo el espacio del Home Indicator con `paddingBottom` dinámico:
       `Platform.OS === 'web' ? 'calc(env(safe-area-inset-bottom, 0px) + 16px)' : insets.bottom + 16`.
       Fondo unificado a `colors.background` eliminando la franja flotante y el hueco negro inferior.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -439,6 +588,10 @@
     - Se agregó soporte en `syncPendingIncidencias` (`sync.ts`) para sincronizar el estado `baja` en `palmetas_led` al despachar incidencias de baja offline.
   - **Sistema Unificado de Notificaciones Toast (`ToastContext.tsx`):**
     - Creado `mobile/src/core/context/ToastContext.tsx` integrado en `app/_layout.tsx` con soporte de `LiquidGlassView`, Safe Areas de iOS/Android/Web, feedback háptico diferenciado y auto-dismiss.
+  - **Corrección de Carga de Eventos (Relación PostgREST y Foreign Key):**
+    - Se identificó la causa raíz por la cual los eventos no cargaban: la tabla `eventos` carecía de la restricción formal de Foreign Key (`eventos_tecnico_id_fkey`) hacia `public.perfiles(id)`, lo que provocaba que la consulta embebida de PostgREST (`perfiles:tecnico_id(...)`) fallara con `Could not find a relationship between 'eventos' and 'perfiles' in the schema cache`.
+    - Se ejecutó DDL en PostgreSQL para establecer `ALTER TABLE public.eventos ADD CONSTRAINT eventos_tecnico_id_fkey FOREIGN KEY (tecnico_id) REFERENCES public.perfiles(id) ON DELETE SET NULL;` y se recargó la caché de PostgREST (`NOTIFY pgrst, 'reload schema'`).
+    - En el cliente web ([eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)), se desacopló el embedding directo y se implementó mapeo resiliente en memoria cruzando `eventosData` con `perfilesData`, garantizando que la carga de eventos nunca falle.
   - **Validación Técnica:**
     - `npx tsc --noEmit` en `/mobile`: **0 errores**.
     - `npx tsc --noEmit` en `/web`: **0 errores**.
@@ -1124,6 +1277,37 @@
   - **Pintado 100% negro de la status bar en iOS (App, Login y Loading):** Para garantizar que la franja del status bar sea rigurosamente negra (`#000000` OLED puro) y calce sin discrepancias en toda la app, se unificó el fondo base en `html`, `body`, `#root`, `_layout.tsx` (incluyendo `loadingContainer`, `safeAreaProvider` y `customDarkTheme`), `(tabs)/_layout.tsx`, `HomeScreen`, `EventsScreen`, `SettingsScreen`, `NotificationsScreen`, `LoginScreen` y `ForgotPasswordScreen` a `#000000` (eliminando cualquier remanente `#070B14` y el parpadeo de 1s previo a cargar el login). Se inyectó una capa fija nativa `#ios-status-bar-fill` en `index.html` con `height: env(safe-area-inset-top)` y `z-index: 99999` para blindar el área superior en negro azabache, y los degradados ambientales (`topAmbientGlow`) mantienen los primeros 48px estrictamente en `#000000` antes de florecer en azul corporativo (App) o dorado corporativo (Login).
   - **Configuración de PWA:** `index.html` con `html, body, #root { background-color: #000000 !important; }`, `theme-color: #000000`, `manifest.json` y `app.json` sincronizados a `#000000`.
   - **Validación de Tipos:** `npx tsc --noEmit` en `/mobile` verificado con 0 errores.
+
+- **2026-11-17 (Sesión 84 — Configuración Canónica de Dominio Público para Enlace de Auto-Registro):**
+  - **Problema:** En el modal de compartir enlace de registro de `/usuarios`, el enlace se generaba a partir de `window.location.origin`, produciendo `http://localhost:3000/registro` en desarrollo local, el cual no abría en los celulares de los técnicos al compartir por WhatsApp.
+  - **Solución Implementada:**
+    - Se configuró `NEXT_PUBLIC_SITE_URL=https://aleprod-web.vercel.app` en [web/.env.local](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/.env.local) y [web/.env.local.example](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/.env.local.example).
+    - En [web/app/(dashboard)/usuarios/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/usuarios/page.tsx), `getRegistroUrl()` prioriza el dominio oficial público para que el botón de WhatsApp e invitaciones copien `https://aleprod-web.vercel.app/registro` (funcional en cualquier teléfono móvil).
+    - Se incorporó un selector de entorno (Oficial Producción vs Local Desarrollo) dentro del modal para flexibilidad técnica durante pruebas.
+  - **Salud del Sistema:** `npx tsc --noEmit` en `/web` verificado con **0 errores**.
+
+- **2026-11-16 (Sesión 83 — Centrado Simétrico del Módulo de Técnicos y Accesos y Columna Equipo/Técnico):**
+  - **Alineación Simétrica en Tabla de Eventos (`/eventos`):**
+    - Se transformó la celda "Equipo / Técnico" en un componente unificado centrado con `flex items-center justify-center`.
+    - Cuando no hay técnico asignado, renderiza una píldora interactiva centrada `[● Abierto · Por unirse + group_add]` que abre directamente el modal de asignación y equipo en terreno, eliminando la asimetría causada por el botón flotante independiente.
+    - Cuando hay un técnico asignado, renderiza una tarjeta simétrica centrada con avatar, nombre/rol y botón de edición rápido.
+  - **Alineación y Centrado en Módulo de Técnicos (`/usuarios`):**
+    - Encabezados de tabla (`thead`): Se centraron explícitamente las columnas `Estado` y `Acciones` (`text-center`).
+    - Filas de tabla (`tbody`): Se aplicó `align-middle` a todas las celdas y se centraron horizontalmente las columnas `Estado` y `Acciones` mediante contenedores flex (`flex items-center justify-center`).
+    - Contenedor de módulo principal: Se verificó la alineación full-width sin restricciones asimétricas.
+  - **Salud del Sistema:** `npx tsc --noEmit` verificado en `/web` y `/mobile` con 0 errores. Servidores activos en local.
+
+- **2026-11-16 (Sesión 82 — Eliminación del PIN de Acceso para Eventos en Web y App Móvil):**
+  - **Motivación:** Dado que ahora cualquier colaborador puede registrarse de forma autónoma mediante `/registro` o ser creado por la administración, el requerimiento de PIN de 4 dígitos para unirse a eventos y reportar incidencias resultaba redundante e introducía fricción innecesaria.
+  - **Panel Web Next.js:**
+    - Se eliminó el campo y generación de PIN en el modal de nuevo evento tanto en `/eventos` ([web/app/(dashboard)/eventos/page.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/(dashboard)/eventos/page.tsx)) como en el Dashboard ([web/app/components/dashboard-view.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/web/app/components/dashboard-view.tsx)).
+    - Se eliminó el badge `PIN: ----` de la tabla de producciones.
+    - Se retiró la sección "PIN de Acceso al Evento" del modal de equipo/quién trabajó, manteniendo la asignación de encargado y la lista de colaboradores en terreno.
+  - **App Móvil Expo:**
+    - Se eliminó `PinJoinModal.tsx`.
+    - En [HomeScreen.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/mobile/src/modules/home-event/screens/HomeScreen.tsx), cuando hay una producción activa (`en_curso`), se visualiza directamente el montaje activo sin bloquear al técnico ni exigir PIN.
+    - En [EventNotificationJoiner.tsx](file:///c:/Users/lucas/Downloads/Panel%20ALE/aleprod-capstone/mobile/src/core/components/EventNotificationJoiner.tsx), se restauró `ConfirmModal`: al recibir notificación de nuevo montaje, el técnico confirma con un solo toque ("Unirme al Montaje") sin PIN.
+  - **Salud del Sistema:** `npx tsc --noEmit` verificado en `/web` y `/mobile` con 0 errores. Servidores activos en local.
 
 - **2026-10-21 (Sesión 10 — Ciclo de Vida de Eventos HU-16 en Móvil):**
   - Conexión de `HomeScreen.tsx` con el evento real activo (`estado = 'en_curso'`).

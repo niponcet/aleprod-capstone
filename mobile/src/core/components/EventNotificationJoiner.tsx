@@ -19,7 +19,7 @@ interface EventPayload {
 
 /**
  * Componente global que intercepta notificaciones push de inicio de evento (Foreground y Background/Tap).
- * Implementa la lógica de unión (Event Joiner) con confirmación mediante ConfirmModal,
+ * Implementa la lógica de unión (Event Joiner) con confirmación directa mediante ConfirmModal,
  * gestión de conflictos contra SQLite y validación en tiempo real contra Supabase Cloud.
  */
 export const EventNotificationJoiner: React.FC = () => {
@@ -212,7 +212,7 @@ export const EventNotificationJoiner: React.FC = () => {
   }, [processEventPayload]);
 
   /**
-   * Confirma la unión al evento con validación Realtime y guardado en SQLite.
+   * Confirma la unión al evento sin requerir PIN, sincronizando Realtime y guardando en SQLite.
    */
   const handleConfirmJoin = async () => {
     if (!pendingEvent) return;
@@ -230,20 +230,33 @@ export const EventNotificationJoiner: React.FC = () => {
 
       if (error || !remoteEvent || remoteEvent.estado !== 'en_curso') {
         setConfirmLoading(false);
-        setModalVisible(false);
-        setPendingEvent(null);
         triggerHaptic('error');
         showToast({
-          type: 'warning',
+          type: 'error',
           title: 'EVENTO NO DISPONIBLE',
-          message: 'El evento ya no se encuentra en curso.',
-          code: targetId,
+          message: 'El evento ya no se encuentra en curso o fue finalizado.',
         });
+        setModalVisible(false);
+        setPendingEvent(null);
         return;
       }
 
-      // 2. Configurar entorno local SQLite:
-      // Pasa cualquier evento anterior a 'planificado' y activa el nuevo evento.
+      // 2. Registrar participación en Supabase (evento_participantes)
+      if (user?.id) {
+        await supabase
+          .from('evento_participantes')
+          .upsert(
+            {
+              evento_id: remoteEvent.id,
+              tecnico_id: user.id,
+              activo: true,
+              fecha_union: new Date().toISOString(),
+            },
+            { onConflict: 'evento_id,tecnico_id' }
+          );
+      }
+
+      // 3. Configurar entorno local SQLite:
       const localToSave: LocalEvento = {
         id: remoteEvent.id,
         nombre: remoteEvent.nombre,
@@ -275,13 +288,10 @@ export const EventNotificationJoiner: React.FC = () => {
     } catch (err: any) {
       console.error('[EventJoiner] Error al unirse al evento:', err);
       setConfirmLoading(false);
-      setModalVisible(false);
-      setPendingEvent(null);
       showToast({
         type: 'error',
         title: 'ERROR DE CONEXIÓN',
-        message: err?.message || 'No se pudo verificar el estado del evento.',
-        code: targetId,
+        message: err?.message || 'No fue posible unirse al evento.',
       });
     }
   };
@@ -295,11 +305,10 @@ export const EventNotificationJoiner: React.FC = () => {
   return (
     <ConfirmModal
       visible={modalVisible}
-      title={isConflict ? 'Cambio de Evento Activo' : 'Iniciar Montaje'}
+      title={isConflict ? 'CAMBIAR DE MONTAJE' : 'NUEVO MONTAJE INICIADO'}
       message={modalMessage}
-      confirmText="Unirse"
+      confirmText="Unirme al Montaje"
       cancelText="Ignorar"
-      isDestructive={isConflict}
       confirmLoading={confirmLoading}
       onConfirm={handleConfirmJoin}
       onCancel={handleCancelJoin}

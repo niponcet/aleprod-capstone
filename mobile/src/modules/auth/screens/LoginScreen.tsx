@@ -88,6 +88,22 @@ export const LoginScreen: React.FC = () => {
           'No se pudo establecer una sesión activa con el servidor.'
         );
       } else {
+        // Verificar si la cuenta de colaborador está activa
+        const { data: perfilData } = await supabase
+          .from('perfiles')
+          .select('activo')
+          .eq('id', data.session.user.id)
+          .maybeSingle();
+
+        if (perfilData && perfilData.activo === false) {
+          await supabase.auth.signOut();
+          Alert.alert(
+            'Acceso Inhabilitado',
+            'Tu cuenta de colaborador ha sido suspendida o inhabilitada. Si crees que se trata de un error, contacta a la administración de Alejandra Producciones.'
+          );
+          return;
+        }
+
         // Persistir o limpiar el correo según la preferencia de Recordarme
         if (rememberMe) {
           await AsyncStorage.setItem('@aleprod_saved_email', trimmedEmail);
