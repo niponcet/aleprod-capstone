@@ -7,7 +7,7 @@
 
 ## 1. Ficha de Estado General
 
-- **Fecha de Última Actualización:** 16 de Noviembre de 2026 (Sesión 83 — Corrección de Contraste en Columna Gestión y Centrado Horizontal/Vertical de Columna Equipo/Técnico en `/eventos`).
+- **Fecha de Última Actualización:** 17 de Noviembre de 2026 (Sesión 84 — Despliegue Exitoso en Vercel Producción de Módulo de Técnicos, Auto-Registro y Mejoras de Eventos).
 - **Fase del Proyecto:** **Fase 3 (Desarrollo Núcleo App/Web)** — Monorepo completo con Mobile (Expo SDK 58, offline-first, sync con Supabase Cloud y Storage) y Web (Dashboard, Login, Palmetas, Eventos, Incidencias, Usuarios y Auto-Registro conectados en tiempo real).
 - **Sprint Activo:** Épica 1 (HU-05, HU-06 y Gestión de Colaboradores Completadas con roles Admin/Coordinador/Técnico y Auto-Registro), Épica 2 (HU-07 y HU-08 Completadas en Web), Épica 3 (HU-10, HU-11, HU-12, HU-13 y HU-16 Completadas en Móvil), Épica 4 (HU-14 y HU-15 Completadas).
 - **Salud del Monorepo:** Tipado limpio (`npx tsc --noEmit` exitoso en `/mobile` y `/web` con 0 errores). Export web en mobile verificado con 0 errores. Build de Next.js 16 con Turbopack exitoso. Servidores activos en local: Web en `http://localhost:3000` y Mobile Expo en `http://localhost:8081`.
